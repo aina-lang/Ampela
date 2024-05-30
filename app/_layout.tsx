@@ -40,8 +40,8 @@ export default function RootLayout() {
         screenOptions={{ headerShown: false }}
         // initialRouteName="discovery"
       >
-        <Stack.Screen name="discovery" options={{ headerShown: false }} />
         <Stack.Screen name="main" options={{ headerShown: false }} />
+        <Stack.Screen name="discovery" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       {/* </ThemeProvider> */}
