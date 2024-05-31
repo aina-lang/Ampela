@@ -1,21 +1,18 @@
-import React, { useEffect, useLayoutEffect } from "react";
-import * as SplashScreen from "expo-splash-screen";
-import { getUser, setFirstLaunchFalse } from "@/services/database";
-import { SIZES } from "@/constants";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
+import React, { useEffect } from "react";
+import { getAllCycle, getUser, setFirstLaunchFalse } from "@/services/database";
 import { Tabs, useNavigation } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
 import { updateUser } from "@/redux/userSlice";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { Drawer } from "expo-router/drawer";
 import MyTabBar from "@/components/MyTabBar";
 import { Text, TouchableOpacity, View } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-
-SplashScreen.preventAutoHideAsync();
+import { SIZES } from "@/constants";
+import { updateCycleMenstruelData } from "@/redux/cycleSlice";
 
 export default function TabLayout() {
   const user = useSelector((state) => state.user);
+
   const dispatch = useDispatch();
   const navigation = useNavigation();
 
@@ -29,6 +26,9 @@ export default function TabLayout() {
         console.log("FROM SQILTE ", userFromSqlite);
         dispatch(updateUser(userFromSqlite));
         console.log(user);
+        const cyclesFromSqlite = await getAllCycle();
+        console.log("Cycles FROM SQLITE ", cyclesFromSqlite);
+        dispatch(updateCycleMenstruelData(cyclesFromSqlite));
       } catch (error) {
         console.error("Error:", error);
       }

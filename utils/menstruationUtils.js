@@ -55,6 +55,8 @@ export function generateCycleMenstrualData(
   cycleDuration,
   menstruationDuration
 ) {
+
+  console.log(startDate,cycleDuration,menstruationDuration);
   // Tableau pour stocker les données de chaque mois
   const cyclesData = [];
 

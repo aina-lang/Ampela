@@ -6,12 +6,13 @@ const _layout = () => {
   return (
     <Stack
       screenOptions={{ headerShown: false }}
-      initialRouteName="lastMenstrualCycleStartAge"
+      initialRouteName="questionsSeries"
     >
       <Stack.Screen name="index" />
       <Stack.Screen name="personalHealthTestScreen" />
       <Stack.Screen name="usernameAndPasswordScreen" />
       <Stack.Screen name="lastMenstrualCycleStartAge" />
+      <Stack.Screen name="questionsSeries" />
     </Stack>
   );
 };

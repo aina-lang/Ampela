@@ -62,14 +62,12 @@ export const initializeDatabase = async () => {
 
       CREATE TABLE IF NOT EXISTS cycles_menstruels (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        userId INTEGER NOT NULL,
         month TEXT NOT NULL,
         ovulationDate DATE NOT NULL,
         fecundityPeriodStart DATE NOT NULL,
         fecundityPeriodEnd DATE NOT NULL,
         nextMenstruationDate DATE NOT NULL,
-        nextMenstruationEndDate DATE NOT NULL,
-        FOREIGN KEY (userId) REFERENCES users (id) ON DELETE CASCADE
+        nextMenstruationEndDate DATE NOT NULL
       );
 
       CREATE TABLE IF NOT EXISTS first_time (
@@ -145,31 +143,69 @@ export const setFirstLaunchFalse = async () => {
   }
 };
 
+// export const addCycleMenstruel = async (
+//   userId,
+//   month,
+//   ovulationDate,
+//   fecundityPeriodStart,
+//   fecundityPeriodEnd,
+//   nextMenstruationDate,
+//   nextMenstruationEndDate
+// ) => {
+//   const statement = await db.prepareAsync(
+//     "INSERT INTO cycles_menstruels (userId, month, ovulationDate, fecundityPeriodStart, fecundityPeriodEnd, nextMenstruationDate, nextMenstruationEndDate) VALUES (?, ?, ?, ?, ?, ?, ?)"
+//   );
+//   try {
+//     const result = await statement.executeAsync([
+//       userId,
+//       month,
+//       ovulationDate,
+//       fecundityPeriodStart,
+//       fecundityPeriodEnd,
+//       nextMenstruationDate,
+//       nextMenstruationEndDate,
+//     ]);
+//     console.log("Cycle menstruel ajouté :", result);
+//     return result;
+//   } finally {
+//     await statement.finalizeAsync();
+//   }
+// };
+
 export const addCycleMenstruel = async (
-  userId,
-  month,
-  ovulationDate,
-  fecundityPeriodStart,
+  // userId,
   fecundityPeriodEnd,
+  fecundityPeriodStart,
+  month,
   nextMenstruationDate,
-  nextMenstruationEndDate
+  nextMenstruationEndDate,
+  ovulationDate
 ) => {
-  const statement = await db.prepareAsync(
-    "INSERT INTO cycles_menstruels (userId, month, ovulationDate, fecundityPeriodStart, fecundityPeriodEnd, nextMenstruationDate, nextMenstruationEndDate) VALUES (?, ?, ?, ?, ?, ?, ?)"
-  );
   try {
-    const result = await statement.executeAsync([
-      userId,
-      month,
-      ovulationDate,
-      fecundityPeriodStart,
-      fecundityPeriodEnd,
-      nextMenstruationDate,
-      nextMenstruationEndDate,
-    ]);
+    const result = await db.runAsync(
+      "INSERT INTO cycles_menstruels ( month, ovulationDate, fecundityPeriodStart, fecundityPeriodEnd, nextMenstruationDate, nextMenstruationEndDate) VALUES ( ?, ?, ?, ?, ?, ?)",
+      [
+        // userId,
+        month,
+        ovulationDate,
+        fecundityPeriodStart,
+        fecundityPeriodEnd,
+        nextMenstruationDate,
+        nextMenstruationEndDate,
+      ]
+    );
     console.log("Cycle menstruel ajouté :", result);
     return result;
-  } finally {
-    await statement.finalizeAsync();
+  } catch (error) {
+    console.error("Error adding cycle menstruel:", error);
+    throw error;
   }
+};
+
+export const getAllCycle = async () => {
+  const allRows = await db.getAllAsync("SELECT * FROM cycles_menstruels");
+  for (const row of allRows) {
+    // console.log(row);
+  }
+  return allRows;
 };

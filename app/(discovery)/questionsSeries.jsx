@@ -15,7 +15,7 @@ import {
   ResponseOfQuestion0,
   ResponseOfQuestion1,
 } from "@/components/response-of-question";
-import { addUser } from "@/services/database";
+import { addCycleMenstruel, addUser } from "@/services/database";
 import ProgressBar from "@/components/ProgreessBar";
 import { Redirect } from "expo-router";
 import { generateCycleMenstrualData } from "@/utils/menstruationUtils";
@@ -76,29 +76,37 @@ const QuestionsSeries = () => {
       user.username,
       user.password,
       user.profession,
-      user.lastMenstruationDate,
-      user.durationMenstruation,
+      user.lastMenstrualCycleStartAge,
+      user.menstruationDuration,
       user.cycleDuration,
       user.email
     );
-    const cycleData = generateCycleMenstrualData(
-      user.lastMenstruationDate,
-      user.cycleDuration,
-      user.durationMenstruation
-    );
 
+    const cycleData = generateCycleMenstrualData(
+      user.lastMenstrualCycleStartAge,
+      user.cycleDuration,
+      user.menstruationDuration
+    );
+    console.log("USER ", user);
     // Boucle pour enregistrer chaque cycle dans la base de données
     for (let i = 0; i < cycleData.length; i++) {
       const cycle = cycleData[i];
+      console.log(cycle.month);
+      console.log({ ...cycle });
       // Ajout du cycle menstruel dans la base de données
-      await addCycleMenstruel({
-        userId: user.id,
-        ...cycle,
-      });
+      await addCycleMenstruel(
+        // user.id,
+        cycle.fecundityPeriodEnd,
+        cycle.fecundityPeriodStart,
+        cycle.month,
+        cycle.nextMenstruationDate,
+        cycle.nextMenstruationEndDate,
+        cycle.ovulationDate
+      );
     }
 
     setIsTransactionInProgress(false);
-    navigation.navigate("main");
+    navigation.navigate("(drawer)");
   };
 
   useEffect(() => {
