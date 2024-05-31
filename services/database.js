@@ -59,14 +59,25 @@ export const initializeDatabase = async () => {
         cycleDuration INTEGER NULL,
         email TEXT NULL
       );
-    `);
 
-    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS cycles_menstruels (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId INTEGER NOT NULL,
+        month TEXT NOT NULL,
+        ovulationDate DATE NOT NULL,
+        fecundityPeriodStart DATE NOT NULL,
+        fecundityPeriodEnd DATE NOT NULL,
+        nextMenstruationDate DATE NOT NULL,
+        nextMenstruationEndDate DATE NOT NULL,
+        FOREIGN KEY (userId) REFERENCES users (id) ON DELETE CASCADE
+      );
+
       CREATE TABLE IF NOT EXISTS first_time (
         id INTEGER PRIMARY KEY,
         status INTEGER DEFAULT 0
       );
-      `);
+    `);
+
     console.log("Database initialized:", result);
     return result;
   } catch (error) {
@@ -74,6 +85,36 @@ export const initializeDatabase = async () => {
     throw error;
   }
 };
+
+// export const initializeDatabase = async () => {
+//   try {
+//     const result = await db.execAsync(`
+//       PRAGMA journal_mode = WAL;
+//       CREATE TABLE IF NOT EXISTS users (
+//         id INTEGER PRIMARY KEY AUTOINCREMENT,
+//         username TEXT NOT NULL ,
+//         password TEXT NOT NULL,
+//         profession TEXT NULL,
+//         lastMenstruationDate DATE NULL,
+//         durationMenstruation INTEGER NULL,
+//         cycleDuration INTEGER NULL,
+//         email TEXT NULL
+//       );
+//     `);
+
+//     await db.execAsync(`
+//       CREATE TABLE IF NOT EXISTS first_time (
+//         id INTEGER PRIMARY KEY,
+//         status INTEGER DEFAULT 0
+//       );
+//       `);
+//     console.log("Database initialized:", result);
+//     return result;
+//   } catch (error) {
+//     console.error("Error initializing database:", error);
+//     throw error;
+//   }
+// };
 
 export const isFirstLaunch = async () => {
   try {
@@ -101,5 +142,34 @@ export const setFirstLaunchFalse = async () => {
   } catch (error) {
     console.error("Error setting first launch flag:", error);
     throw error;
+  }
+};
+
+export const addCycleMenstruel = async (
+  userId,
+  month,
+  ovulationDate,
+  fecundityPeriodStart,
+  fecundityPeriodEnd,
+  nextMenstruationDate,
+  nextMenstruationEndDate
+) => {
+  const statement = await db.prepareAsync(
+    "INSERT INTO cycles_menstruels (userId, month, ovulationDate, fecundityPeriodStart, fecundityPeriodEnd, nextMenstruationDate, nextMenstruationEndDate) VALUES (?, ?, ?, ?, ?, ?, ?)"
+  );
+  try {
+    const result = await statement.executeAsync([
+      userId,
+      month,
+      ovulationDate,
+      fecundityPeriodStart,
+      fecundityPeriodEnd,
+      nextMenstruationDate,
+      nextMenstruationEndDate,
+    ]);
+    console.log("Cycle menstruel ajouté :", result);
+    return result;
+  } finally {
+    await statement.finalizeAsync();
   }
 };

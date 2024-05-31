@@ -18,6 +18,7 @@ import {
 import { addUser } from "@/services/database";
 import ProgressBar from "@/components/ProgreessBar";
 import { Redirect } from "expo-router";
+import { generateCycleMenstrualData } from "@/utils/menstruationUtils";
 
 const menstruationDurations = [];
 const cycleDurations = [];
@@ -80,6 +81,22 @@ const QuestionsSeries = () => {
       user.cycleDuration,
       user.email
     );
+    const cycleData = generateCycleMenstrualData(
+      user.lastMenstruationDate,
+      user.cycleDuration,
+      user.durationMenstruation
+    );
+
+    // Boucle pour enregistrer chaque cycle dans la base de données
+    for (let i = 0; i < cycleData.length; i++) {
+      const cycle = cycleData[i];
+      // Ajout du cycle menstruel dans la base de données
+      await addCycleMenstruel({
+        userId: user.id,
+        ...cycle,
+      });
+    }
+
     setIsTransactionInProgress(false);
     navigation.navigate("main");
   };
