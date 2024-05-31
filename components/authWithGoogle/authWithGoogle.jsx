@@ -43,6 +43,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     backgroundColor: COLORS.neutral200,
+  
   },
   ignoreContainer: {
     position: "absolute",

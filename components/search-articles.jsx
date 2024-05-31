@@ -1,10 +1,10 @@
-import {useState} from 'react';
+
 import { View, TextInput, Image, StyleSheet, Pressable } from 'react-native';
-import { useTranslation } from 'react-i18next';
-import {SIZES, icons } from '../../constants';
+// import { useTranslation } from 'react-i18next';
+import {SIZES, icons } from '@/constants';
 
 const SearchArticles = ({text, onChange}) => {
-    const { t } = useTranslation();
+    // const { t } = useTranslation();
     const handleTextInputChange = (inputText) => {
         onChange(inputText);
     } 
@@ -14,10 +14,10 @@ const SearchArticles = ({text, onChange}) => {
         }
     }
     return (
-        <View style={styles.container}>
+        <View style={styles.container} className="shadow-sm shadow-black ">
             <TextInput 
               style={{fontFamily: 'Medium', fontSize: SIZES.medium, width: '90%'}}
-              placeholder={t('rechercher')}
+              placeholder={'rechercher'}
               value={text}
               onChangeText={handleTextInputChange}
             />
@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
     container: {
        width: '100%',
        marginVertical: 10,
-       backgroundColor: "rgba(255, 255, 255, .6)",
+       backgroundColor: "rgba(255, 255, 255, .8)",
        borderRadius: 100, 
        paddingVertical: 10,
        paddingHorizontal: 15,

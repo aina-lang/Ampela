@@ -6,25 +6,26 @@ import { initializeDatabase, isFirstLaunch } from "@/services/database";
 
 SplashScreen.preventAutoHideAsync();
 
+initializeDatabase();
+
 export default function Index() {
   const [loaded, setLoaded] = useState(false);
-  // const [isFirstTime, setIsFirstTime] = useState(null);
-  
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       await initializeDatabase();
-  //       const firstLaunch = await isFirstLaunch();
-  //       setIsFirstTime(firstLaunch.status);
-  //       setLoaded(true);
-  //       SplashScreen.hideAsync();
-  //     } catch (error) {
-  //       console.error("Error:", error);
-  //     }
-  //   };
+  const [isFirstTime, setIsFirstTime] = useState(null);
 
-  //   fetchData();
-  // }, []);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const firstLaunch = await isFirstLaunch();
+        setIsFirstTime(firstLaunch.status);
+        setLoaded(true);
+        SplashScreen.hideAsync();
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const [fontsLoaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
@@ -38,9 +39,8 @@ export default function Index() {
     return null;
   }
 
-  const initialRouteName ="main";
-    // isFirstTime === null || isFirstTime === 1 ? "discovery" :
-    //  "main";
+  const initialRouteName =
+    isFirstTime === null || isFirstTime === 1 ? "(discovery)" : "(drawer)";
 
   return <Redirect href={initialRouteName} />;
 }

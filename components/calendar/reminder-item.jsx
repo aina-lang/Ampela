@@ -1,19 +1,19 @@
-import { useState, useContext } from "react";
-import { View, Text, Pressable, Switch, StyleSheet } from "react-native";
+import { useState } from "react";
+import { View, Text, Switch, StyleSheet, TouchableOpacity } from "react-native";
 import { COLORS, SIZES } from "../../constants";
-import { ThemeContext } from "../theme-context";
 
 const ReminderItem = ({ as, time, onPress, howmanytimeReminder }) => {
-  // const { 'pink'} = useContext(ThemeContext);
   const [isEnabled, setIsEnabled] = useState(false);
+
   const toggleSwitch = () => {
     setIsEnabled((v) => !v);
   };
+
   return (
-    <Pressable style={styles.container} onPress={onPress}>
+    <View style={styles.container} className="shadow-sm shadow-black">
       <View style={styles.left}>
         <Text style={styles.textRegular}>{as}</Text>
-        <View style={styles.time}>
+        <TouchableOpacity style={styles.time} onPress={onPress}>
           <Text style={styles.textMedium}>
             {time?.hour.toString().padStart(2, "0")}
           </Text>
@@ -21,14 +21,14 @@ const ReminderItem = ({ as, time, onPress, howmanytimeReminder }) => {
           <Text style={styles.textMedium}>
             {time?.minutes.toString().padStart(2, "0")}
           </Text>
-        </View>
+        </TouchableOpacity>
         <Text style={styles.textRegular}>Rappeler: {howmanytimeReminder}</Text>
       </View>
       <View>
         <Switch
           trackColor={{
-            false: 'pink'=== "pink" ? COLORS.neutral200 : COLORS.neutral250,
-            true: 'pink'=== "pink" ? COLORS.accent600 : COLORS.accent800,
+            false: "pink" === "pink" ? COLORS.neutral200 : COLORS.neutral250,
+            true: "pink" === "pink" ? COLORS.accent600 : COLORS.accent800,
           }}
           thumbColor={isEnabled ? COLORS.neutral100 : COLORS.neutral100}
           ios_backgroundColor={COLORS.neutral200}
@@ -36,7 +36,7 @@ const ReminderItem = ({ as, time, onPress, howmanytimeReminder }) => {
           value={isEnabled}
         />
       </View>
-    </Pressable>
+    </View>
   );
 };
 
@@ -64,6 +64,7 @@ const styles = StyleSheet.create({
   textRegular: {
     fontFamily: "Regular",
     fontSize: SIZES.medium,
+    
   },
   textMedium: {
     fontFamily: "Medium",

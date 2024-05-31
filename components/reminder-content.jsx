@@ -6,9 +6,8 @@ import {
   StyleSheet,
   Dimensions,
 } from "react-native";
-// import ScrollPicker from "react-native-wheel-scrollview-picker";
-import { COLORS, SIZES } from "../constants";
-// import { RFValue } from "react-native-responsive-fontsize";
+import { COLORS } from "../constants";
+import Animated from "react-native-reanimated";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -68,10 +67,12 @@ const ReminderContent = ({
   };
 
   return (
-    <View style={styles.container}>
+    <Animated.View className="bg-white  p-5 py-10 rounded-md w-[90%] mx-auto shadow-md shadow-black">
       <View style={styles.header}>
-        <Text style={[styles.textRegular, { textAlign: "center" }]}>
-          Début des règles
+        <Text
+          style={[styles.textRegular, { textAlign: "center", fontSize: 17 }]}
+        >
+          {type}
         </Text>
       </View>
 
@@ -88,7 +89,9 @@ const ReminderContent = ({
             highlightColor="#d8d8d8"
             highlightBorderWidth={2}
           /> */}
-          <Text style={styles.timeDivider}>:</Text>
+          <Text style={styles.timeDivider} className="text-xl">
+            10 : 12
+          </Text>
           {/* <ScrollPicker
             dataSource={minutes}
             selectedIndex={selectedMinute}
@@ -104,7 +107,7 @@ const ReminderContent = ({
         </View>
       </View>
 
-      <View style={styles.footer}>
+      <View style={styles.footer} className="p-5 py-0">
         <Text style={styles.textRegular}>Répéter : </Text>
         <View style={styles.pressableContainer}>
           <TouchableOpacity
@@ -218,10 +221,10 @@ const ReminderContent = ({
             </>
           )}
         </View>
-        <View style={styles.buttonContainer}>
+        <View className=" flex flex-row space-x-3 w-full items-center justify-center">
           <TouchableOpacity
             onPress={handleRegisterBtnPress}
-            style={[styles.button, { backgroundColor: COLORS.accent600 }]}
+            className="p-5 bg-[#FF7575] py-2 rounded-md shadow-sm shadow-black"
           >
             <Text style={[styles.textMedium, { color: COLORS.neutral100 }]}>
               Enregistrer
@@ -229,7 +232,7 @@ const ReminderContent = ({
           </TouchableOpacity>
           <TouchableOpacity
             onPress={onCloseIconPress}
-            style={[styles.button, { backgroundColor: COLORS.neutral400 }]}
+            className="p-5 bg-[#d5d6d6] py-2 rounded-md shadow-black"
           >
             <Text style={[styles.textMedium, { color: COLORS.neutral100 }]}>
               Annuler
@@ -237,7 +240,7 @@ const ReminderContent = ({
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
@@ -268,12 +271,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginTop: 10,
     marginBottom: 20,
+    flexWrap: "wrap",
   },
   item: {
     paddingVertical: 3,
     paddingHorizontal: 8,
     borderRadius: 16,
     marginRight: 10,
+    marginVertical: 5,
   },
   itemText: {
     // fontSize: RFValue(SIZES.small),
