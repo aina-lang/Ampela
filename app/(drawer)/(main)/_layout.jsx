@@ -19,11 +19,11 @@ export default function TabLayout() {
   const user = useSelector((state) => state.user);
 
   // console.log(getOvulationDate(user.lastMenstruationDate,28));
-  // generateCycleMenstrualData(
-  //   user.lastMenstruationDate,
-  //   user.cycleDuration,
-  //   user.durationMenstruation
-  // );
+  generateCycleMenstrualData(
+    "2024-06-02",
+    25,
+    5
+  );
 
   // console.log(user.cycleDuration);
   // console.log(getOvulationDate(user.lastMenstruationDate, 28));

@@ -99,23 +99,10 @@ export default function onemessage() {
         }}
         renderInputToolbar={(props) => customtInputToolbar(props)}
         renderSend={(props) => {
-          // <Send {...props}>
-          //   <View
-          //     style={{
-          //       justifyContent: "center",
-          //       height: "100%",
-          //       // marginRight: 10,
-          //     }}
-          //   >
-          //     <AntDesign
-          //       name="arrowright"
-          //       size={24}
-          //       color={"rgb(248 113 113)"}
-          //     />
-          //   </View>
-          // </Send>;
+         
           // console.log(props.text);
           const { text, messageIdGenerator, user, onSend } = props;
+          console.log(messageIdGenerator);
           return (
             text != "" && (
               <TouchableOpacity
@@ -125,7 +112,7 @@ export default function onemessage() {
                       {
                         text: text.trim(),
                         user: user,
-                        _id: messageIdGenerator(),
+                        _id: 1,
                       },
                       true
                     );

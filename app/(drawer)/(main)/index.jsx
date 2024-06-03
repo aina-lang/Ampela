@@ -284,9 +284,9 @@ const index = () => {
           >{}</Text> */}
           <View style={styles.calendar}>
             <Calendar
-              minDate={"2024-05-15"}
+              // minDate={"2024-05-15"}
               disableAllTouchEventsForDisabledDays={true}
-              initialDate={"2024-05-15"}
+              // initialDate={"2024-05-15"}
               style={{
                 height: 380,
                 borderRadius: 8,

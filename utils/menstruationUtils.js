@@ -96,7 +96,7 @@ export function generateCycleMenstrualData(
       nextMenstruationEndDate: menstruationPeriod.nextMenstruationEndDate,
     });
 
-    console.log(ovulationDate.ovulationDate);
+    // console.log(ovulationDate.ovulationDate);
     // Passage au mois suivant
 
     currentMonth.add(1, "month");
@@ -104,7 +104,7 @@ export function generateCycleMenstrualData(
       (temp = menstruationPeriod.nextMenstruationDate);
   }
 
-  // console.log(cyclesData);
+  console.log(cyclesData);
 
   return cyclesData;
 }
