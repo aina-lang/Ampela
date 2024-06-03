@@ -80,7 +80,7 @@ const UsernameAndPasswordScreen = () => {
     };
     dispatch(updateUser(userData));
     console.log("User Data:", { ...user, ...userData });
-    navigation.navigate("lastMenstrualCycleStartAge");
+    navigation.navigate("lastMenstrualCycleStart");
   };
 
   return (

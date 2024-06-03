@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image, TextInput, Pressable } from 'react-native';
-import { useTranslation } from 'react-i18next';
-import { COLORS, SIZES, icons } from '../../constants';
+// import { useTranslation } from 'react-i18next';
+import { COLORS, SIZES, icons } from '@/constants';
 import CommentContent from './comment-content';
-import { addNewComment } from "../../config/firestoreAPI";
-import { addNewLike, removeLike } from "../../config/firestoreAPI";
+import { addNewComment } from "@/config/firestoreAPI";
+import { addNewLike, removeLike } from "@/config/firestoreAPI";
 import { getAuth } from 'firebase/auth';
 import { collection, onSnapshot, query, where, getDocs, doc, deleteDoc, getDoc, updateDoc } from "firebase/firestore";
-import { database } from '../../config/firebaseConfig';
+import { database } from '@/config/firebaseConfig';
 
 const ForumItem = ({ post, refToCommentItem, navigation }) => {
     console.log(refToCommentItem);
-    const { t } = useTranslation();
+    // const { t } = useTranslation();
     const [isLikeIconPressed, setIsLikeIconPressed] = useState(false);
     const [isCommentIconPressed, setIsCommentIconPressed] = useState(false);
     const [commentValue, setCommentValue] = useState("");
@@ -239,13 +239,13 @@ const ForumItem = ({ post, refToCommentItem, navigation }) => {
                     </Pressable>
 
                     <Text style={styles.textSmall}>
-                        {likeCount} {t('reactions')}
+                        {likeCount} reactions
                     </Text>
                 </View>
                 <Pressable style={styles.comment} onPress={handleCommentIconPress}>
                     <Image source={icons.message} style={{ width: 24, height: 24 }} />
                     <Text style={styles.textSmall}>
-                        {commentCount} {t('commentaires')}
+                        {commentCount} commentaires
                     </Text>
                 </Pressable>
             </View>
@@ -254,7 +254,7 @@ const ForumItem = ({ post, refToCommentItem, navigation }) => {
 
             <View style={styles.commentBox}>
                 <TextInput
-                    placeholder={t('ecrireUnCommentaire')}
+                    placeholder={'ecrireUnCommentaire'}
                     style={{ width: "90%", height: "100%", fontFamily: "Regular" }}
                     value={commentValue} onChangeText={setCommentValue} />
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ScrollView, Text } from 'react-native';
 import CommentItem from "./forum-comment-item";
 import { collection, getDocs, onSnapshot, query, where } from "firebase/firestore";
-import { database } from "../../config/firebaseConfig";
+import { database } from "@/config/firebaseConfig";
 
 const CommentContent = ({ post, refToCommentItem }) => {
     const [comments, setComments] = useState([]);

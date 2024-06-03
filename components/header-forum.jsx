@@ -1,10 +1,10 @@
 import {useContext} from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity, Pressable } from "react-native";
 import { ThemeContext } from "./theme-context";
-import { COLORS, images, icons } from "../../constants";
+import { COLORS, images, icons } from "@/constants";
 
 const HeaderForum = ({navigation, isDoctor,screen}) => {
-  const {theme} = useContext(ThemeContext);
+  // const {theme} = useContext(ThemeContext);
 console.log(screen);
   return (
     <View style={styles.container}>
@@ -26,7 +26,7 @@ console.log(screen);
             resizeMode="contain"
             style={{ width: 24, height: 24 }}
           />
-          <View style={[styles.notificationIndicator, {backgroundColor: theme === 'pink' ? COLORS.accent600 : COLORS.accent800}]} />
+          <View style={[styles.notificationIndicator, {backgroundColor: "pink" === 'pink' ? COLORS.accent600 : COLORS.accent800}]} />
         </TouchableOpacity>
         {
           isDoctor ?

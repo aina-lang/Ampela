@@ -4,14 +4,10 @@ import { Stack } from "expo-router";
 
 const _layout = () => {
   return (
-    <Stack
-      screenOptions={{ headerShown: false }}
-      initialRouteName="questionsSeries"
-    >
+    <Stack screenOptions={{ headerShown: false }} initialRouteName="index">
       <Stack.Screen name="index" />
-      <Stack.Screen name="personalHealthTestScreen" />
-      <Stack.Screen name="usernameAndPasswordScreen" />
-      <Stack.Screen name="lastMenstrualCycleStartAge" />
+      <Stack.Screen name="username" />
+      <Stack.Screen name="lastMenstrualCycleStart" />
       <Stack.Screen name="questionsSeries" />
     </Stack>
   );

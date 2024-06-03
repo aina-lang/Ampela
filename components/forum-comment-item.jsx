@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
-import {SIZES, COLORS} from "../../constants"; 
+import {SIZES, COLORS} from "@/constants"; 
 
 const CommentItem = ({ authorPic, authorName, creationDate, content }) => {
     return (

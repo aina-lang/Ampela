@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
+ 
 } from "react-native";
 import { COLORS, SIZES } from "../../constants";
 import { Calendar } from "react-native-calendars";
@@ -33,7 +34,7 @@ const LastMenstrualCycleStartAge = () => {
 
   useEffect(() => {
     const userData = {
-      lastMenstrualCycleStartAge: selected,
+      lastMenstruationDate: selected,
     };
     dispatch(updateUser(userData));
     // console.log(selected);

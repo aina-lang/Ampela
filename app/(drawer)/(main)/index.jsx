@@ -9,15 +9,17 @@ import {
   Pressable,
 } from "react-native";
 
-import { COLORS, SIZES } from "../../../constants";
-import ReminderContent from "../../../components/reminder-content";
-import BackgroundContainer from "../../../components/background-container";
-import IndicationCalendar from "../../../components/calendar/indication-calendar";
-import { Calendar } from "react-native-calendars";
-import ReminderItem from "../../../components/calendar/reminder-item";
-import AuthWithGoogle from "../../../components/authWithGoogle/authWithGoogle";
+import { COLORS, SIZES } from "@/constants";
+import ReminderContent from "@/components/reminder-content";
+import BackgroundContainer from "@/components/background-container";
+import IndicationCalendar from "@/components/calendar/indication-calendar";
+import { Calendar, LocaleConfig } from "react-native-calendars";
+import ReminderItem from "@/components/calendar/reminder-item";
+import AuthWithGoogle from "@/components/authWithGoogle/authWithGoogle";
 import { useSelector } from "react-redux";
 import { useNavigation } from "expo-router";
+import moment from "moment";
+import { generateCycleMenstrualData } from "@/utils/menstruationUtils";
 
 const index = () => {
   const user = useSelector((state) => state.user);
@@ -40,6 +42,92 @@ const index = () => {
     hour: 0,
     minutes: 0,
   });
+
+  LocaleConfig.locales["fr"] = {
+    monthNames: [
+      "Janvier",
+      "Février",
+      "Mars",
+      "Avril",
+      "Mai",
+      "Juin",
+      "Juillet",
+      "Août",
+      "Septembre",
+      "Octobre",
+      "Novembre",
+      "Décembre",
+    ],
+    monthNamesShort: [
+      "Janv.",
+      "Févr.",
+      "Mars",
+      "Avril",
+      "Mai",
+      "Juin",
+      "Juil.",
+      "Août",
+      "Sept.",
+      "Oct.",
+      "Nov.",
+      "Déc.",
+    ],
+    dayNames: [
+      "Dimanche",
+      "Lundi",
+      "Mardi",
+      "Mercredi",
+      "Jeudi",
+      "Vendredi",
+      "Samedi",
+    ],
+    dayNamesShort: ["Di.", "Lu.", "Ma.", "Me.", "Je.", "Ve.", "Sa."],
+    today: "Aujourd'hui",
+  };
+  
+  LocaleConfig.locales["mg"] = {
+    monthNames: [
+      "Janoary",
+      "Febroary",
+      "Martsa",
+      "Aprily",
+      "May",
+      "Jona",
+      "Jolay",
+      "Aogositra",
+      "Septambra",
+      "Oktobra",
+      "Novambra",
+      "Desambra",
+    ],
+    monthNamesShort: [
+      "Jan.",
+      "Febr.",
+      "Mar.",
+      "Apr.",
+      "May",
+      "Jona",
+      "Jolay.",
+      "Aogo.",
+      "Sept.",
+      "Oct.",
+      "Nov.",
+      "Des.",
+    ],
+    dayNames: [
+      "Alahady",
+      "Alatsinainy",
+      "Talata",
+      "Alarobia",
+      "Alakamisy",
+      "Zoma",
+      "Sabotsy",
+    ],
+    dayNamesShort: ["Alh.", "Alt.", "Tal.", "Alr.", "Alk.", "Zo.", "Sa."],
+    today: "Androany",
+  };
+  
+  LocaleConfig.defaultLocale = "fr";
 
   const handleReminderBtnOnePress = () => {
     setReminderInfo({ as: "Début des règles" });
@@ -85,7 +173,67 @@ const index = () => {
     }
   };
   const cycles = useSelector((state) => state.cycleMenstruel.cyclesData);
-  
+
+  const markedDates = {};
+
+  const generateMarkedDates = () => {
+    cycles.forEach((cycle) => {
+      for (let i = 0; i < user.durationMenstruation; i++) {
+        // console.log(cycle);
+
+        markedDates[
+          moment(cycle.startMenstruationDate)
+            .add(i, "days")
+            .format("YYYY-MM-DD")
+        ] = {
+          customStyles: {
+            container: {
+              backgroundColor: "#E2445C",
+            },
+            text: {
+              color: "#fff",
+            },
+          },
+        };
+      }
+
+      // Parcourir entre le startfecondity et endfecondity day pour pouvoir les marquer
+      let start = moment(cycle.fecundityPeriodStart);
+      let end = moment(cycle.fecundityPeriodEnd);
+
+      while (start <= end) {
+        markedDates[start.format("YYYY-MM-DD")] = {
+          customStyles: {
+            container: {
+              backgroundColor: "#FFADAD",
+            },
+            text: {
+              color: "#fff",
+            },
+          },
+        };
+        start = start.add(1, "day");
+      }
+
+      markedDates[cycle.ovulationDate] = {
+        customStyles: {
+          container: {
+            borderStyle: "solid",
+            borderColor: "#E2445C",
+            borderWidth: 2,
+          },
+          text: {
+            color: "#000",
+          },
+        },
+        // selected: true,
+      };
+    });
+
+    // return markedDates;
+  };
+
+  generateMarkedDates();
   return (
     <>
       {reminderModalIsVisible == true && (
@@ -136,6 +284,9 @@ const index = () => {
           >{}</Text> */}
           <View style={styles.calendar}>
             <Calendar
+              minDate={"2024-05-15"}
+              disableAllTouchEventsForDisabledDays={true}
+              initialDate={"2024-05-15"}
               style={{
                 height: 380,
                 borderRadius: 8,
@@ -158,14 +309,9 @@ const index = () => {
               onDayPress={(day) => {
                 // //.log(day.dateString);
               }}
-              markedDates={{
-                "2024-05-31": {
-                  selected: true,
-                  disableTouchEvent: true,
-                  selectedColor: COLORS.accent600,
-                  selectedTextColor: COLORS.neutral100,
-                },
-              }}
+              // markedDates={generateMarkedDates()}
+              // markedDates={{ "2024-05-30": { selected: true, color: "blue" } }}
+              markedDates={markedDates}
               enableSwipeMonths={true}
               // onMonthChange={(month) => handleMonthChange(month)}
               markingType="custom"

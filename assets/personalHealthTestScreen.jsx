@@ -7,8 +7,8 @@ import {
   SafeAreaView,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { updateUser } from "../../redux/userSlice";
-import { COLORS, SIZES } from "../../constants";
+import { updateUser } from "../redux/userSlice";
+import { COLORS, SIZES } from "../constants";
 import Checkbox from "expo-checkbox";
 import { useNavigation } from "@react-navigation/native";
 

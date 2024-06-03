@@ -40,7 +40,9 @@ export default function Index() {
   }
 
   const initialRouteName =
-    isFirstTime === null || isFirstTime === 1 ? "(discovery)" : "(drawer)";
+    isFirstTime === null || isFirstTime === 1
+      ? "(discovery)"
+      : "(drawer)/(message)/";
 
   return <Redirect href={initialRouteName} />;
 }

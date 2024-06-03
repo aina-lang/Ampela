@@ -14,7 +14,7 @@ const IndicationCalendar = ({ title }) => {
   switch (title) {
     case "Jours des règles":
       titleText = "joursDesRegles";
-      bgColor = "pink" === "pink" ? COLORS.accent400 : COLORS.neutral250;
+      bgColor = "pink" === "pink" ? COLORS.accent600 : COLORS.accent800;
       break;
     case "Ovulation":
       titleText = "ovulation";
@@ -23,7 +23,7 @@ const IndicationCalendar = ({ title }) => {
       break;
     case "Période de fécondité":
       titleText = "periodeDeFecondite";
-      bgColor = "pink" === "pink" ? COLORS.accent600 : COLORS.accent800;
+      bgColor = "pink" === "pink" ? COLORS.accent400 : COLORS.neutral250;
       break;
     default:
       return null;

@@ -1,175 +1,223 @@
-import { useRef, useEffect, useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Alert,
-  Pressable,
-  Button,
-  TouchableOpacity,
-  SafeAreaView,
-} from "react-native";
-import CheckBox, { Checkbox } from "expo-checkbox";
-import { Link } from "expo-router";
-import { COLORS, FONT, SIZES } from "@/constants";
+import { View, Text, TouchableOpacity } from "react-native";
+import React, { useRef, useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Animated from "react-native-reanimated";
+import { COLORS, SIZES, images } from "@/constants";
+import { Image } from "react-native";
+import { AntDesign } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 
-const DiscoveryScreen = () => {
-  let bouncyCheckbox1Ref = null;
-  let bouncyCheckbox2Ref = null;
+const OnBoarding = [
+  {
+    title: "  Bienvenue sur Ampela",
+    description:
+      " Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut rem",
+    img: images.abscenceDeRegles,
+  },
+
+  {
+    title: "Enregistrer vos données",
+    description:
+      " Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut rem",
+    img: images.culotteMenstruelle,
+  },
+  {
+    title: "Chatter avec les docteurs",
+    description:
+      " Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut rem",
+    img: images.cycleMenstruel,
+  },
+  {
+    title: "Dscuter avec le monde",
+    description:
+      " Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut rem",
+    img: images.alimentationPendantLesRegles,
+  },
+];
+
+const index = () => {
+  const [currentBoard, setCurrentBoard] = useState(0);
+
+  const scrollViewRef = useRef(null);
   const navigation = useNavigation();
+  const nextHandled = () => {
+    setCurrentBoard((prevBoard) => {
+      const nextBoard = prevBoard + 1;
+      if (nextBoard < OnBoarding.length) {
+        scrollViewRef.current?.scrollTo({
+          x: SIZES.width * nextBoard,
+          animated: true,
+        });
+        return nextBoard;
+      } else {
+        return prevBoard;
+      }
+    });
+  };
 
-  const [checkbox1, setCheckbox1] = useState(false);
-  const [checkbox2, setCheckbox2] = useState(false);
-  const [isNextBtnDisabled, setIsNextBtnDisabled] = useState(true);
+  const prevHandled = () => {
+    setCurrentBoard((prevBoard) => {
+      const nextBoard = prevBoard - 1;
+      if (nextBoard >= 0) {
+        scrollViewRef.current?.scrollTo({
+          x: SIZES.width * nextBoard,
+          animated: true,
+        });
+        return nextBoard;
+      } else {
+        return prevBoard;
+      }
+    });
+  };
 
-  useEffect(() => {
-    if (checkbox1 === true && checkbox2 === true) {
-      setIsNextBtnDisabled(false);
-    } else {
-      setIsNextBtnDisabled(true);
+  const onScrollHandler = (event) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const pageWidth = SIZES.width;
+    const pageNumber = Math.floor(offsetX / pageWidth);
+    if (pageNumber === 0 && offsetX < 0) {
+      return;
     }
-  }, [checkbox1, checkbox2]);
+    setCurrentBoard(pageNumber);
+  };
 
-  const handleNextBtnPress = useCallback(() => {
-    navigation.navigate("personalHealthTestScreen");
-  });
+  const skipHandler = () => {
+    navigation.navigate("confidentiality");
+  };
 
-  const handleAcceptAllBtnPress = useCallback(() => {
-    if (checkbox1 === false) {
-      bouncyCheckbox1Ref?.onPress();
-    }
-    if (checkbox2 === false) {
-      bouncyCheckbox2Ref?.onPress();
-    }
-  });
+  const getStartedHandler = () => {
+    navigation.navigate("confidentiality");
+  };
+
+  const RenderDots = () => {
+    // const dotPosition = Animated.divide(scrollX, SIZES.width);
+
+    return (
+      <View
+        style={{
+          bottom: SIZES.height > 700 ? "20%" : "13%",
+        }}
+        className="absolute w-full flex items-center flex-row justify-center my-10"
+      >
+        {OnBoarding.map((item, index) => (
+          <View
+            key={index}
+            className={`${
+              currentBoard == index
+                ? "bg-[#FF7575] w-3 p-1"
+                : "bg-[#FFADAD] w-2"
+            }  h-2 rounded-full mx-2 flex items-center flex-row justify-center `}
+          ></View>
+        ))}
+      </View>
+    );
+  };
+
+  // const scrollX = new Animated.Value(0);
+
+  const renderContent = () => {
+    return (
+      <Animated.ScrollView
+        horizontal
+        pagingEnabled
+        scrollEnabled
+        snapToAlignment={"center"}
+        showsHorizontalScrollIndicator={false}
+        onScroll={onScrollHandler}
+        ref={scrollViewRef}
+        style={{ width: SIZES.width, height: SIZES.height }}
+        className="h-full"
+      >
+        {OnBoarding.map((item, index) => (
+          <View
+            key={index}
+            style={{ width: SIZES.width, height: SIZES.height }}
+            className={`bg-white `}
+          >
+            <View
+              className={""}
+              style={{ height: SIZES.height * 0.6, width: SIZES.width }}
+            >
+              <Image
+                source={item.img}
+                resizeMethod="cover"
+                style={{ width: "99%", height: "100%" }}
+              />
+            </View>
+            <View className="flex items-center justify-center p-5">
+              <Text
+                className="text-2xl font-bold mb-3 "
+                style={{ color: COLORS.accent600 }}
+              >
+                {item.title}
+              </Text>
+              <Text className="text-[18px] text-center  text-gray-600">
+                {item.description}
+              </Text>
+            </View>
+            <View
+              style={{
+                justifyContent:
+                  currentBoard === 0 ? "flex-end" : "space-between",
+              }}
+              className="flex flex-row items-center justify-between  w-full absolute bottom-0 p-5"
+            >
+              {currentBoard !== 0 && (
+                <TouchableOpacity
+                  onPress={prevHandled}
+                  className="p-3 rounded-md "
+                >
+                  <Text>Retour</Text>
+                </TouchableOpacity>
+              )}
+
+              {currentBoard != OnBoarding.length - 1 ? (
+                <TouchableOpacity
+                  style={{ backgroundColor: COLORS.accent500 }}
+                  onPress={nextHandled}
+                  className="p-3 rounded-md shadow-md shadow-black"
+                >
+                  <Text className="text-white"> Suivant </Text>
+                  {/* <AntDesign
+                    name="right"
+                    size={20}
+                    color="white"
+                    className="ml-3"
+                  /> */}
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={{ backgroundColor: COLORS.accent500 }}
+                  onPress={getStartedHandler}
+                  className="p-3 rounded-md shadow-md shadow-black"
+                >
+                  <Text className="text-white"> Commencer </Text>
+                  {/* <AntDesign
+                    name="right"
+                    size={20}
+                    color="white"
+                    className="ml-3"
+                  /> */}
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        ))}
+      </Animated.ScrollView>
+    );
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text
-        style={styles.confidentialityTitle}
-        className="bg-[#FF7575] text-white rounded-br-[150] pt-20 shadow-lg shadow-black"
-      >
-        Confidentialité
-      </Text>
-      <View
-        style={[styles.confidentialityContainer]}
-        className=" flex items-center justify-center p-8"
-      >
-        <View>
-          <View style={styles.confidentialityItem}>
-            <CheckBox
-              value={checkbox1}
-              onValueChange={setCheckbox1}
-              color={checkbox1 ? "#FF7575" : ""}
-            />
-
-            <Pressable onPress={() => setCheckbox1(!checkbox1)}>
-              <Text style={styles.confidentialityText}>
-                J'accepte{" "}
-                <Link
-                  href="https://policies.google.com/privacy?hl=fr-CA"
-                  className="text-[#FF7575]"
-                >
-                  la politique de confidentialité{" "}
-                </Link>
-                et{" "}
-                <Link
-                  href="https://policies.google.com/privacy?hl=fr-CA"
-                  className="text-[#FF7575] ml-2"
-                >
-                  les conditions d'utilisation{" "}
-                </Link>
-                .
-              </Text>
-            </Pressable>
-          </View>
-          <View style={styles.confidentialityItem}>
-            <Checkbox
-              value={checkbox2}
-              onValueChange={setCheckbox2}
-              color={checkbox2 ? "#FF7575" : ""}
-            />
-            <Pressable onPress={() => setCheckbox2(!checkbox2)}>
-              <Text style={styles.confidentialityText}>
-                J'accepte le traitement de mes données personnelles de santé
-                dans le but de bénéficier des fontions de l'application{" "}
-                <Link
-                  href="https://jonathan-boyer.fr"
-                  className="text-[#FF7575]"
-                >
-                  Ampela
-                </Link>{" "}
-                .
-              </Text>
-            </Pressable>
-          </View>
-          {/* {!isAllChecked ? ( 
-            <Button
-              // bgColor={COLORS.neutral100}
-              // textColor={COLORS.accent600}
-              color={"white"}
-              t
-              onPress={handleAcceptAllBtnPress}
-              title="Tout accepter"
-            />
-            <TouchableOpacity className="p-3 bg-[#FF7575] items-center">
-              <Text>Tout accepter</Text>
-            </TouchableOpacity>
-          ) : null}
-          */}
-        </View>
-      </View>
-      <View
-        style={styles.btnBox}
-        className="flex items-center  justify-end flex-row  p-5"
-      >
-        <TouchableOpacity
-          className="p-3  items-center rounded-md px-5 shadow-md shadow-black"
-          onPress={handleNextBtnPress}
-          disabled={isNextBtnDisabled}
-          style={{
-            backgroundColor: isNextBtnDisabled ? "#e7e5e5" : "#FF7575",
-          }}
-        >
-          <Text className="text-white">Suivant</Text>
+    <SafeAreaView className={`flex-1 bg-white justify-center items-center`}>
+      {renderContent()}
+      {RenderDots()}
+      <View className="absolute top-10 right-5">
+        <TouchableOpacity onPress={skipHandler}>
+          <Text className="text-[16px]"> Ignorer</Text>
+          <AntDesign name="" />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.neutral100,
-  },
-  confidentialityContainer: {
-    width: SIZES.width,
-    height: SIZES.height * 0.6,
-  },
-  confidentialityTitle: {
-    fontSize: SIZES.width * 0.08,
-    fontFamily: "Bold",
-    textAlign: "center",
-    height: SIZES.height * 0.3,
-  },
-  confidentialityItem: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    marginTop: 20,
-  },
-  confidentialityText: {
-    fontFamily: "Regular",
-    fontSize: SIZES.width * 0.05,
-    lineHeight: 24,
-    paddingRight: 20,
-  },
-  btnBox: {
-    height: SIZES.height * 0.15,
-    width: SIZES.width,
-  },
-});
-
-export default DiscoveryScreen;
+export default index;

@@ -1,16 +1,32 @@
 import React from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
-import { COLORS, SIZES } from "../../constants";
+import { COLORS, SIZES } from "@/constants";
 
-const MessageItem = ({ urlImg, name, job, lastMessage, onPress }) => {
+const MessageItem = ({
+  urlImg,
+  name,
+  job,
+  lastMessage,
+  onPress,
+  actifIndicator,
+}) => {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
-      <Image
-        source={urlImg}
-        style={{ width: 44, height: 44, borderRadius: 100 }}
-      />
+      <View className={`border border-gray-100 rounded-full relative`}>
+        <Image
+          source={urlImg}
+          style={{ width: 50, height: 50, borderRadius: 100 }}
+        />
+
+        <View
+          className={`w-[10px] ${
+            actifIndicator ? "bg-green-500" : "bg-gray-500 "
+          } h-[10px] absolute rounded-full left-1`}
+        />
+        {/* <View className="w-[10px] bg-gray-500 h-[10px] absolute rounded-full left-1" /> */}
+      </View>
       <View style={{ marginLeft: 15 }}>
-        <View style={{display:"flex",flexDirection:"row"}}>
+        <View style={{ display: "flex", flexDirection: "row" }}>
           <Text style={{ fontFamily: "Regular", fontSize: SIZES.medium }}>
             {name}
           </Text>

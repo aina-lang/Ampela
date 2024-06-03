@@ -35,17 +35,27 @@ const _layout = () => {
               <Text
                 style={{ fontSize: 20, fontWeight: "bold", color: "white" }}
               >
-                Bonjour {user.username}
+                {user.username}
               </Text>
             </View>
-            <TouchableOpacity className="p-2 pl-0 ">
-              <Ionicons
-                name="notifications-circle"
-                color={"white"}
-                size={30}
-                onPress={() => navigation.openDrawer()}
-              />
-            </TouchableOpacity>
+            <View className="flex-row">
+              <TouchableOpacity
+                className="p-2 pl-0 "
+                onPress={() => navigation.navigate("(message)")}
+              >
+                <Ionicons name="chatbubble" color={"white"} size={24} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="p-2 pl-0 "
+                onPress={() => navigation.navigate("(message)")}
+              >
+                <Ionicons
+                  name="notifications-circle"
+                  color={"white"}
+                  size={24}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
         ),
       }}

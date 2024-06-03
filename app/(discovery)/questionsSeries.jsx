@@ -4,8 +4,9 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  SafeAreaView,
+
   TouchableOpacity,
+  SafeAreaView,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { COLORS, SIZES } from "../../constants";
@@ -20,14 +21,14 @@ import ProgressBar from "@/components/ProgreessBar";
 import { Redirect } from "expo-router";
 import { generateCycleMenstrualData } from "@/utils/menstruationUtils";
 
-const menstruationDurations = [];
+const durationMenstruations = [];
 const cycleDurations = [];
 
 for (let i = 2; i < 46; i++) {
   let text = null;
   if (i > 2 && i < 8) {
     text = i + " " + "jours";
-    menstruationDurations.push(text);
+    durationMenstruations.push(text);
   }
   if (i > 20 && i < 46) {
     text = i + " " + "jours";
@@ -38,7 +39,7 @@ for (let i = 2; i < 46; i++) {
 const QuestionsSeries = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const [response0, setResponse0] = useState(menstruationDurations[0]);
+  const [response0, setResponse0] = useState(durationMenstruations[0]);
   const [response1, setResponse1] = useState(cycleDurations[0]);
   const [isNextBtnDisabled, setIsNextBtnDisabled] = useState(true);
   const dontRememberText = "je m'en souviens pas";
@@ -76,22 +77,22 @@ const QuestionsSeries = () => {
       user.username,
       user.password,
       user.profession,
-      user.lastMenstrualCycleStartAge,
-      user.menstruationDuration,
+      user.lastMenstruationDate,
+      user.durationMenstruation,
       user.cycleDuration,
       user.email
     );
 
-    const cycleData = generateCycleMenstrualData(
-      user.lastMenstrualCycleStartAge,
+    const cycleData =    generateCycleMenstrualData(
+      user.lastMenstruationDate,
       user.cycleDuration,
-      user.menstruationDuration
-    );
-    console.log("USER ", user);
+      user.durationMenstruation
+    )
+    // console.log("USER ", user);
     // Boucle pour enregistrer chaque cycle dans la base de données
     for (let i = 0; i < cycleData.length; i++) {
       const cycle = cycleData[i];
-      console.log(cycle.month);
+      // console.log(cycle.month);
       console.log({ ...cycle });
       // Ajout du cycle menstruel dans la base de données
       await addCycleMenstruel(
@@ -99,6 +100,8 @@ const QuestionsSeries = () => {
         cycle.fecundityPeriodEnd,
         cycle.fecundityPeriodStart,
         cycle.month,
+        cycle.startMenstruationDate,
+        cycle.endMenstruationDate,
         cycle.nextMenstruationDate,
         cycle.nextMenstruationEndDate,
         cycle.ovulationDate
@@ -111,7 +114,7 @@ const QuestionsSeries = () => {
 
   useEffect(() => {
     const userData = {
-      menstruationDuration: getNumberFromString(response0),
+      durationMenstruation: getNumberFromString(response0),
     };
     dispatch(updateUser(userData));
   }, [response0]);
@@ -141,7 +144,7 @@ const QuestionsSeries = () => {
               paddingRight: 20,
               height: 70,
             }}
-            data={menstruationDurations}
+            data={durationMenstruations}
             renderItem={({ item }) => (
               <ResponseOfQuestion0
                 text={item}

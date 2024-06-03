@@ -179,6 +179,7 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     order: 2,
+    alignSelf: "center",
   },
 });
 

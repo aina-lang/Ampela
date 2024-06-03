@@ -9,9 +9,25 @@ import { Text, TouchableOpacity, View } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { SIZES } from "@/constants";
 import { updateCycleMenstruelData } from "@/redux/cycleSlice";
+import {
+  generateCycleMenstrualData,
+  getOvulationDate,
+} from "@/utils/menstruationUtils";
+import moment from "moment";
 
 export default function TabLayout() {
   const user = useSelector((state) => state.user);
+
+  // console.log(getOvulationDate(user.lastMenstruationDate,28));
+  // generateCycleMenstrualData(
+  //   user.lastMenstruationDate,
+  //   user.cycleDuration,
+  //   user.durationMenstruation
+  // );
+
+  // console.log(user.cycleDuration);
+  // console.log(getOvulationDate(user.lastMenstruationDate, 28));
+  // console.log(moment(user.lastMenstruationDate).format("YYYY-MM-DD"));
 
   const dispatch = useDispatch();
   const navigation = useNavigation();
@@ -23,11 +39,11 @@ export default function TabLayout() {
 
         await setFirstLaunchFalse();
 
-        console.log("FROM SQILTE ", userFromSqlite);
+        // console.log("FROM SQILTE ", userFromSqlite);
         dispatch(updateUser(userFromSqlite));
-        console.log(user);
+        // console.log(user);
         const cyclesFromSqlite = await getAllCycle();
-        console.log("Cycles FROM SQLITE ", cyclesFromSqlite);
+        // console.log("Cycles FROM SQLITE ", cyclesFromSqlite);
         dispatch(updateCycleMenstruelData(cyclesFromSqlite));
       } catch (error) {
         console.error("Error:", error);
@@ -62,19 +78,27 @@ export default function TabLayout() {
                 <Text
                   style={{ fontSize: 20, fontWeight: "bold", color: "white" }}
                 >
-                  Bonjour {user.username}
+                  {user.username}
                 </Text>
               </View>
-              <TouchableOpacity
-                className="p-2 pl-0 "
-                onPress={() => navigation.openDrawer()}
-              >
-                <Ionicons
-                  name="notifications-circle"
-                  color={"white"}
-                  size={30}
-                />
-              </TouchableOpacity>
+              <View className="flex-row">
+                <TouchableOpacity
+                  className="p-2 pl-0 "
+                  onPress={() => navigation.navigate("(message)")}
+                >
+                  <Ionicons name="chatbubble" color={"white"} size={24} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className="p-2 pl-0 "
+                  onPress={() => navigation.navigate("(message)")}
+                >
+                  <Ionicons
+                    name="notifications-circle"
+                    color={"white"}
+                    size={24}
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
           ),
 
@@ -91,10 +115,11 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="(messageandforum)/index"
+          name="(forum)"
           options={{
             title: "message",
             tabBarIcon: "chatbubble",
+            headerShown: false,
           }}
         />
         <Tabs.Screen

@@ -1,14 +1,16 @@
 import moment from "moment";
 
 export function getOvulationDate(lastMenstruationDate, cycleDurations) {
+  
+  // console.log(moment(lastMenstruationDate).format("YYYY-MM-DD"));
   const ovulationDate = moment(lastMenstruationDate).add(
     cycleDurations - 14,
     "days"
   );
 
-  if (ovulationDate.isLeapYear()) {
-    ovulationDate.add(1, "days");
-  }
+  // if (ovulationDate.isLeapYear()) {
+  //   ovulationDate.add(1, "days");
+  // }
 
   const formattedDate = ovulationDate.format("YYYY-MM-DD");
   return { ovulationDate: formattedDate };
@@ -55,18 +57,17 @@ export function generateCycleMenstrualData(
   cycleDuration,
   menstruationDuration
 ) {
-
-  console.log(startDate,cycleDuration,menstruationDuration);
+  // console.log(startDate, cycleDuration, menstruationDuration);
   // Tableau pour stocker les données de chaque mois
   const cyclesData = [];
 
   let lastMenstruationDate1 = moment(startDate);
-
+  let temp = lastMenstruationDate1;
   for (let i = 0; i < 12; i++) {
     // Calcule les informations pour le cycle menstruel de ce mois
 
-    let currentMonth = moment(lastMenstruationDate1);
-
+    let currentMonth = moment(temp);
+    // console.log(currentMonth);
     const ovulationDate = getOvulationDate(
       currentMonth.format("YYYY-MM-DD"),
       cycleDuration
@@ -87,14 +88,23 @@ export function generateCycleMenstrualData(
       ovulationDate: ovulationDate.ovulationDate,
       fecundityPeriodStart: fecundityPeriod.startFecondityDate,
       fecundityPeriodEnd: fecundityPeriod.endFecondityDate,
+      startMenstruationDate: moment(lastMenstruationDate1).format("YYYY-MM-DD"),
+      endMenstruationDate: moment(lastMenstruationDate1)
+        .add(2, "days")
+        .format("YYYY-MM-DD"),
       nextMenstruationDate: menstruationPeriod.nextMenstruationDate,
       nextMenstruationEndDate: menstruationPeriod.nextMenstruationEndDate,
     });
 
+    console.log(ovulationDate.ovulationDate);
     // Passage au mois suivant
+
     currentMonth.add(1, "month");
-    lastMenstruationDate1 = menstruationPeriod.nextMenstruationDate;
+    (lastMenstruationDate1 = menstruationPeriod.nextMenstruationDate),
+      (temp = menstruationPeriod.nextMenstruationDate);
   }
+
+  // console.log(cyclesData);
 
   return cyclesData;
 }
