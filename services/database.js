@@ -2,9 +2,9 @@ import * as SQLite from "expo-sqlite";
 
 export const db = SQLite.openDatabaseSync("ampela.db");
 
-// db.closeSync();
+db.closeSync();
 
-// SQLite.deleteDatabaseSync("ampela.db");
+SQLite.deleteDatabaseSync("ampela.db");
 
 export const addUser = async (
   username,
@@ -88,17 +88,20 @@ export const initializeDatabase = async () => {
 
 export const isFirstLaunch = async () => {
   try {
-    const result = await db.getFirstAsync("SELECT * FROM first_time");
+    let result = await db.getFirstAsync("SELECT * FROM first_time");
 
-    if (result == null) {
-      await db.runAsync("INSERT INTO first_time(status) VALUES (1);");
+    if (!result) {
+      await db.runAsync("INSERT INTO first_time (status) VALUES (1);");
+      result = { status: 1 };
+    } else {
+      result = { status: result.status };
     }
-    // console.log(result);
 
     return result;
   } catch (error) {
-    console.error("Error checking first launch:", error);
-    throw error;
+    // console.error("Error checking first launch:", error);
+    // throw error;
+    return { status: true };
   }
 };
 
