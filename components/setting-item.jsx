@@ -1,6 +1,6 @@
 import React from "react";
 import { TouchableOpacity, View, Text, StyleSheet, Image } from "react-native";
-import { SIZES, icons } from '../../constants';
+import { SIZES, icons } from '@/constants';
 const SettingItem = ({ title, urlIcon, routeToNavigate, chevronRight, navigation }) => {
   return (
     <TouchableOpacity

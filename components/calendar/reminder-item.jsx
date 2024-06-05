@@ -10,10 +10,14 @@ const ReminderItem = ({ as, time, onPress, howmanytimeReminder }) => {
   };
 
   return (
-    <View style={styles.container} className="shadow-sm shadow-black">
+    <TouchableOpacity
+      onPress={onPress}
+      style={styles.container}
+      className="shadow-sm shadow-black"
+    >
       <View style={styles.left}>
         <Text style={styles.textRegular}>{as}</Text>
-        <TouchableOpacity style={styles.time} onPress={onPress}>
+        <View style={styles.time}>
           <Text style={styles.textMedium}>
             {time?.hour.toString().padStart(2, "0")}
           </Text>
@@ -21,7 +25,7 @@ const ReminderItem = ({ as, time, onPress, howmanytimeReminder }) => {
           <Text style={styles.textMedium}>
             {time?.minutes.toString().padStart(2, "0")}
           </Text>
-        </TouchableOpacity>
+        </View>
         <Text style={styles.textRegular}>Rappeler: {howmanytimeReminder}</Text>
       </View>
       <View>
@@ -36,7 +40,7 @@ const ReminderItem = ({ as, time, onPress, howmanytimeReminder }) => {
           value={isEnabled}
         />
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -64,7 +68,6 @@ const styles = StyleSheet.create({
   textRegular: {
     fontFamily: "Regular",
     fontSize: SIZES.medium,
-    
   },
   textMedium: {
     fontFamily: "Medium",

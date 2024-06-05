@@ -33,27 +33,27 @@ const _layout = () => {
               <Text
                 style={{ fontSize: 20, fontWeight: "bold", color: "white" }}
               >
-               {user.username}
+                {user.username}
               </Text>
             </View>
             <View className="flex-row">
-                <TouchableOpacity
-                  className="p-2 pl-0 "
-                  onPress={() => navigation.navigate("(message)")}
-                >
-                  <Ionicons name="chatbubble" color={"white"} size={24} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  className="p-2 pl-0 "
-                  onPress={() => navigation.navigate("(message)")}
-                >
-                  <Ionicons
-                    name="notifications-circle"
-                    color={"white"}
-                    size={24}
-                  />
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                className="p-2 pl-0 "
+                onPress={() => navigation.navigate("(message)")}
+              >
+                <Ionicons name="chatbubble" color={"white"} size={24} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="p-2 pl-0 "
+                onPress={() => navigation.navigate("(message)")}
+              >
+                <Ionicons
+                  name="notifications-circle"
+                  color={"white"}
+                  size={24}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
         ),
 
@@ -63,6 +63,7 @@ const _layout = () => {
       initialRouteName="index"
     >
       <Stack.Screen name="index" />
+
     </Stack>
   );
 };

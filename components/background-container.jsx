@@ -3,7 +3,11 @@ import { ImageBackground, KeyboardAvoidingView, Platform } from "react-native";
 import { images } from "@/constants";
 import { ThemeContext } from "./theme-context";
 
-const BackgroundContainer = ({ children, paddingBottom }) => {
+const BackgroundContainer = ({
+  children,
+  paddingBottom,
+  paddingHorizontal,
+}) => {
   // const { theme } = useContext(ThemeContext);
   return (
     <KeyboardAvoidingView
@@ -15,7 +19,7 @@ const BackgroundContainer = ({ children, paddingBottom }) => {
         resizeMode="repeat"
         style={{
           flex: 1,
-          paddingHorizontal: 20,
+          paddingHorizontal: paddingHorizontal ? paddingHorizontal : 20,
           paddingBottom: paddingBottom ? paddingBottom : null,
         }}
       >

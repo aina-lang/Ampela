@@ -18,11 +18,13 @@ import { ThemeContext } from "@/components/theme-context";
 import { COLORS, SIZES } from "@/constants";
 import BackgroundContainer from "@/components/background-container";
 
-import { addNewPost } from "@/config/firestoreAPI";
+import { addNewPost } from "@/services/firestoreAPI";
 import { getAuth } from "firebase/auth";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
-import { database } from "@/config/firebaseConfig";
-import { useNavigation } from "expo-router";
+import { database } from "@/services/firebaseConfig";
+import { Link, useNavigation } from "expo-router";
+import SearchForum from "@/components/SearchForum";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 
 const index = () => {
   const navigation = useNavigation();
@@ -34,25 +36,26 @@ const index = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isInputsDisabled, setIsInputsDisabled] = useState(false);
 
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      query(collection(database, "posts"), orderBy("createdAt", "desc")),
-      (snapshot) => {
-        const newPosts = snapshot.docs.map((doc) => doc.data());
+  // useEffect(() => {
+  //   const unsubscribe = onSnapshot(
+  //     query(collection(database, "posts"), orderBy("createdAt", "desc")),
+  //     (snapshot) => {
+  //       const newPosts = snapshot.docs.map((doc) => doc.data());
 
-        setPosts(newPosts);
-      }
-    );
+  //       setPosts(newPosts);
+  //     }
+  //   );
 
-    return () => unsubscribe();
-  }, []);
+  //   return () => unsubscribe();
+  // }, []);
 
   const handleAskQuestionBtnPress = () => {
-    Animated.timing(translateXAnim, {
-      toValue: 0,
-      duration: 0,
-      useNativeDriver: true,
-    }).start();
+    // Animated.timing(translateXAnim, {
+    //   toValue: 0,
+    //   duration: 0,
+    //   useNativeDriver: true,
+    // }).start();
+    navigation.navigate("(drawer)/(forum)");
   };
 
   const handleCancelBtnPress = () => {
@@ -102,92 +105,23 @@ const index = () => {
 
   return (
     <View style={styles.container}>
-      <BackgroundContainer paddingBottom={85}>
+      <BackgroundContainer paddingBottom={85} paddingHorizontal={20}>
         {isLoading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={COLORS.primary} />
           </View>
         )}
 
-        <Animated.View
-          style={[
-            styles.containerBox,
-            {
-              transform: [{ translateX: translateXAnim }],
-            },
-          ]}
-        >
-          <View style={styles.box}>
-            <TextInput
-              multiline={true}
-              numberOfLines={4}
-              style={styles.askQuestionTextInput}
-              onChangeText={(text) => setNewPostContent(text)}
-              placeholder="Posez ici vos questions sur les règles, la contraception, la planification familiale, etc..."
-              value={newPostContent}
-              editable={!isInputsDisabled}
-            />
-            <View style={styles.btnBox}>
-              <TouchableOpacity
-                style={[
-                  styles.btnInsideBox,
-                  { backgroundColor: COLORS.neutral400 },
-                ]}
-                onPress={handleCancelBtnPress}
-                disabled={isInputsDisabled}
-              >
-                <Text
-                  style={{
-                    fontFamily: "Bold",
-                    color: COLORS.neutral100,
-                    fontSize: SIZES.small,
-                  }}
-                >
-                  Annuler
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.btnInsideBox,
-                  {
-                    backgroundColor:
-                      "pink" === "pink" ? COLORS.accent600 : COLORS.accent800,
-                  },
-                ]}
-                onPress={handleSendBtnPress}
-                disabled={isInputsDisabled}
-              >
-                <Text
-                  style={{
-                    fontFamily: "Bold",
-                    color: COLORS.neutral100,
-                    fontSize: SIZES.small,
-                  }}
-                >
-                  Envoyer
-                </Text>
-              </TouchableOpacity>
-            </View>
+        <View className=" pt-5" style={{ height: SIZES.height * 0.2 }}>
+          <View className="flex-row justify-between items-center p-2 ">
+            <Text className="text-xl">Forum</Text>
+            <Link href={"(drawer)/(forum)/addpost"} className="flex-row space-x-2 p-2 bg-white rounded-md shadow-sm shadow-black">
+              <AntDesign name="edit" size={24} color={COLORS.accent600}/>
+              <Text>Posez des questions</Text>
+            </Link>
           </View>
-        </Animated.View>
-
-        {/* <HeaderForum
-          navigation={navigation}
-          isDoctor={false}
-          screen={"MessageScreen"}
-        /> */}
-        <TouchableOpacity
-          style={[
-            styles.btn,
-            {
-              backgroundColor:
-                "pink" === "pink" ? COLORS.accent600 : COLORS.accent800,
-            },
-          ]}
-          onPress={handleAskQuestionBtnPress}
-        >
-          <Text style={styles.textBtn}>posezVotreQuestion</Text>
-        </TouchableOpacity>
+          <SearchForum />
+        </View>
 
         <ScrollView showsVerticalScrollIndicator={false}>
           {posts.map((post) => (

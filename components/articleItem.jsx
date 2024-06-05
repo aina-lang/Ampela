@@ -1,10 +1,6 @@
-import { useContext } from "react";
-import { Text, View, StyleSheet, Pressable, Image } from "react-native";
-import { SIZES, COLORS } from "@/constants";
-// import { useTranslation } from 'react-i18next';
-// import { images } from '../../constants';
-// import { ThemeContext } from './theme-context';
-// import { RFValue } from 'react-native-responsive-fontsize';
+import React, { useRef, useEffect } from "react";
+import { Text, View, StyleSheet, Pressable, Image, Animated } from "react-native";
+import { COLORS } from "@/constants";
 
 const ArticleItem = ({
   navigation,
@@ -20,29 +16,19 @@ const ArticleItem = ({
   onPress,
   img,
 }) => {
-  // const { t } = useTranslation();
-  let categoryText = null;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  switch (category) {
-    case "Menstruations":
-      categoryText = "menstruations";
-      break;
-    case "Hygiène menstruelle":
-      categoryText = "hygieneMenstruelle";
-      break;
-    case "Troubles et maladies":
-      categoryText = "troublesEtMaladies";
-      break;
-    case "Planning Familiale":
-      categoryText = "planningFamiliale";
-      break;
-    case "Astuces":
-      categoryText = "astuces";
-      break;
-    default:
-      return null;
-  }
-  //   const { theme } = useContext(ThemeContext);
+  useEffect(() => {
+    Animated.timing(
+      fadeAnim,
+      {
+        toValue: 1,
+        duration: 1000, // Durée de l'animation en millisecondes
+        useNativeDriver: true, // Utiliser le moteur natif pour les performances
+      }
+    ).start();
+  }, [fadeAnim]);
+
   const handleTextPress = () => {
     navigation.navigate("onearticle", {
       title,
@@ -56,6 +42,7 @@ const ArticleItem = ({
       img,
     });
   };
+
   const handleContainerPress = () => {
     onPress(
       title,
@@ -69,48 +56,51 @@ const ArticleItem = ({
       img
     );
   };
+
   return (
-    <Pressable style={styles.container} onPress={handleContainerPress}>
-      <Text style={styles.title}>{title}</Text>
-      <View
-        style={[
-          styles.category,
-          {
-            backgroundColor:
-              "pink" === "pink" ? COLORS.accent400 : COLORS.neutral250,
-          },
-        ]}
-      >
-        <Text
-          style={{
-            fontFamily: "Regular",
-            color: "pink" === "pink" ? COLORS.neutral100 : COLORS.primary,
-          }}
+    <Pressable onPress={handleContainerPress}>
+      <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+        <Text style={styles.title}>{title}</Text>
+        <View
+          style={[
+            styles.category,
+            {
+              backgroundColor:
+                "pink" === "pink" ? COLORS.accent400 : COLORS.neutral250,
+            },
+          ]}
         >
-          {categoryText}
+          <Text
+            style={{
+              fontFamily: "Regular",
+              color: "pink" === "pink" ? COLORS.neutral100 : COLORS.primary,
+            }}
+          >
+            {category}
+          </Text>
+        </View>
+        <View style={styles.img}>
+          <Image
+            source={img}
+            style={{ height: 280, width: 280 }}
+            resizeMode="contain"
+          />
+        </View>
+        <Text style={styles.content} numberOfLines={4}>
+          {content}
         </Text>
-      </View>
-      <View style={styles.img}>
-        <Image
-          source={img}
-          style={{ height: 280, width: 280 }}
-          resizeMode="contain"
-        />
-      </View>
-      <Text style={styles.content} numberOfLines={4}>
-        {content}
-      </Text>
-      <Pressable onPress={handleTextPress}>
-        <Text
-          style={{
-            color: "pink" === "pink" ? COLORS.accent600 : COLORS.accent800,
-            fontFamily: "Regular",
-            marginTop: 6,
-          }}
-        >
-          Voir plus {">"}{" "}
-        </Text>
-      </Pressable>
+        <Pressable onPress={handleTextPress}>
+          <Text
+            style={{
+              color: "pink" === "pink" ? COLORS.accent600 : COLORS.accent800,
+              fontFamily: "Regular",
+              marginTop: 6,
+            }}
+          >
+            Voir plus {">"}
+          </Text>
+        </Pressable>
+      </Animated.View>
     </Pressable>
   );
 };
@@ -123,7 +113,6 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
   title: {
-    // fontSize: RFValue(SIZES.xLarge),
     fontFamily: "SBold",
   },
   category: {

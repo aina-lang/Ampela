@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { getAllCycle, getUser, setFirstLaunchFalse } from "@/services/database";
 import { Tabs, useNavigation } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
@@ -18,12 +18,10 @@ import moment from "moment";
 export default function TabLayout() {
   const user = useSelector((state) => state.user);
 
+  
+
   // console.log(getOvulationDate(user.lastMenstruationDate,28));
-  generateCycleMenstrualData(
-    "2024-06-02",
-    25,
-    5
-  );
+  // generateCycleMenstrualData("2024-06-02", 25, 5);
 
   // console.log(user.cycleDuration);
   // console.log(getOvulationDate(user.lastMenstruationDate, 28));
@@ -117,11 +115,12 @@ export default function TabLayout() {
         <Tabs.Screen
           name="(forum)"
           options={{
-            title: "message",
-            tabBarIcon: "chatbubble",
+            title: "forum",
+            tabBarIcon: "globe-outline",
             headerShown: false,
           }}
         />
+
         <Tabs.Screen
           name="(article)"
           options={{

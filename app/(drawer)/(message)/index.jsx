@@ -18,7 +18,7 @@ import HeaderWithGoBack from "@/components/header-with-go-back";
 
 import { COLORS, SIZES, icons, images } from "@/constants";
 import MessageItem from "@/components/messageItem";
-import { auth, database } from "@/config/firebaseConfig";
+import { auth, database } from "@/services/firebaseConfig";
 import { useNavigation } from "expo-router";
 import { AntDesign } from "@expo/vector-icons";
 

@@ -3,11 +3,11 @@ import { View, Text, StyleSheet, Image, TextInput, Pressable } from 'react-nativ
 // import { useTranslation } from 'react-i18next';
 import { COLORS, SIZES, icons } from '@/constants';
 import CommentContent from './comment-content';
-import { addNewComment } from "@/config/firestoreAPI";
-import { addNewLike, removeLike } from "@/config/firestoreAPI";
+import { addNewComment } from "@/services/firestoreAPI";
+import { addNewLike, removeLike } from "@/services/firestoreAPI";
 import { getAuth } from 'firebase/auth';
 import { collection, onSnapshot, query, where, getDocs, doc, deleteDoc, getDoc, updateDoc } from "firebase/firestore";
-import { database } from '@/config/firebaseConfig';
+import { database } from '@/services/firebaseConfig';
 
 const ForumItem = ({ post, refToCommentItem, navigation }) => {
     console.log(refToCommentItem);

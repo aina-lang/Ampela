@@ -1,53 +1,93 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
+  ScrollView,
   Dimensions,
+  TouchableWithoutFeedback,
+  FlatList,
+  Modal,
+  Alert,
 } from "react-native";
-import { COLORS } from "../constants";
-import Animated from "react-native-reanimated";
+import { useDispatch, useSelector } from "react-redux";
+import { setSelectedParams } from "../redux/notificationSlice";
+import * as Notifications from "expo-notifications";
+
+import { COLORS, SIZES } from "../constants";
+import {
+  scheduleMenstruationNotifications,
+  scheduleOvulationNotifications,
+  schedulePillNotifications,
+} from "@/redux/actions";
 
 const screenWidth = Dimensions.get("window").width;
 
 const ReminderContent = ({
-  onCloseIconPress,
+  isActive,
+  setReminderModalIsVisible,
   pills,
   type,
-  onRegisterButtonPress,
 }) => {
   const [selectedHour, setSelectedHour] = useState(0);
   const [selectedMinute, setSelectedMinute] = useState(0);
-  const [active, setActive] = useState("");
+  const [active, setActive] = useState(pills ? "Aujourd'hui" : "3 jours");
+  // const [modalIsActive, setModalIsActive] = useState(isActive);
+  const {
+    menstruationNotifications,
+    ovulationNotifications,
+    pillNotifications,
+  } = useSelector((state) => state.reminder);
 
-  const handleHourChange = (hour) => {
-    setSelectedHour(hour);
+  const hourScrollViewRef = useRef(null);
+  const minuteScrollViewRef = useRef(null);
+  const dispatch = useDispatch();
+
+  // const selectedParams = useSelector(
+  //   (state) => state.notification.selectedParams
+  // );
+
+  const handleHourChange = (event) => {
+    const yOffset = event.nativeEvent.contentOffset.y;
+    const itemHeight = 50;
+    const index = Math.round(yOffset / itemHeight);
+    hourScrollViewRef.current.scrollToIndex({ animated: true, index });
+    // setSelectedHour(index);
   };
 
-  const handleMinuteChange = (minute) => {
-    setSelectedMinute(minute);
+  const handleMinuteChange = (event) => {
+    const yOffset = event.nativeEvent.contentOffset.y;
+    const itemHeight = 50;
+    const index = Math.round(yOffset / itemHeight);
+    minuteScrollViewRef.current.scrollToIndex({ animated: true, index });
+
+    // setSelectedMinute(index);
   };
+  // const handleMenstruationToggle = () => {
+  //   dispatch(toggleMenstruationNotifications());
+  // };
 
-  const renderHourItem = (data, index) => (
-    <TouchableOpacity
-      key={data.value}
-      onPress={() => handleHourChange(data.value)}
-      style={{ padding: 10 }}
-    >
-      <Text>{data.label}</Text>
-    </TouchableOpacity>
-  );
+  // const handleOvulationToggle = () => {
+  //   dispatch(toggleOvulationNotifications());
+  // };
 
-  const renderMinuteItem = (data, index) => (
-    <TouchableOpacity
-      key={data.value}
-      onPress={() => handleMinuteChange(data.value)}
-      style={{ padding: 10 }}
-    >
-      <Text>{data.label}</Text>
-    </TouchableOpacity>
-  );
+  // const handlePillToggle = () => {
+  //   dispatch(togglePillNotifications());
+  // };
+
+  const handleRegisterBtnPress = () => {
+    if (menstruationNotifications) {
+      scheduleMenstruationNotifications();
+    }
+    if (ovulationNotifications) {
+      scheduleOvulationNotifications();
+    }
+    if (pillNotifications) {
+      schedulePillNotifications();
+    }
+    onRegisterButtonPress(type, selectedHour, selectedMinute, active);
+  };
 
   const hours = Array.from({ length: 24 }, (_, i) => ({
     value: i,
@@ -62,195 +102,199 @@ const ReminderContent = ({
     setActive(active === item ? "" : item);
   };
 
-  const handleRegisterBtnPress = () => {
-    onRegisterButtonPress(type, selectedHour, selectedMinute, active);
-  };
-
   return (
-    <Animated.View className="bg-white  p-5 py-10 rounded-md w-[90%] mx-auto shadow-md shadow-black">
-      <View style={styles.header}>
-        <Text
-          style={[styles.textRegular, { textAlign: "center", fontSize: 17 }]}
-        >
-          {type}
-        </Text>
-      </View>
-
-      <View style={styles.body}>
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          {/* <ScrollPicker
-            dataSource={hours}
-            selectedIndex={selectedHour}
-            renderItem={renderHourItem}
-            onValueChange={handleHourChange}
-            wrapperHeight={80}
-            wrapperBackground="#FFFFFF"
-            itemHeight={60}
-            highlightColor="#d8d8d8"
-            highlightBorderWidth={2}
-          /> */}
-          <Text style={styles.timeDivider} className="text-xl">
-            10 : 12
-          </Text>
-          {/* <ScrollPicker
-            dataSource={minutes}
-            selectedIndex={selectedMinute}
-            renderItem={renderMinuteItem}
-            onValueChange={handleMinuteChange}
-            wrapperHeight={80}
-            wrapperBackground="#FFFFFF"
-            itemHeight={60}
-            highlightColor="#d8d8d8"
-            highlightBorderWidth={2}
-            
-          /> */}
-        </View>
-      </View>
-
-      <View style={styles.footer} className="p-5 py-0">
-        <Text style={styles.textRegular}>Répéter : </Text>
-        <View style={styles.pressableContainer}>
-          <TouchableOpacity
-            style={[
-              styles.item,
-              {
-                backgroundColor:
-                  active === "Ajourd'hui" || active === "3 jours"
-                    ? COLORS.accent600
-                    : "rgba(0, 0, 0, 0.1)",
-              },
-            ]}
-            onPress={() => handleItemPress(pills ? "Aujourd'hui" : "3 jours")}
-          >
+    <Modal
+      transparent={true}
+      visible={isActive}
+      onRequestClose={() => {
+        Alert.alert("Modal has been closed.");
+        setReminderModalIsVisible(!isActive);
+      }}
+    >
+      <View
+        className={`bg-black/40 justify-center items-center`}
+        style={{ height: SIZES.height, width: SIZES.width }}
+      >
+        <View className="bg-white w-[90%] p-5 rounded-md mx-auto">
+          <View style={styles.header}>
             <Text
               style={[
-                styles.itemText,
-                {
-                  color:
-                    active === "Ajourd'hui" || active === "3 jours"
-                      ? COLORS.neutral100
-                      : COLORS.neutral400,
-                },
+                styles.textRegular,
+                { textAlign: "center", fontSize: 17 },
               ]}
             >
-              {pills ? "Ajourd'hui" : "3 jours"}
+              {type}
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.item,
-              {
-                backgroundColor:
-                  active === "Tous les jours" || active === "2 jours"
-                    ? COLORS.accent600
-                    : "rgba(0, 0, 0, 0.1)",
-              },
-            ]}
-            onPress={() =>
-              handleItemPress(pills ? "Tous les jours" : "2 jours")
-            }
-          >
-            <Text
-              style={[
-                styles.itemText,
-                {
-                  color:
-                    active === "Tous les jours" || active === "2 jours"
-                      ? COLORS.neutral100
-                      : COLORS.neutral400,
-                },
-              ]}
+          </View>
+
+          <View style={styles.body}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", width: 120 }}
             >
-              {pills ? "Tous les jours " : "2 jours"}
-            </Text>
-          </TouchableOpacity>
-          {pills ? null : (
-            <>
-              <TouchableOpacity
-                style={[
-                  styles.item,
-                  {
-                    backgroundColor:
-                      active === "1 jour"
-                        ? COLORS.accent600
-                        : "rgba(0, 0, 0, 0.1)",
-                  },
-                ]}
-                onPress={() => handleItemPress("1 jour")}
-              >
-                <Text
+              <FlatList
+                onScroll={handleHourChange}
+                showsVerticalScrollIndicator={false}
+                style={{ height: 50 }}
+                className="bg-white  shadow-sm shadow-black rounded-md overflow-hidden"
+                ref={hourScrollViewRef}
+                data={hours}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                renderItem={({ item }) => (
+                  <View
+                    // onPress={() => handleHourChange(item.value)}
+                    className="rounded-md "
+                    style={[
+                      styles.item,
+                      // {
+                      //   backgroundColor:
+                      //     selectedHour === item.value
+                      //       ? COLORS.accent600
+                      //       : "rgba(0, 0, 0, 0.1)",
+                      // },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.itemText,
+                        {
+                          fontSize: 20,
+                          // color: selectedHour === item.value ? "white" : "black",
+                        },
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                  </View>
+                )}
+                keyExtractor={(item) => item.value.toString()}
+                horizontal={false}
+              />
+              <Text style={styles.timeDivider}>:</Text>
+              <FlatList
+                onScroll={handleMinuteChange}
+                style={{ height: 50 }}
+                className="bg-white  shadow-sm shadow-black rounded-md overflow-hidden"
+                showsVerticalScrollIndicator={false}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                ref={minuteScrollViewRef}
+                data={minutes}
+                renderItem={({ item }) => (
+                  <View
+                    className="rounded-md "
+                    // onPress={() => handleMinuteChange(item.value)}
+                    style={[
+                      styles.item,
+                      // {
+                      //   backgroundColor:
+                      //     selectedMinute === item.value
+                      //       ? COLORS.accent600
+                      //       : "rgba(0, 0, 0, 0.1)",
+                      // },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.itemText,
+                        {
+                          fontSize: 20,
+                          //   color:
+                          //     selectedMinute === item.value ? "white" : "black",
+                          //
+                        },
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                  </View>
+                )}
+                keyExtractor={(item) => item.value.toString()}
+                horizontal={false} // Pour scroller verticalement
+              />
+            </View>
+          </View>
+
+          <View style={styles.footer}>
+            <Text style={styles.textRegular}>Répéter : </Text>
+            <View style={styles.pressableContainer}>
+              {[
+                {
+                  label: pills ? "Ajourd'hui" : "3 jours",
+                  value: pills ? "Ajourd'hui" : "3 jours",
+                },
+                {
+                  label: pills ? "Tous les jours" : "2 jours",
+                  value: pills ? "Tous les jours" : "2 jours",
+                },
+                ...(pills
+                  ? []
+                  : [
+                      { label: "1 jour", value: "1 jour" },
+                      { label: "Le jour même", value: "Le jour même" },
+                    ]),
+              ].map((item) => (
+                <TouchableOpacity
+                  key={item.value}
                   style={[
-                    styles.itemText,
+                    styles.item2,
                     {
-                      color:
-                        active === "1 jour"
-                          ? COLORS.neutral100
-                          : COLORS.neutral400,
+                      backgroundColor:
+                        active === item.value
+                          ? COLORS.accent600
+                          : "rgba(0, 0, 0, 0.1)",
                     },
                   ]}
+                  className={`rounded-md ${
+                    active === item.value ? " shadow-sm shadow-black" : ""
+                  }`}
+                  onPress={() => handleItemPress(item.value)}
                 >
-                  1 jour
+                  <Text
+                    style={[
+                      styles.itemText,
+                      { color: active === item.value ? "white" : "black" },
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                // onPress={handleRegisterBtnPress}
+                style={[styles.button, { backgroundColor: COLORS.accent500 }]}
+                className="shadow-md shadow-black"
+              >
+                <Text style={styles.textMedium} className="text-white">
+                  Enregistrer
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
+                onPress={() => setReminderModalIsVisible(!isActive)}
                 style={[
-                  styles.item,
-                  {
-                    backgroundColor:
-                      active === "Le jour même"
-                        ? COLORS.accent600
-                        : "rgba(0, 0, 0, 0.1)",
-                  },
+                  styles.button,
+                  { backgroundColor: "rgba(0, 0, 0, 0.1)" },
                 ]}
-                onPress={() => handleItemPress("Le jour même")}
               >
-                <Text
-                  style={[
-                    styles.itemText,
-                    {
-                      color:
-                        active === "Le jour même"
-                          ? COLORS.neutral100
-                          : COLORS.neutral400,
-                    },
-                  ]}
-                >
-                  Le jour même
-                </Text>
+                <Text style={styles.textMedium}>Annuler</Text>
               </TouchableOpacity>
-            </>
-          )}
-        </View>
-        <View className=" flex flex-row space-x-3 w-full items-center justify-center">
-          <TouchableOpacity
-            onPress={handleRegisterBtnPress}
-            className="p-5 bg-[#FF7575] py-2 rounded-md shadow-sm shadow-black"
-          >
-            <Text style={[styles.textMedium, { color: COLORS.neutral100 }]}>
-              Enregistrer
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={onCloseIconPress}
-            className="p-5 bg-[#d5d6d6] py-2 rounded-md shadow-black"
-          >
-            <Text style={[styles.textMedium, { color: COLORS.neutral100 }]}>
-              Annuler
-            </Text>
-          </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </View>
-    </Animated.View>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 20,
-    paddingHorizontal: 10,
-    backgroundColor: COLORS.neutral100,
-    width: screenWidth - 40,
-    borderRadius: 15,
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22,
+    width: screenWidth,
+    height: SIZES.height,
   },
   header: {
     marginBottom: 20,
@@ -267,18 +311,30 @@ const styles = StyleSheet.create({
   footer: {
     marginTop: 20,
   },
+  separator: {
+    height: 1,
+    backgroundColor: "gray",
+  },
   pressableContainer: {
     flexDirection: "row",
     marginTop: 10,
     marginBottom: 20,
     flexWrap: "wrap",
+    padding: 10,
   },
   item: {
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 16,
-    marginRight: 10,
-    marginVertical: 5,
+    width: 50,
+    height: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    marginHorizontal: "auto",
+  },
+  item2: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginHorizontal: 5,
+    marginTop: 5,
+    padding: 10,
   },
   itemText: {
     // fontSize: RFValue(SIZES.small),
@@ -291,9 +347,9 @@ const styles = StyleSheet.create({
   button: {
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 30,
+    borderRadius: 10,
     paddingVertical: 8,
-    width: 120,
+    paddingHorizontal: 10,
   },
   textRegular: {
     fontFamily: "Regular",

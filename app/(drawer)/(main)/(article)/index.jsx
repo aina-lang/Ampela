@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -31,11 +31,15 @@ const ArticlesScreen = () => {
   const [text, setText] = useState("");
   const navigation = useNavigation();
   const user = useSelector((state) => state.user);
+  const flatListRef = useRef(null);
 
   const [activeCategory, setActiveCategory] = useState("Menstruations");
   const handleArticleCategoryPress = useCallback(
     (item) => {
       setActiveCategory(item);
+      const index = DATA.findIndex((category) => category === item);
+      // Scroll the FlatList to the specified index with animation
+      flatListRef.current.scrollToIndex({ animated: true, index });
     },
     [activeCategory]
   );
@@ -45,7 +49,10 @@ const ArticlesScreen = () => {
   }, []);
 
   return (
-    <KeyboardAvoidingView style={{flex:1}}     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       <SafeAreaView style={styles.container} className="">
         <BackgroundContainer paddingBottom={50}>
           <Text style={styles.title}>{"articles"}</Text>
@@ -63,6 +70,7 @@ const ArticlesScreen = () => {
               </ArticleCategory>
             )}
             horizontal
+            ref={flatListRef}
             showsHorizontalScrollIndicator={false}
           />
 

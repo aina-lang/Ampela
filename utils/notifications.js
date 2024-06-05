@@ -1,40 +1,64 @@
-import * as Notifications from 'expo-notifications';
-import * as Permissions from 'expo-permissions';
-import Constants from 'expo-constants';
-import moment from 'moment';
+import * as Notifications from "expo-notifications";
+import * as Permissions from "expo-permissions";
+import Constants from "expo-constants";
+import { Platform } from "react-native";
+import moment from "moment";
+import * as Device from "expo-device";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
   }),
 });
 
 export async function registerForPushNotificationsAsync() {
-  if (Constants.isDevice) {
-    const { status: existingStatus } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
-    let finalStatus = existingStatus;
-    if (existingStatus !== 'granted') {
-      const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
-      finalStatus = status;
-    }
-    if (finalStatus !== 'granted') {
-      alert('Failed to get push token for push notification!');
-      return;
-    }
-  } else {
-    alert('Must use physical device for Push Notifications');
-  }
+  let token;
 
-  if (Platform.OS === 'android') {
-    Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
+  if (Platform.OS === "android") {
+    await Notifications.setNotificationChannelAsync("default", {
+      name: "default",
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF231F7C',
+      lightColor: "#FF231F7C",
     });
   }
+
+  if (Device.isDevice) {
+    const { status: existingStatus } =
+      await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== "granted") {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus !== "granted") {
+      alert("Failed to get push token for push notification!");
+      return;
+    }
+
+    try {
+      const projectId =
+        Constants?.expoConfig?.extra?.eas?.projectId ??
+        Constants?.easConfig?.projectId;
+      if (!projectId) {
+        throw new Error("Project ID not found");
+      }
+      token = (
+        await Notifications.getExpoPushTokenAsync({
+          projectId,
+        })
+      ).data;
+      console.log(token);
+    } catch (e) {
+      token = `${e}`;
+    }
+  } else {
+    alert("Must use physical device for Push Notifications");
+  }
+
+  return token;
 }
 
 export async function scheduleNotification(title, body, date) {
@@ -42,24 +66,67 @@ export async function scheduleNotification(title, body, date) {
     content: {
       title: title,
       body: body,
+      sound: "notification.mp3",
+      priority: Notifications.AndroidNotificationPriority.HIGH,
+      sticky: true,
+      actions: [
+        {
+          identifier: "pause",
+          buttonTitle: "Pause",
+          options: {
+            isDestructive: false,
+            isAuthenticationRequired: false,
+          },
+        },
+        {
+          identifier: "stop",
+          buttonTitle: "Stop",
+          options: {
+            isDestructive: true,
+            isAuthenticationRequired: false,
+          },
+        },
+      ],
     },
-    trigger: { date: date },
+    trigger: 1,
   });
 }
 
-export async function scheduleCycleNotifications(lastMenstruationDate, cycleDuration) {
-  const ovulationDate = moment(lastMenstruationDate).add(cycleDuration - 14, 'days');
-  const nextMenstruationDate = moment(lastMenstruationDate).add(cycleDuration, 'days');
+export async function scheduleCycleNotifications(
+  lastMenstruationDate,
+  cycleDuration
+) {
+  const menstruationDate = moment(lastMenstruationDate);
+  const ovulationDate = menstruationDate.clone().add(cycleDuration / 2, "days");
 
-  // Planifier notification pour l'ovulation
-  await scheduleNotification('Ovulation Reminder', 'Today is your ovulation day!', ovulationDate.toDate());
+  await scheduleNotification(
+    "Rappel de Menstruation",
+    "Votre menstruation commence aujourd'hui.",
+    menstruationDate.toDate()
+  );
+  await scheduleNotification(
+    "Rappel de Menstruation",
+    "Votre menstruation commence aujourd'hui.",
+    menstruationDate.toDate()
+  );
 
-  // Planifier notification pour la prise de pilule quotidienne
-  for (let i = 1; i < cycleDuration; i++) {
-    const pillReminderDate = moment(lastMenstruationDate).add(i, 'days');
-    await scheduleNotification('Pill Reminder', 'Time to take your pill!', pillReminderDate.toDate());
-  }
+  await scheduleNotification(
+    "Rappel d'Ovulation",
+    "Aujourd'hui est votre jour d'ovulation.",
+    ovulationDate.toDate()
+  );
 
-  // Planifier notification pour le début des règles
-  await scheduleNotification('Menstruation Reminder', 'Your menstruation starts today!', nextMenstruationDate.toDate());
+  const reminderTime = moment().add(i, "minutes").toDate();
+  await scheduleNotification(
+    "Rappel de Pilule",
+    "N'oubliez pas de prendre votre pilule.",
+    reminderTime
+  );
+
+  const dailyPillReminderTime = moment().add(1, "minutes").toDate();
+  await scheduleNotification(
+    "Rappel de Pilule",
+    "N'oubliez pas de prendre votre pilule aujourd'hui.",
+    dailyPillReminderTime
+  );
 }

@@ -1,10 +1,10 @@
 import { useContext } from "react";
 import { View, Text, Pressable, StyleSheet, Image } from "react-native";
-import { SIZES, COLORS } from "../../../constants"; 
-import { ThemeContext } from "../theme-context";
+import { SIZES, COLORS } from "@/constants"; 
+// import { ThemeContext } from "@/theme-context";
 
 export const StateItem1 = ({ text, active, urlImg, onPress }) => {
-    const {theme} = useContext(ThemeContext);
+    // const {theme} = useContext(ThemeContext);
      
     return ( 
     <View style={styles.container}>
@@ -20,7 +20,7 @@ export const StateItem1 = ({ text, active, urlImg, onPress }) => {
 };
 
 export const StateItem2 = ({ text, urlImg, active, onPress }) => {
-    const {theme} = useContext(ThemeContext);
+    // const {theme} = useContext(ThemeContext);
   
     return (
         <View style={styles.container}>
@@ -33,7 +33,7 @@ export const StateItem2 = ({ text, urlImg, active, onPress }) => {
 }
 
 export const StateItem3 = ({ text, urlImg, active, onPress }) => {
-    const {theme} = useContext(ThemeContext);
+    // const {theme} = useContext(ThemeContext);
    
     return (
         <View style={styles.container}>

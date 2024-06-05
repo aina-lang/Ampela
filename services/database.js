@@ -2,9 +2,9 @@ import * as SQLite from "expo-sqlite";
 
 export const db = SQLite.openDatabaseSync("ampela.db");
 
-db.closeSync();
+// db.closeSync();
 
-SQLite.deleteDatabaseSync("ampela.db");
+// SQLite.deleteDatabaseSync("ampela.db");
 
 export const addUser = async (
   username,

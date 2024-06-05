@@ -13,15 +13,15 @@ import {
 
 function MyTabBar({ state, descriptors, navigation }) {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-  const translateY = useRef(new Animated.Value(0)).current; // Initialise la valeur animée pour translateY
-
+  const translateY = useRef(new Animated.Value(0)).current;
+  
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       "keyboardDidShow",
       () => {
         setKeyboardVisible(true);
         Animated.timing(translateY, {
-          toValue: 100, // Valeur pour déplacer la barre d'onglets vers le bas
+          toValue: 100,
           duration: 300,
           easing: Easing.ease,
           useNativeDriver: true,
@@ -33,7 +33,7 @@ function MyTabBar({ state, descriptors, navigation }) {
       () => {
         setKeyboardVisible(false);
         Animated.timing(translateY, {
-          toValue: 0, // Valeur pour ramener la barre d'onglets à sa position initiale
+          toValue: 0,
           duration: 300,
           easing: Easing.ease,
           useNativeDriver: true,
@@ -62,7 +62,7 @@ function MyTabBar({ state, descriptors, navigation }) {
           const label = options.tabBarLabel ?? options.title ?? route.name;
           const icon = options.tabBarIcon;
           const isFocused = state.index === index;
-
+          console.log(route.name);
           const onPress = () => {
             const event = navigation.emit({
               type: "tabPress",
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     width: SIZES.width,
     position: "absolute",
     bottom: 10,
-    zIndex: 10,
+    zIndex: 1,
   },
   tabContainer: {
     width: SIZES.width - 20,

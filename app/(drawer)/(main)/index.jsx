@@ -1,13 +1,5 @@
-import { useState, useLayoutEffect } from "react";
-import {
-  View,
-  ScrollView,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Button,
-  Pressable,
-} from "react-native";
+import { useState, useRef, useCallback } from "react";
+import { View, ScrollView, Text, StyleSheet, Pressable } from "react-native";
 
 import { COLORS, SIZES } from "@/constants";
 import ReminderContent from "@/components/reminder-content";
@@ -15,11 +7,10 @@ import BackgroundContainer from "@/components/background-container";
 import IndicationCalendar from "@/components/calendar/indication-calendar";
 import { Calendar, LocaleConfig } from "react-native-calendars";
 import ReminderItem from "@/components/calendar/reminder-item";
-import AuthWithGoogle from "@/components/authWithGoogle/authWithGoogle";
 import { useSelector } from "react-redux";
 import { useNavigation } from "expo-router";
 import moment from "moment";
-import { generateCycleMenstrualData } from "@/utils/menstruationUtils";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
 const index = () => {
   const user = useSelector((state) => state.user);
@@ -30,6 +21,7 @@ const index = () => {
   const [scrollDisabled, setScrollDisabled] = useState(true);
   const [reminderModalIsVisible, setReminderModalIsVisible] = useState(false);
   const [reminderInfo, setReminderInfo] = useState({ as: "", time: "" });
+
   const [time1, setTime1] = useState({
     hour: 0,
     minutes: 0,
@@ -84,7 +76,7 @@ const index = () => {
     dayNamesShort: ["Di.", "Lu.", "Ma.", "Me.", "Je.", "Ve.", "Sa."],
     today: "Aujourd'hui",
   };
-  
+
   LocaleConfig.locales["mg"] = {
     monthNames: [
       "Janoary",
@@ -126,7 +118,7 @@ const index = () => {
     dayNamesShort: ["Alh.", "Alt.", "Tal.", "Alr.", "Alk.", "Zo.", "Sa."],
     today: "Androany",
   };
-  
+
   LocaleConfig.defaultLocale = "fr";
 
   const handleReminderBtnOnePress = () => {
@@ -156,16 +148,19 @@ const index = () => {
       case "Début des règles":
         setTime1({ ...time1, hour: hour, minutes: minutes });
         setHowmanytimeReminder1(active);
+        dispatch(scheduleMenstruationNotifications());
         setTranslateYOne(1500);
         break;
       case "Jour d'ovulation":
         setTime2({ ...time2, hour: hour, minutes: minutes });
         setHowmanytimeReminder2(active);
+        dispatch(scheduleOvulationNotifications());
         setTranslateYTwo(1500);
         break;
       case "Prise de pillule":
         setTime3({ ...time3, hour: hour, minutes: minutes });
         setHowmanytimeReminder3(active);
+        dispatch(schedulePillNotifications());
         setTranslateYThree(1500);
         break;
       default:
@@ -197,7 +192,6 @@ const index = () => {
         };
       }
 
-      // Parcourir entre le startfecondity et endfecondity day pour pouvoir les marquer
       let start = moment(cycle.fecundityPeriodStart);
       let end = moment(cycle.fecundityPeriodEnd);
 
@@ -226,51 +220,47 @@ const index = () => {
             color: "#000",
           },
         },
-        // selected: true,
       };
     });
-
-    // return markedDates;
   };
 
   generateMarkedDates();
+
+  const bottomSheetRef = useRef();
+
+  const openBottomSheet = () => {
+    bottomSheetRef.current.expand();
+  };
+
+  const closeBottomSheet = () => {
+    bottomSheetRef.current.close();
+  };
+
+  const handleSheetChanges = useCallback((index) => {
+    console.log("handleSheetChanges", index);
+  }, []);
+
   return (
     <>
-      {reminderModalIsVisible == true && (
-        <Pressable
-          className="absolute z-50 bg-black/40"
-          style={{
-            position: "absolute",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100%",
-            width: SIZES.width,
-          }}
-          onPress={() => setReminderModalIsVisible(false)}
-        >
-          <ReminderContent
-            onCloseIconPress={handleCloseIconOnePress}
-            pills={false}
-            type={reminderInfo.as}
-            onRegisterButtonPress={handleRegisterButtonPress}
-          />
-        </Pressable>
-      )}
+      <ReminderContent
+        isActive={reminderModalIsVisible}
+        setReminderModalIsVisible={setReminderModalIsVisible}
+        pills={false}
+        type={reminderInfo.as}
+        onRegisterButtonPress={handleRegisterButtonPress}
+      />
 
-      {/* <Animated.View
-        style={{
-          position: "absolute",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          height: SIZES.height,
-          width: SIZES.width,
-        }}
-        className="absolute z-50 bg-black/40 top-0 flex-1"
+      <BottomSheet
+        ref={bottomSheetRef}
+        onChange={handleSheetChanges}
+        snapPoints={["50%", "90%"]}
+        // initialSnapIndex={0}
+        enablePanDownToClose
       >
-        <AuthWithGoogle className="z-50" />
-      </Animated.View> */}
+        <BottomSheetView style={styles.contentContainer}>
+          <Text>Awesome 🎉</Text>
+        </BottomSheetView>
+      </BottomSheet>
 
       <ScrollView
         scrollEnabled={scrollDisabled}
@@ -278,19 +268,12 @@ const index = () => {
         showsVerticalScrollIndicator={false}
       >
         <BackgroundContainer>
-          {/* <Text
-            style={styles.title}
-            // onPress={() => navigation.navigate("Screen")}
-          >{}</Text> */}
           <View style={styles.calendar}>
             <Calendar
-              // minDate={"2024-05-15"}
               disableAllTouchEventsForDisabledDays={true}
-              // initialDate={"2024-05-15"}
               style={{
                 height: 380,
                 borderRadius: 8,
-                // backgroundColor: "rgba(255, 255, 255, .5)",
               }}
               theme={{
                 textSectio0nTitleColor: COLORS.neutral400,
@@ -306,14 +289,8 @@ const index = () => {
                 textMonthFontSize: SIZES.large,
                 textDayHeaderFontSize: SIZES.medium,
               }}
-              onDayPress={(day) => {
-                // //.log(day.dateString);
-              }}
-              // markedDates={generateMarkedDates()}
-              // markedDates={{ "2024-05-30": { selected: true, color: "blue" } }}
               markedDates={markedDates}
               enableSwipeMonths={true}
-              // onMonthChange={(month) => handleMonthChange(month)}
               markingType="custom"
             />
           </View>
@@ -367,13 +344,9 @@ const index = () => {
 };
 
 const styles = StyleSheet.create({
-  authwithgoogleContainer: {
-    // position: "absolute",
-    // top: 0,
-    // left: 0,
-    // right: 0,
-    // bottom: 0,
-    // backgroundColor: "rgba(0, 0, 0, 0.4)",
+  contentContainer: {
+    flex: 1,
+    alignItems: "center",
   },
   container: {
     height: "100%",
@@ -382,8 +355,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     alignItems: "center",
     paddingTop: "50%",
-    // justifyContent: "center",
-    // backgroundColor: "rgba(0, 0, 0, .3)",
     top: 0,
     right: -20,
     left: -20,
@@ -392,7 +363,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: "Bold",
-
     textAlign: "center",
     marginTop: 60,
   },
@@ -420,3 +390,149 @@ const styles = StyleSheet.create({
 });
 
 export default index;
+
+// import { useState, useEffect, useRef } from "react";
+// import { Text, View, Button, Platform } from "react-native";
+// import * as Device from "expo-device";
+// import * as Notifications from "expo-notifications";
+// import Constants from "expo-constants";
+
+// Notifications.setNotificationHandler({
+//   handleNotification: async () => ({
+//     shouldShowAlert: true,
+//     shouldPlaySound: false,
+//     shouldSetBadge: false,
+//   }),
+// });
+
+// export default function App() {
+//   const [expoPushToken, setExpoPushToken] = useState("");
+//   const [channels, setChannels] = useState([]);
+//   const [notification, setNotification] = useState();
+//   // (useState < Notifications.Notification) | (undefined > undefined);
+
+//   const notificationListener = useRef();
+//   const responseListener = useRef();
+
+//   useEffect(() => {
+//     registerForPushNotificationsAsync().then(
+//       (token) => token && setExpoPushToken(token)
+//     );
+
+//     if (Platform.OS === "android") {
+//       Notifications.getNotificationChannelsAsync().then((value) =>
+//         setChannels(value ?? [])
+//       );
+//     }
+//     notificationListener.current =
+//       Notifications.addNotificationReceivedListener((notification) => {
+//         setNotification(notification);
+//       });
+
+//     responseListener.current =
+//       Notifications.addNotificationResponseReceivedListener((response) => {
+//         console.log(response);
+//       });
+
+//     return () => {
+//       notificationListener.current &&
+//         Notifications.removeNotificationSubscription(
+//           notificationListener.current
+//         );
+//       responseListener.current &&
+//         Notifications.removeNotificationSubscription(responseListener.current);
+//     };
+//   }, []);
+
+//   return (
+//     <View
+//       style={{
+//         flex: 1,
+//         alignItems: "center",
+//         justifyContent: "space-around",
+//       }}
+//     >
+//       <Text>Your expo push token: {expoPushToken}</Text>
+//       <Text>{`Channels: ${JSON.stringify(
+//         channels.map((c) => c.id),
+//         null,
+//         2
+//       )}`}</Text>
+//       <View style={{ alignItems: "center", justifyContent: "center" }}>
+//         <Text>
+//           Title: {notification && notification.request.content.title}{" "}
+//         </Text>
+//         <Text>Body: {notification && notification.request.content.body}</Text>
+//         <Text>
+//           Data:{" "}
+//           {notification && JSON.stringify(notification.request.content.data)}
+//         </Text>
+//       </View>
+//       <Button
+//         title="Press to schedule a notification"
+//         onPress={async () => {
+//           await schedulePushNotification();
+//         }}
+//       />
+//     </View>
+//   );
+// }
+
+// async function schedulePushNotification() {
+//   await Notifications.scheduleNotificationAsync({
+//     content: {
+//       title: "You've got mail! 📬",
+//       body: "Here is the notification body",
+//       data: { data: "goes here", test: { test1: "more data" } },
+//     },
+//     trigger: { seconds: 2 },
+//   });
+// }
+
+// async function registerForPushNotificationsAsync() {
+//   let token;
+
+//   if (Platform.OS === "android") {
+//     await Notifications.setNotificationChannelAsync("default", {
+//       name: "default",
+//       importance: Notifications.AndroidImportance.MAX,
+//       vibrationPattern: [0, 250, 250, 250],
+//       lightColor: "#FF231F7C",
+//     });
+//   }
+
+//   if (Device.isDevice) {
+//     const { status: existingStatus } =
+//       await Notifications.getPermissionsAsync();
+//     let finalStatus = existingStatus;
+//     if (existingStatus !== "granted") {
+//       const { status } = await Notifications.requestPermissionsAsync();
+//       finalStatus = status;
+//     }
+//     if (finalStatus !== "granted") {
+//       alert("Failed to get push token for push notification!");
+//       return;
+//     }
+
+//     try {
+//       const projectId =
+//         Constants?.expoConfig?.extra?.eas?.projectId ??
+//         Constants?.easConfig?.projectId;
+//       if (!projectId) {
+//         throw new Error("Project ID not found");
+//       }
+//       token = (
+//         await Notifications.getExpoPushTokenAsync({
+//           projectId,
+//         })
+//       ).data;
+//       console.log(token);
+//     } catch (e) {
+//       token = `${e}`;
+//     }
+//   } else {
+//     alert("Must use physical device for Push Notifications");
+//   }
+
+//   return token;
+// }

@@ -1,8 +1,8 @@
 import { useState, useContext, useEffect } from 'react';
 import { Text, View, StyleSheet, Pressable, Image } from 'react-native';
-import { COLORS, SIZES, icons } from '../../../constants';
+import { COLORS, SIZES, icons } from '@/constants';
 import { ThemeContext } from '../theme-context';
-import { useTranslation } from 'react-i18next';
+// import { useTranslation } from 'react-i18next';
 
 // [
 //     {
@@ -16,8 +16,8 @@ import { useTranslation } from 'react-i18next';
 // ]
 
 const FaqItem = ({question, response, list}) => {
-    const {theme} = useContext(ThemeContext);
-    const {t} = useTranslation();
+    // const {theme} = useContext(ThemeContext);
+    // const {t} = useTranslation();
     const [active, setActive] = useState(false);
    
     const handlePress = () => {
@@ -25,10 +25,10 @@ const FaqItem = ({question, response, list}) => {
     }
     
     return (
-        <Pressable onPress={handlePress} style={[styles.container, {backgroundColor: theme === 'pink' ? COLORS.neutral200  : COLORS.neutral280}]}>
+        <Pressable onPress={handlePress} style={[styles.container, {backgroundColor: 'pink'=== 'pink' ? COLORS.neutral200  : COLORS.neutral280}]}>
             <View style={{flexDirection: "row",  alignItems: "flex-start", justifyContent: "space-between"}}>
                 <View style={{width: "90%"}}>
-                <Text style={styles.question}>{t(question)}</Text>
+                <Text style={styles.question}>{question}</Text>
                 </View>
                     <Pressable onPress={handlePress} style={{
                         transform: [
@@ -42,8 +42,8 @@ const FaqItem = ({question, response, list}) => {
                 active ?
                 (   
                 <View>
-                    <Text style={styles.response}>{t(response)}</Text>  
-                    {list ? list.map((d) => <Text key={d} style={styles.response}>- {t(d)}</Text>) : null}
+                    <Text style={styles.response}>{response}</Text>  
+                    {list ? list.map((d) => <Text key={d} style={styles.response}>- {d}</Text>) : null}
                 </View>                  
                 )
                    

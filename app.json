@@ -28,6 +28,20 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/favicon.png",
+          "color": "#ffffff",
+          "sounds": ["./assets/sound/notification.mp3"]
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Cette applicaion necessite une opermission vers votre gallerie"
+        }
+      ],
       "expo-router",
       "expo-font"
     ],
