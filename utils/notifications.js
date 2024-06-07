@@ -1,5 +1,4 @@
 import * as Notifications from "expo-notifications";
-import * as Permissions from "expo-permissions";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 import moment from "moment";
