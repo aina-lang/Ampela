@@ -2,6 +2,7 @@
 import { View, TextInput, Image, StyleSheet, Pressable } from 'react-native';
 // import { useTranslation } from 'react-i18next';
 import {SIZES, icons } from '@/constants';
+import i18n from '@/constants/i18n';
 
 const SearchArticles = ({text, onChange}) => {
     // const { t } = useTranslation();
@@ -17,7 +18,7 @@ const SearchArticles = ({text, onChange}) => {
         <View style={styles.container} className="shadow-sm shadow-black ">
             <TextInput 
               style={{fontFamily: 'Medium', fontSize: SIZES.medium, width: '90%'}}
-              placeholder={'rechercher'}
+              placeholder={i18n.t('rechercher')}
               value={text}
               onChangeText={handleTextInputChange}
             />
@@ -31,7 +32,7 @@ const SearchArticles = ({text, onChange}) => {
 const styles = StyleSheet.create({
     container: {
        width: '100%',
-       marginVertical: 10,
+       marginVertical: 30,
        backgroundColor: "rgba(255, 255, 255, .8)",
        borderRadius: 100, 
        paddingVertical: 10,

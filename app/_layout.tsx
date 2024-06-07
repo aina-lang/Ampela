@@ -1,50 +1,49 @@
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
-import * as SplashScreen from "expo-splash-screen";
-import { useFonts } from "expo-font";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Provider } from "react-redux";
-SplashScreen.preventAutoHideAsync();
-import { Stack } from "expo-router";
+import { Stack, useNavigation } from "expo-router";
 import "react-native-reanimated";
-import { useColorScheme } from "@/hooks/useColorScheme";
 import store from "@/redux/store";
+import ProgressBar from "@/components/ProgreessBar";
+import i18n from "@/constants/i18n";
+import { ThemeProvider } from "@/hooks/theme-context";
+import LanguageProvider from "@/hooks/LangageProvider";
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-    Regular: require("../assets/fonts/WorkSans-Regular.ttf"),
-    Medium: require("../assets/fonts/WorkSans-Medium.ttf"),
-    SBold: require("../assets/fonts/WorkSans-SemiBold.ttf"),
-    Bold: require("../assets/fonts/WorkSans-Bold.ttf"),
-  });
-
+  const [locale, setLocale] = useState(i18n.locale);
+  const [loading, setLoading] = useState(false);
+  const navigation = useNavigation();
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
+    i18n.onChange(() => {
+      setLoading(true);
+      setLocale(i18n.locale);
+      setTimeout(() => {
+        setLoading(false);
+      }, 200);
+    });
+  }, [locale]);
 
   return (
     <Provider store={store}>
-      {/* <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}> */}
-      <Stack
-        screenOptions={{ headerShown: false }}
-        // initialRouteName="discovery"
-      >
-        <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-        <Stack.Screen name="(discovery)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      {/* </ThemeProvider> */}
+      <LanguageProvider>
+        <ThemeProvider>
+          {loading ? (
+            <ProgressBar isVisible={true} percentage={20} text={"en cours"} />
+          ) : (
+            <Stack
+              screenOptions={{ headerShown: false }}
+              // initialRouteName="discovery"
+              key={locale}
+            >
+              <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="(discovery)"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+          )}
+        </ThemeProvider>
+      </LanguageProvider>
     </Provider>
   );
 }

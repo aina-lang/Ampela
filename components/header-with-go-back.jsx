@@ -6,7 +6,7 @@ const HeaderWithGoBack = ({ navigation, title, iconLeft, onIconLeftPress }) => {
   return (
     <View style={styles.header}>
       <TouchableOpacity
-        onPress={() => navigation.goBack()}
+        onPress={() => {navigation.goBack();navigation.openDrawer()}}
         style={{ padding: 10 }}
       >
         <Image source={icons.backLeft} style={{ width: 15, height: 15 }} />

@@ -18,6 +18,7 @@ import BackgroundContainer from "@/components/background-container";
 import { useNavigation } from "expo-router";
 import { useSelector } from "react-redux";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import i18n from "@/constants/i18n";
 
 const DATA = [
   "Menstruations",
@@ -38,7 +39,7 @@ const ArticlesScreen = () => {
     (item) => {
       setActiveCategory(item);
       const index = DATA.findIndex((category) => category === item);
-      // Scroll the FlatList to the specified index with animation
+
       flatListRef.current.scrollToIndex({ animated: true, index });
     },
     [activeCategory]
@@ -55,7 +56,7 @@ const ArticlesScreen = () => {
     >
       <SafeAreaView style={styles.container} className="">
         <BackgroundContainer paddingBottom={50}>
-          <Text style={styles.title}>{"articles"}</Text>
+       
           <SearchArticles text={text} onChange={handleTextInputChange} />
 
           <FlatList

@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { View, Text, Switch, StyleSheet, TouchableOpacity } from "react-native";
 import { COLORS, SIZES } from "../../constants";
+import { ThemeContext } from "@/hooks/theme-context";
 
 const ReminderItem = ({ as, time, onPress, howmanytimeReminder }) => {
   const [isEnabled, setIsEnabled] = useState(false);
-
+  const { theme } = useContext(ThemeContext);
   const toggleSwitch = () => {
     setIsEnabled((v) => !v);
   };
@@ -31,8 +32,8 @@ const ReminderItem = ({ as, time, onPress, howmanytimeReminder }) => {
       <View>
         <Switch
           trackColor={{
-            false: "pink" === "pink" ? COLORS.neutral200 : COLORS.neutral250,
-            true: "pink" === "pink" ? COLORS.accent600 : COLORS.accent800,
+            false: theme === "pink" ? COLORS.neutral200 : COLORS.neutral250,
+            true: theme === "pink" ? COLORS.accent600 : COLORS.accent800,
           }}
           thumbColor={isEnabled ? COLORS.neutral100 : COLORS.neutral100}
           ios_backgroundColor={COLORS.neutral200}

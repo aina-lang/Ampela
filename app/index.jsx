@@ -16,12 +16,7 @@ SplashScreen.preventAutoHideAsync();
 export default function Index() {
   const [loaded, setLoaded] = useState(false);
   const [isFirstTime, setIsFirstTime] = useState(null);
-  const [expoPushToken, setExpoPushToken] = useState("");
-  const [notification, setNotification] = useState(undefined);
-
-  const notificationListener = useRef();
-  const responseListener = useRef();
-
+  
   useEffect(() => {
     const fetchData = async () => {
       try {

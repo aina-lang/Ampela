@@ -1,22 +1,12 @@
 import { useState, useContext, useEffect } from 'react';
 import { Text, View, StyleSheet, Pressable, Image } from 'react-native';
 import { COLORS, SIZES, icons } from '@/constants';
-import { ThemeContext } from '../theme-context';
-// import { useTranslation } from 'react-i18next';
+import { ThemeContext } from '../../hooks/theme-context';
+import i18n from '@/constants/i18n';
 
-// [
-//     {
-//         title: "intro",
-//         content: "Titlleee"
-//     },
-//     {
-//         title: "list",
-//         content: ["Hey", "Hello", "Way man negga"]
-//     }
-// ]
 
 const FaqItem = ({question, response, list}) => {
-    // const {theme} = useContext(ThemeContext);
+    const {theme} = useContext(ThemeContext);
     // const {t} = useTranslation();
     const [active, setActive] = useState(false);
    
@@ -25,7 +15,7 @@ const FaqItem = ({question, response, list}) => {
     }
     
     return (
-        <Pressable onPress={handlePress} style={[styles.container, {backgroundColor: 'pink'=== 'pink' ? COLORS.neutral200  : COLORS.neutral280}]}>
+        <Pressable onPress={handlePress} style={[styles.container, {backgroundColor: theme=== 'pink' ? COLORS.neutral200  : COLORS.neutral280}]}>
             <View style={{flexDirection: "row",  alignItems: "flex-start", justifyContent: "space-between"}}>
                 <View style={{width: "90%"}}>
                 <Text style={styles.question}>{question}</Text>
@@ -43,7 +33,7 @@ const FaqItem = ({question, response, list}) => {
                 (   
                 <View>
                     <Text style={styles.response}>{response}</Text>  
-                    {list ? list.map((d) => <Text key={d} style={styles.response}>- {d}</Text>) : null}
+                    {list ? list.map((d,index) => <Text key={index} style={styles.response}>- {i18n.t(d)}</Text>) : null}
                 </View>                  
                 )
                    
@@ -66,7 +56,8 @@ const styles = StyleSheet.create({
     response: {
         fontFamily: "Regular",
         fontSize: SIZES.medium,
-        marginTop: 10
+        marginTop: 10,
+        lineHeight:22
     }
 })
 

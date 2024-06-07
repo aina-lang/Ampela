@@ -1,7 +1,8 @@
-import { SIZES } from "@/constants";
+import { COLORS, SIZES } from "@/constants";
+import { ThemeContext } from "@/hooks/theme-context";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { useNavigation } from "expo-router";
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useContext } from "react";
 import {
   SafeAreaView,
   Text,
@@ -14,6 +15,7 @@ import { GiftedChat, InputToolbar, Send } from "react-native-gifted-chat";
 export default function onemessage() {
   const [messages, setMessages] = useState([]);
   const navigation = useNavigation();
+  const { theme } = useContext(ThemeContext);
 
   useEffect(() => {
     setMessages([
@@ -67,7 +69,7 @@ export default function onemessage() {
       <View
         className=" w-full flex-row items-center pt-8  rounded-b-lg justify-between  shadow-md shadow-black"
         style={{
-          backgroundColor: "#FF7575",
+          backgroundColor:   theme=== "orange" ? COLORS.accent800 : COLORS.accent500,
           height: SIZES.height * 0.16,
           paddingHorizontal: 16,
         }}

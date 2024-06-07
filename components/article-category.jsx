@@ -3,17 +3,20 @@ import { Pressable, Text, StyleSheet } from "react-native";
 // import { useTranslation } from "react-i18next";
 // import { ThemeContext } from "./theme-context";
 import { COLORS, SIZES } from "@/constants";
+import i18n from "@/constants/i18n";
+import { ThemeContext } from "@/hooks/theme-context";
+import { useContext } from "react";
 
 const ArticleCategory = ({ active, onPress, children }) => {
   //   const { t } = useTranslation();
-  //   const { theme } = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const containerStyle = active
     ? [
         styles.container,
         {
           backgroundColor:
-            "pink" === "pink" ? COLORS.accent600 : COLORS.accent800,
-          borderColor: "pink" === "pink" ? COLORS.accent600 : COLORS.accent800,
+            theme === "pink" ? COLORS.accent600 : COLORS.accent800,
+          borderColor: theme === "pink" ? COLORS.accent600 : COLORS.accent800,
         },
       ]
     : styles.container;
@@ -46,7 +49,7 @@ const ArticleCategory = ({ active, onPress, children }) => {
       onPress={onPress}
       className={`${active ? "shadow-md shadow-black " : ""}`}
     >
-      <Text style={textStyle}>{text}</Text>
+      <Text style={textStyle}>{i18n.t(text)}</Text>
     </Pressable>
   );
 };

@@ -1,7 +1,7 @@
 import { useCallback, useContext } from 'react';
 import { Text, Linking, Alert, StyleSheet } from 'react-native';
 import { COLORS } from '@/constants';
-import { ThemeContext } from './theme-context';
+import { ThemeContext } from '../hooks/theme-context';
 
 const Link = ({url, children}) => {
     // const {theme} = useContext(ThemeContext);

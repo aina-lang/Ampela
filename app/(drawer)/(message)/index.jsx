@@ -21,10 +21,12 @@ import MessageItem from "@/components/messageItem";
 import { auth, database } from "@/services/firebaseConfig";
 import { useNavigation } from "expo-router";
 import { AntDesign } from "@expo/vector-icons";
+import i18n from "@/constants/i18n";
+import { ThemeContext } from "@/hooks/theme-context";
 
 const index = () => {
   // const { t } = useTranslation();
-  // const { theme, toggleTheme } = useContext(ThemeContext);
+  const { theme, toggleTheme } = useContext(ThemeContext);
   const navigation = useNavigation();
   // const [users, setUsers] = useState([]);
   // const currentUserUid = auth.currentUser.uid;
@@ -172,7 +174,7 @@ const index = () => {
         styles.container,
         {
           backgroundColor:
-            "pink" === "pink" ? COLORS.neutral200 : COLORS.neutral100,
+            theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
         },
       ]}
     >
@@ -187,7 +189,7 @@ const index = () => {
               fontSize: SIZES.medium,
               width: "90%",
             }}
-            placeholder={"rechercher"}
+            placeholder={i18n.t('rechercher')}
             onChangeText={(text) => {
               handleSearch(text);
               const sanitizedText = text.replace(

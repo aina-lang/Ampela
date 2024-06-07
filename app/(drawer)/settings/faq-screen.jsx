@@ -5,6 +5,7 @@ import HeaderWithGoBack from '@/components/header-with-go-back';
 import FaqItem from '@/components/settings/faq-item';
 import faqdata from '@/constants/faqdata';
 import { useNavigation } from 'expo-router';
+import i18n from '@/constants/i18n';
 
 const FaqScreen = () => {
     const [data, setData] = useState([]);
@@ -19,7 +20,7 @@ const FaqScreen = () => {
                 <View style={{gap: 10}}>
                 {
                     data.map((d) => (
-                        <FaqItem key={d.id} question={d.question} response={d.response} list={d.list ? d.list : ""} />
+                        <FaqItem key={d.id} question={i18n.t(d.question)} response={i18n.t(d.response)} list={d.list ? d.list : ""} />
                     ))
                 }
                 </View>

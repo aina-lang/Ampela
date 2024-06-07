@@ -14,7 +14,7 @@ import {
 
 import HeaderForum from "@/components/header-forum";
 import ForumItem from "@/components/forum-item";
-import { ThemeContext } from "@/components/theme-context";
+// import { ThemeContext } from "@/components/theme-context";
 import { COLORS, SIZES } from "@/constants";
 import BackgroundContainer from "@/components/background-container";
 
@@ -31,7 +31,7 @@ const index = () => {
   const screenWidth = Dimensions.get("window").width + 200;
   const translateXAnim = useRef(new Animated.Value(screenWidth)).current;
   const [newPostContent, setNewPostContent] = useState("");
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState([{},{},{}]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isInputsDisabled, setIsInputsDisabled] = useState(false);
@@ -78,7 +78,6 @@ const index = () => {
       updatedAt: new Date(),
     };
 
-    // Appel de la fonction addNewPost pour ajouter le nouveau post
     try {
       const response = await addNewPost(newPostData);
       if (response && response.msg === "no-auth") {
@@ -105,31 +104,33 @@ const index = () => {
 
   return (
     <View style={styles.container}>
-      <BackgroundContainer paddingBottom={85} paddingHorizontal={20}>
+      <BackgroundContainer paddingBottom={0} paddingHorizontal={2}>
         {isLoading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={COLORS.primary} />
           </View>
         )}
 
-        <View className=" pt-5" style={{ height: SIZES.height * 0.2 }}>
+        <View className=" pt-5 pb-10 px-5" style={{ height: SIZES.height * 0.2 }}>
           <View className="flex-row justify-between items-center p-2 ">
-            <Text className="text-xl">Forum</Text>
-            <Link href={"(drawer)/(forum)/addpost"} className="flex-row space-x-2 p-2 bg-white rounded-md shadow-sm shadow-black">
-              <AntDesign name="edit" size={24} color={COLORS.accent600}/>
+            <Link
+              href={"(drawer)/(forum)/addpost"}
+              className="flex-row space-x-2 p-2 bg-white rounded-md shadow-sm shadow-black"
+            >
+              <AntDesign name="edit" size={24} color={COLORS.accent600} />
               <Text>Posez des questions</Text>
             </Link>
           </View>
           <SearchForum />
         </View>
-
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {posts.map((post) => (
-            <ForumItem
-              key={post.createdAt.toMillis()}
-              post={post}
-              navigation={navigation}
-            />
+        <View className="h-8" />
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          className="p-3 mx-auto scroll-pb-20"
+          style={{ width:"100%" }}
+        >
+          {posts.map((post, index) => (
+            <ForumItem key={index} post={post} navigation={navigation} />
           ))}
         </ScrollView>
       </BackgroundContainer>
@@ -138,16 +139,7 @@ const index = () => {
 };
 
 const styles = StyleSheet.create({
-  containerBox: {
-    flex: 1,
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, .3)",
-    zIndex: 30000,
-  },
+
   loadingContainer: {
     position: "absolute",
     ...StyleSheet.absoluteFillObject,

@@ -1,11 +1,11 @@
 import { useState, useContext, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
-
-import { ThemeContext } from "@/components/theme-context";
 import { SIZES, COLORS } from "@/constants";
 import HeaderWithGoBack from "@/components/header-with-go-back";
 import Link from "@/components/link";
 import { useNavigation } from "expo-router";
+import i18n from "@/constants/i18n";
+import { ThemeContext } from "@/hooks/theme-context";
 
 const contentData = [
   {
@@ -28,8 +28,7 @@ const contentData = [
 
 
 const InfoScreen = () => {
-  // const { t } = useTranslation();
-  // const { 'pink'} = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const navigation=useNavigation()
   const [data, setData] = useState([]); 
   
@@ -40,15 +39,15 @@ const InfoScreen = () => {
         styles.container,
         {
           backgroundColor:
-            'pink'=== "pink" ? COLORS.neutral200 : COLORS.neutral100,
+            theme=== "pink" ? COLORS.neutral200 : COLORS.neutral100,
         },
       ]}
     >
-      <HeaderWithGoBack title={"infoAmpela"} navigation={navigation} />
+      <HeaderWithGoBack title={i18n.t("infoAmpela")} navigation={navigation} />
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={{marginTop: 20}}>
         <Text style={styles.text}>
-          {"introInfo"}
+          {i18n.t("introInfo")}
       </Text>
         </View>
       
@@ -56,16 +55,16 @@ const InfoScreen = () => {
         {
           contentData.map((content) => {
             return (<View key={content.subtitle}>
-              <Text style={styles.subtitle}>{content.subtitle}</Text>
-              <Text style={styles.text}>{content.content}</Text>
+              <Text style={styles.subtitle}>{i18n.t(content.subtitle)}</Text>
+              <Text style={styles.text}>{i18n.t(content.content)}</Text>
             </View>)
           })
         }
       </View>
       
       <View style={{marginTop: 30, marginBottom: 15}}> 
-      <Text style={styles.text}>{"partenariat"} : UNFPA Madagascar, Orange Madagascar </Text>
-      <Text style={styles.text}>{"siteWeb"}: <Link url="https://www.google.com">www.ampela.com</Link></Text>
+      <Text style={styles.text}>{i18n.t("partenariat")} : UNFPA Madagascar, Orange Madagascar </Text>
+      <Text style={styles.text}>{i18n.t("siteWeb")}: <Link url="https://www.google.com">www.ampela.com</Link></Text>
 
       </View>
 

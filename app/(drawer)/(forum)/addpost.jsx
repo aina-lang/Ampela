@@ -29,7 +29,7 @@ const AddPost = () => {
       quality: 1,
     });
 
-    console.log(result);
+    // console.log(result);
 
     if (!result.canceled) {
       setPhotos(result.assets[0].uri);
@@ -37,7 +37,7 @@ const AddPost = () => {
   };
 
   const submitPost = () => {
-    console.log({ title, description, photos });
+    // console.log({ title, description, photos });
   };
 
   return (

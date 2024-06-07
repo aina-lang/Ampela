@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image, TextInput, Pressable } from 'react-native';
 // import { useTranslation } from 'react-i18next';
-import { COLORS, SIZES, icons } from '@/constants';
+import { COLORS, SIZES, icons, images } from '@/constants';
 import CommentContent from './comment-content';
 import { addNewComment } from "@/services/firestoreAPI";
 import { addNewLike, removeLike } from "@/services/firestoreAPI";
@@ -10,242 +10,242 @@ import { collection, onSnapshot, query, where, getDocs, doc, deleteDoc, getDoc, 
 import { database } from '@/services/firebaseConfig';
 
 const ForumItem = ({ post, refToCommentItem, navigation }) => {
-    console.log(refToCommentItem);
-    // const { t } = useTranslation();
-    const [isLikeIconPressed, setIsLikeIconPressed] = useState(false);
-    const [isCommentIconPressed, setIsCommentIconPressed] = useState(false);
-    const [commentValue, setCommentValue] = useState("");
-    const [authorName, setAuthorName] = useState('');
-    const [likeCount, setLikeCount] = useState(post.like);
-    const [commentCount, setCommentCount] = useState(0);
-    const [isDisabled, setIsDisabled] = useState(false);
+    // console.log(refToCommentItem);
+    // // const { t } = useTranslation();
+    // const [isLikeIconPressed, setIsLikeIconPressed] = useState(false);
+    // const [isCommentIconPressed, setIsCommentIconPressed] = useState(false);
+    // const [commentValue, setCommentValue] = useState("");
+    // const [authorName, setAuthorName] = useState('');
+    // const [likeCount, setLikeCount] = useState(post.like);
+    // const [commentCount, setCommentCount] = useState(0);
+    // const [isDisabled, setIsDisabled] = useState(false);
 
-    useEffect(() => {
-        try {
-            const likesRef = collection(database, 'likes');
-            const likesQuery = query(likesRef, where('postId', '==', post.postId));
+    // useEffect(() => {
+    //     try {
+    //         const likesRef = collection(database, 'likes');
+    //         const likesQuery = query(likesRef, where('postId', '==', post.postId));
 
-            const unsubscribeLikes = onSnapshot(likesQuery, (likesSnapshot) => {
-                try {
-                    setLikeCount(likesSnapshot.size);
-                } catch (error) {
-                    console.error("Erreur lors de la mise à jour du nombre de likes :", error);
-                }
-            });
+    //         const unsubscribeLikes = onSnapshot(likesQuery, (likesSnapshot) => {
+    //             try {
+    //                 setLikeCount(likesSnapshot.size);
+    //             } catch (error) {
+    //                 console.error("Erreur lors de la mise à jour du nombre de likes :", error);
+    //             }
+    //         });
 
-            const commentsRef = collection(database, 'comments');
-            const commentsQuery = query(commentsRef, where('postId', '==', post.postId));
+    //         const commentsRef = collection(database, 'comments');
+    //         const commentsQuery = query(commentsRef, where('postId', '==', post.postId));
 
-            const unsubscribeComments = onSnapshot(commentsQuery, (commentsSnapshot) => {
-                try {
-                    setCommentCount(commentsSnapshot.size);
-                } catch (error) {
-                    console.error("Erreur lors de la mise à jour du nombre de commentaires :", error);
-                }
-            });
+    //         const unsubscribeComments = onSnapshot(commentsQuery, (commentsSnapshot) => {
+    //             try {
+    //                 setCommentCount(commentsSnapshot.size);
+    //             } catch (error) {
+    //                 console.error("Erreur lors de la mise à jour du nombre de commentaires :", error);
+    //             }
+    //         });
 
-            return () => {
-                unsubscribeLikes();
-                unsubscribeComments();
-            };
-        } catch (error) {
-            console.error("Erreur dans useEffect :", error);
-        }
-    }, [post.postId]);
-
-
-    const checkUserLikedPost = async (userId, postId) => {
-        try {
-            const likesCollection = collection(database, 'likes');
-            const likesQuery = query(likesCollection, where('userId', '==', userId), where('postId', '==', postId));
-            const likesSnapshot = await getDocs(likesQuery);
-
-            return likesSnapshot.size > 0;
-        } catch (error) {
-            console.error('Erreur lors de la vérification des likes de l\'utilisateur :', error);
-            return false;
-        }
-    };
-
-    const removeLike = async (userId, postId) => {
-        try {
-            const likesCollection = collection(database, 'likes');
-            const likesQuery = query(likesCollection, where('userId', '==', userId), where('postId', '==', postId));
-            const likesSnapshot = await getDocs(likesQuery);
-
-            if (likesSnapshot.size > 0) {
-                const likeDoc = likesSnapshot.docs[0];
-                await deleteDoc(doc(database, 'likes', likeDoc.id));
-            }
-        } catch (error) {
-            console.error('Erreur lors de la suppression du like :', error);
-        }
-    };
+    //         return () => {
+    //             unsubscribeLikes();
+    //             unsubscribeComments();
+    //         };
+    //     } catch (error) {
+    //         console.error("Erreur dans useEffect :", error);
+    //     }
+    // }, [post.postId]);
 
 
-    useEffect(() => {
-        const fetchAuthorName = async () => {
-            try {
+    // const checkUserLikedPost = async (userId, postId) => {
+    //     try {
+    //         const likesCollection = collection(database, 'likes');
+    //         const likesQuery = query(likesCollection, where('userId', '==', userId), where('postId', '==', postId));
+    //         const likesSnapshot = await getDocs(likesQuery);
 
-                const usersCollection = collection(database, 'users');
-                const authorQuery = query(usersCollection, where('uid', '==', post.authorId));
-                const authorSnapshot = await getDocs(authorQuery);
+    //         return likesSnapshot.size > 0;
+    //     } catch (error) {
+    //         console.error('Erreur lors de la vérification des likes de l\'utilisateur :', error);
+    //         return false;
+    //     }
+    // };
+
+    // const removeLike = async (userId, postId) => {
+    //     try {
+    //         const likesCollection = collection(database, 'likes');
+    //         const likesQuery = query(likesCollection, where('userId', '==', userId), where('postId', '==', postId));
+    //         const likesSnapshot = await getDocs(likesQuery);
+
+    //         if (likesSnapshot.size > 0) {
+    //             const likeDoc = likesSnapshot.docs[0];
+    //             await deleteDoc(doc(database, 'likes', likeDoc.id));
+    //         }
+    //     } catch (error) {
+    //         console.error('Erreur lors de la suppression du like :', error);
+    //     }
+    // };
 
 
-                if (authorSnapshot.size > 0) {
-                    const authorData = authorSnapshot.docs[0].data();
-                    setAuthorName(authorData.pseudo);
-                } else {
-                    console.error('Aucun document d\'auteur correspondant trouvé.');
-                }
-            } catch (error) {
-                console.error('Erreur lors de la recherche du nom de l\'auteur :', error);
-            }
-        };
-        fetchAuthorName();
-    }, [post.authorId]);
+    // useEffect(() => {
+    //     const fetchAuthorName = async () => {
+    //         try {
 
-    useEffect(() => {
-        const checkLikedPost = async () => {
-            try {
-                const userId = getAuth().currentUser.uid;
-                const postId = post.postId;
-                const userLiked = await checkUserLikedPost(userId, postId);
+    //             const usersCollection = collection(database, 'users');
+    //             const authorQuery = query(usersCollection, where('uid', '==', post.authorId));
+    //             const authorSnapshot = await getDocs(authorQuery);
 
-                if (userLiked) {
-                    setIsLikeIconPressed(true);
-                } else {
-                    setIsLikeIconPressed(false);
-                }
-            } catch (error) {
-                console.error('Erreur lors de la vérification des likes de l\'utilisateur :', error);
-            }
-        };
-        checkLikedPost();
-    }, [post.postId]);
 
-    const months = [
-        'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
-        'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
-    ];
+    //             if (authorSnapshot.size > 0) {
+    //                 const authorData = authorSnapshot.docs[0].data();
+    //                 setAuthorName(authorData.pseudo);
+    //             } else {
+    //                 console.error('Aucun document d\'auteur correspondant trouvé.');
+    //             }
+    //         } catch (error) {
+    //             console.error('Erreur lors de la recherche du nom de l\'auteur :', error);
+    //         }
+    //     };
+    //     fetchAuthorName();
+    // }, [post.authorId]);
 
-    const days = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+    // useEffect(() => {
+    //     const checkLikedPost = async () => {
+    //         try {
+    //             const userId = getAuth().currentUser.uid;
+    //             const postId = post.postId;
+    //             const userLiked = await checkUserLikedPost(userId, postId);
 
-    const date = new Date(post.createdAt.toDate());
-    const day = date.getDate();
-    const month = months[date.getMonth()];
-    const year = date.getFullYear();
-    const dayOfWeek = days[date.getDay()];
+    //             if (userLiked) {
+    //                 setIsLikeIconPressed(true);
+    //             } else {
+    //                 setIsLikeIconPressed(false);
+    //             }
+    //         } catch (error) {
+    //             console.error('Erreur lors de la vérification des likes de l\'utilisateur :', error);
+    //         }
+    //     };
+    //     checkLikedPost();
+    // }, [post.postId]);
 
-    const formattedDate = `${day} ${month} ${year} (${dayOfWeek})`;
+    // const months = [
+    //     'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+    //     'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+    // ];
 
-    const handleLikeIconPress = async () => {
-        const userId = getAuth().currentUser.uid;
-        const postId = post.postId;
-        const postRef = doc(database, "posts", postId);
-        setIsDisabled(true);
-        try {
-            const postDoc = await getDoc(postRef);
+    // const days = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 
-            if (!postDoc.exists()) {
-                console.error("Le post n'existe pas.");
-                return;
-            }
-            if (postDoc.data()) {
-                const currentLikes = postDoc.data().like;
-                if (isLikeIconPressed) {
-                    await removeLike(userId, postId);
-                    await updateDoc(postRef, { like: currentLikes - 1 });
-                } else {
-                    await addNewLike({ userId, postId, createdAt: new Date() });
-                    await updateDoc(postRef, { like: currentLikes + 1 });
-                }
-            } else {
-                console.log("error");
-            }
-            // setLikeCount((prevLikeCount) => isLikeIconPressed ? prevLikeCount - 1 : prevLikeCount + 1);
-            setIsLikeIconPressed(!isLikeIconPressed);
-            console.log(isLikeIconPressed);
-        } catch (error) {
-            console.error("Erreur lors de la mise à jour du nombre de likes : ", error);
-        }
-        setIsDisabled(false);
-    };
+    // const date = new Date(post.createdAt.toDate());
+    // const day = date.getDate();
+    // const month = months[date.getMonth()];
+    // const year = date.getFullYear();
+    // const dayOfWeek = days[date.getDay()];
 
-    const handleCommentIconPress = () => {
-        // setIsCommentIconPressed(v => !v);
-        navigation.navigate("CommentScreen", {
-            post,
-            refToCommentItem
-        });
-    }
+    // const formattedDate = `${day} ${month} ${year} (${dayOfWeek})`;
 
-    const handleCommentSent = async () => {
-        if (commentValue.trim() !== "") {
-            setCommentValue("");
-            const commentData = {
-                content: commentValue,
-                postId: post.postId,
-                authorId: getAuth().currentUser.uid,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            };
+    // const handleLikeIconPress = async () => {
+    //     const userId = getAuth().currentUser.uid;
+    //     const postId = post.postId;
+    //     const postRef = doc(database, "posts", postId);
+    //     setIsDisabled(true);
+    //     try {
+    //         const postDoc = await getDoc(postRef);
 
-            try {
-                const response = await addNewComment(commentData);
+    //         if (!postDoc.exists()) {
+    //             console.error("Le post n'existe pas.");
+    //             return;
+    //         }
+    //         if (postDoc.data()) {
+    //             const currentLikes = postDoc.data().like;
+    //             if (isLikeIconPressed) {
+    //                 await removeLike(userId, postId);
+    //                 await updateDoc(postRef, { like: currentLikes - 1 });
+    //             } else {
+    //                 await addNewLike({ userId, postId, createdAt: new Date() });
+    //                 await updateDoc(postRef, { like: currentLikes + 1 });
+    //             }
+    //         } else {
+    //             console.log("error");
+    //         }
+    //         // setLikeCount((prevLikeCount) => isLikeIconPressed ? prevLikeCount - 1 : prevLikeCount + 1);
+    //         setIsLikeIconPressed(!isLikeIconPressed);
+    //         console.log(isLikeIconPressed);
+    //     } catch (error) {
+    //         console.error("Erreur lors de la mise à jour du nombre de likes : ", error);
+    //     }
+    //     setIsDisabled(false);
+    // };
 
-                if (response && response.msg === "no-auth") {
-                    console.log("L'utilisateur n'est pas authentifié.");
-                } else {
-                    console.log("Commentaire ajouté avec succès.");
-                    setCommentValue("");
-                }
-            } catch (error) {
-                console.error("Erreur lors de l'ajout du commentaire : ", error);
-            }
-        } else {
-            console.log('Commentaire vide');
-        }
-    };
+    // const handleCommentIconPress = () => {
+    //     // setIsCommentIconPressed(v => !v);
+    //     navigation.navigate("CommentScreen", {
+    //         post,
+    //         refToCommentItem
+    //     });
+    // }
+
+    // const handleCommentSent = async () => {
+    //     if (commentValue.trim() !== "") {
+    //         setCommentValue("");
+    //         const commentData = {
+    //             content: commentValue,
+    //             postId: post.postId,
+    //             authorId: getAuth().currentUser.uid,
+    //             createdAt: new Date(),
+    //             updatedAt: new Date(),
+    //         };
+
+    //         try {
+    //             const response = await addNewComment(commentData);
+
+    //             if (response && response.msg === "no-auth") {
+    //                 console.log("L'utilisateur n'est pas authentifié.");
+    //             } else {
+    //                 console.log("Commentaire ajouté avec succès.");
+    //                 setCommentValue("");
+    //             }
+    //         } catch (error) {
+    //             console.error("Erreur lors de l'ajout du commentaire : ", error);
+    //         }
+    //     } else {
+    //         console.log('Commentaire vide');
+    //     }
+    // };
 
     return (
-        <View nestedScrollEnabled style={styles.container}>
+        <View nestedScrollEnabled style={styles.container} className="shadow-sm my-5 shadow-black">
             <View style={styles.header}>
-                <Image source={{ uri: "https://i.pravatar.cc/300" + Math.floor(Math.random() * 1000) + 1 }} style={{ width: 44, height: 44, borderRadius: 100, }} />
+                <Image source={images.doctor03} style={{ width: 50, height: 50, borderRadius: 100, }} />
                 <View>
                     <Text style={{
                         fontFamily: "Bold",
                         fontSize: SIZES.small,
                         color: "#555"
-                    }}>{authorName}</Text>
-                    <Text style={styles.textSmall}>{formattedDate}</Text>
+                    }}>aina</Text>
+                    <Text style={styles.textSmall}>20 octobre 20024</Text>
                 </View>
             </View>
 
             <View style={styles.content}>
                 <Text style={{ fontFamily: "SBold", fontSize: SIZES.large }}>
-                    {post.content}
+                    Lorem ipsum dolor sit, amet consectetur adipisicing elit. Tempore quaerat voluptatem voluptas incidunt quod veritatis vero maiores illum sed, veniam officia cupiditate fugiat placeat! Quae consequatur omnis facere minima reiciendis!
                 </Text>
             </View>
 
             <View style={styles.reactions}>
                 <View style={styles.like}>
-                    <Pressable disabled={isDisabled} onPress={handleLikeIconPress} >
+                    <Pressable disabled={true}  >
                         <Image
-                            source={isLikeIconPressed ? icons.heartFill : icons.heart}
+                            source={icons.heartFill }
                             style={{ width: 23, height: 20 }}
                             resizeMode='contain'
                         />
                     </Pressable>
 
                     <Text style={styles.textSmall}>
-                        {likeCount} reactions
+                       20 reactions
                     </Text>
                 </View>
-                <Pressable style={styles.comment} onPress={handleCommentIconPress}>
+                <Pressable style={styles.comment}>
                     <Image source={icons.message} style={{ width: 24, height: 24 }} />
                     <Text style={styles.textSmall}>
-                        {commentCount} commentaires
+                       20 commentaires
                     </Text>
                 </Pressable>
             </View>
@@ -256,9 +256,9 @@ const ForumItem = ({ post, refToCommentItem, navigation }) => {
                 <TextInput
                     placeholder={'ecrireUnCommentaire'}
                     style={{ width: "90%", height: "100%", fontFamily: "Regular" }}
-                    value={commentValue} onChangeText={setCommentValue} />
+                    value={20} />
 
-                <Pressable onPress={handleCommentSent} >
+                <Pressable  >
                     <Image source={icons.send} style={{ width: 19, height: 18 }} />
                 </Pressable>
             </View>

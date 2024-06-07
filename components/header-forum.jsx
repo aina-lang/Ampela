@@ -1,6 +1,6 @@
 import {useContext} from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity, Pressable } from "react-native";
-import { ThemeContext } from "./theme-context";
+import { ThemeContext } from "../hooks/theme-context";
 import { COLORS, images, icons } from "@/constants";
 
 const HeaderForum = ({navigation, isDoctor,screen}) => {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { getAllCycle, getUser, setFirstLaunchFalse } from "@/services/database";
 import { Tabs, useNavigation } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
@@ -7,29 +7,21 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import MyTabBar from "@/components/MyTabBar";
 import { Text, TouchableOpacity, View } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { SIZES } from "@/constants";
+import { COLORS, SIZES } from "@/constants";
 import { updateCycleMenstruelData } from "@/redux/cycleSlice";
 import {
   generateCycleMenstrualData,
   getOvulationDate,
 } from "@/utils/menstruationUtils";
 import moment from "moment";
+import { ThemeContext } from "@/hooks/theme-context";
 
 export default function TabLayout() {
   const user = useSelector((state) => state.user);
 
-  
-
-  // console.log(getOvulationDate(user.lastMenstruationDate,28));
-  // generateCycleMenstrualData("2024-06-02", 25, 5);
-
-  // console.log(user.cycleDuration);
-  // console.log(getOvulationDate(user.lastMenstruationDate, 28));
-  // console.log(moment(user.lastMenstruationDate).format("YYYY-MM-DD"));
-
   const dispatch = useDispatch();
   const navigation = useNavigation();
-
+  const { theme } = useContext(ThemeContext);
   useEffect(() => {
     async function fetchData() {
       try {
@@ -59,7 +51,7 @@ export default function TabLayout() {
             <View
               className=" w-full flex-row items-center pt-8  rounded-b-lg justify-between  shadow-md shadow-black"
               style={{
-                backgroundColor: "#FF7575",
+                backgroundColor:  theme === "orange" ? COLORS.accent800 : COLORS.accent500,
                 height: SIZES.height * 0.16,
                 paddingHorizontal: 16,
               }}

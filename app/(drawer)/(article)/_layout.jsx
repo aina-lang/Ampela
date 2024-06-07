@@ -5,6 +5,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { COLORS, SIZES } from "@/constants";
 import { useSelector } from "react-redux";
 import { ThemeContext } from "@/hooks/theme-context";
+import { AntDesign } from "@expo/vector-icons";
 
 const _layout = () => {
   const user = useSelector((state) => state.user);
@@ -16,9 +17,10 @@ const _layout = () => {
         headerShown: true,
         header: () => (
           <View
-            className=" w-full flex-row items-center rounded-b-lg justify-between  shadow-md shadow-black pt-8"
+            className=" w-full flex-row items-center  justify-between  pt-8"
             style={{
-              backgroundColor:  theme === "orange" ? COLORS.accent800 : COLORS.accent500,
+              backgroundColor:
+                theme === "pink" ? COLORS.accent400 : COLORS.neutral280,
               height: SIZES.height * 0.16,
               paddingHorizontal: 16,
             }}
@@ -26,18 +28,26 @@ const _layout = () => {
             <View className="flex flex-row  items-center justify-center ">
               <TouchableOpacity
                 className="p-2 pl-0 mr-3"
-                onPress={() => navigation.openDrawer()}
+                onPress={() => navigation.goBack()}
               >
-                <Ionicons name="menu" color={"white"} size={35} />
+                <AntDesign
+                  name="left"
+                  color={theme === "pink" ? "white" : COLORS.accent800}
+                  size={35}
+                />
               </TouchableOpacity>
-              <Text
-                style={{ fontSize: 20, fontWeight: "bold", color: "white" }}
+              {/* <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: "bold",
+                  color: theme === "pink" ? "white" : COLORS.accent800,
+                }}
               >
-                Article
-              </Text>
+                {user.username}
+              </Text> */}
             </View>
             <View className="flex-row">
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 className="p-2 pl-0 "
                 onPress={() => navigation.navigate("(message)")}
               >
@@ -52,18 +62,13 @@ const _layout = () => {
                   color={"white"}
                   size={24}
                 />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           </View>
         ),
       }}
-      // initialRouteName="discovery"
-    >
-      <Stack.Screen
-        name="index"
-        // options={{ headerShown: false }}
-      />
-    </Stack>
+ 
+    ></Stack>
   );
 };
 

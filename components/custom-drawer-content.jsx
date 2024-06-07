@@ -2,7 +2,7 @@ import {useContext} from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { COLORS, SIZES, images, icons } from '../../constants';
 import SettingItem from './setting-item';
-import { ThemeContext } from './theme-context';
+import { ThemeContext } from '../hooks/theme-context';
 import { useTranslation } from 'react-i18next';
 
 const CustomDrawerContent = ({navigation}) => {

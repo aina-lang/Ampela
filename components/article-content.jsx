@@ -58,7 +58,7 @@ const ArticleContent = ({ navigation, activeCategory, text }) => {
     <ScrollView
       style={styles.container}
       showsVerticalScrollIndicator={false}
-      className=""
+      className=" shadow-inner shadow-black"
     >
       {content.content.map((c) => {
         if (c.title.toLocaleLowerCase().includes(text.toLocaleLowerCase())) {

@@ -1,14 +1,16 @@
 import { View, Text, TouchableOpacity } from "react-native";
-import React from "react";
+import React, { useContext } from "react";
 import { Stack, useNavigation } from "expo-router";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { SIZES } from "@/constants";
+import { COLORS, SIZES } from "@/constants";
 import { useSelector } from "react-redux";
 import { Ionicons } from "@expo/vector-icons";
+import { ThemeContext } from "@/hooks/theme-context";
 
 const _layout = () => {
   const user = useSelector((state) => state.user);
   const navigation = useNavigation();
+  const { theme } = useContext(ThemeContext);
   return (
     <Stack
       screenOptions={{
@@ -16,7 +18,8 @@ const _layout = () => {
           <View
             className=" w-full flex-row items-center pt-8  rounded-b-lg justify-between  shadow-md shadow-black"
             style={{
-              backgroundColor: "#FF7575",
+              backgroundColor:
+                theme === "orange" ? COLORS.accent800 : COLORS.accent500,
               height: SIZES.height * 0.16,
               paddingHorizontal: 16,
             }}
@@ -33,7 +36,7 @@ const _layout = () => {
               <Text
                 style={{ fontSize: 20, fontWeight: "bold", color: "white" }}
               >
-                {user.username}
+                Forum
               </Text>
             </View>
             <View className="flex-row">
@@ -63,7 +66,6 @@ const _layout = () => {
       initialRouteName="index"
     >
       <Stack.Screen name="index" />
-
     </Stack>
   );
 };

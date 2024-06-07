@@ -1,5 +1,12 @@
-import { useState, useRef, useCallback } from "react";
-import { View, ScrollView, Text, StyleSheet, Pressable } from "react-native";
+import { useState, useRef, useCallback, useContext } from "react";
+import {
+  View,
+  ScrollView,
+  Text,
+  StyleSheet,
+  Pressable,
+  Button,
+} from "react-native";
 
 import { COLORS, SIZES } from "@/constants";
 import ReminderContent from "@/components/reminder-content";
@@ -11,6 +18,7 @@ import { useSelector } from "react-redux";
 import { useNavigation } from "expo-router";
 import moment from "moment";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import { ThemeContext } from "@/hooks/theme-context";
 
 const index = () => {
   const user = useSelector((state) => state.user);
@@ -21,7 +29,7 @@ const index = () => {
   const [scrollDisabled, setScrollDisabled] = useState(true);
   const [reminderModalIsVisible, setReminderModalIsVisible] = useState(false);
   const [reminderInfo, setReminderInfo] = useState({ as: "", time: "" });
-
+  const { theme } = useContext(ThemeContext);
   const [time1, setTime1] = useState({
     hour: 0,
     minutes: 0,
@@ -136,12 +144,6 @@ const index = () => {
     setReminderModalIsVisible(true);
   };
 
-  const handleCloseIconOnePress = () => {};
-
-  const handleCloseIconTwoPress = () => {};
-
-  const handleCloseIconThreePress = () => {};
-
   const handleRegisterButtonPress = (type, hour, minutes, active) => {
     setScrollDisabled(true);
     switch (type) {
@@ -174,8 +176,6 @@ const index = () => {
   const generateMarkedDates = () => {
     cycles.forEach((cycle) => {
       for (let i = 0; i < user.durationMenstruation; i++) {
-        // console.log(cycle);
-
         markedDates[
           moment(cycle.startMenstruationDate)
             .add(i, "days")
@@ -183,7 +183,8 @@ const index = () => {
         ] = {
           customStyles: {
             container: {
-              backgroundColor: "#E2445C",
+              backgroundColor:
+                theme === "orange" ? COLORS.accent800 : COLORS.accent600,
             },
             text: {
               color: "#fff",
@@ -199,7 +200,8 @@ const index = () => {
         markedDates[start.format("YYYY-MM-DD")] = {
           customStyles: {
             container: {
-              backgroundColor: "#FFADAD",
+              backgroundColor:
+                theme === "orange" ? COLORS.neutral250 : COLORS.accent400,
             },
             text: {
               color: "#fff",
@@ -213,7 +215,8 @@ const index = () => {
         customStyles: {
           container: {
             borderStyle: "solid",
-            borderColor: "#E2445C",
+            borderColor:
+              theme === "orange" ? COLORS.accent800 : COLORS.accent500,
             borderWidth: 2,
           },
           text: {
@@ -237,7 +240,7 @@ const index = () => {
   };
 
   const handleSheetChanges = useCallback((index) => {
-    console.log("handleSheetChanges", index);
+    // console.log("handleSheetChanges", index);
   }, []);
 
   return (
@@ -249,12 +252,12 @@ const index = () => {
         type={reminderInfo.as}
         onRegisterButtonPress={handleRegisterButtonPress}
       />
-
+      {/* <Button onPress={openBottomSheet} title="open bottom" /> */}
       <BottomSheet
         ref={bottomSheetRef}
         onChange={handleSheetChanges}
-        snapPoints={["50%", "90%"]}
-        // initialSnapIndex={0}
+        snapPoints={[500, "90%"]}
+        initialSnapIndex={100}
         enablePanDownToClose
       >
         <BottomSheetView style={styles.contentContainer}>

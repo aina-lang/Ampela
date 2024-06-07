@@ -1,9 +1,19 @@
-import React, { useRef, useEffect } from "react";
-import { Text, View, StyleSheet, Pressable, Image, Animated } from "react-native";
+import React, { useRef, useEffect, useContext } from "react";
+import {
+  Text,
+  View,
+  StyleSheet,
+  Pressable,
+  Image,
+  Animated,
+  TouchableOpacity,
+} from "react-native";
 import { COLORS } from "@/constants";
+import i18n from "@/constants/i18n";
+import { ThemeContext } from "@/hooks/theme-context";
+import { useNavigation, useRouter } from "expo-router";
 
 const ArticleItem = ({
-  navigation,
   title,
   category,
   content,
@@ -17,67 +27,73 @@ const ArticleItem = ({
   img,
 }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-
+  const { theme } = useContext(ThemeContext);
+  
+  const router = useRouter();
   useEffect(() => {
-    Animated.timing(
-      fadeAnim,
-      {
-        toValue: 1,
-        duration: 1000, // Durée de l'animation en millisecondes
-        useNativeDriver: true, // Utiliser le moteur natif pour les performances
-      }
-    ).start();
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
   }, [fadeAnim]);
 
   const handleTextPress = () => {
-    navigation.navigate("onearticle", {
-      title,
-      content,
-      list,
-      imgInside,
-      imgInsideArr,
-      imgInsideArrMg,
-      content2,
-      list2,
-      img,
+    router.push({
+      pathname: "(drawer)/(article)/onearticle/",
+      params: {
+        title,
+        content,
+        list,
+        imgInside,
+        imgInsideArr,
+        imgInsideArrMg,
+        content2,
+        list2,
+        img,
+      },
     });
   };
 
   const handleContainerPress = () => {
-    onPress(
-      title,
-      content,
-      list,
-      imgInside,
-      imgInsideArr,
-      imgInsideArrMg,
-      content2,
-      list2,
-      img
-    );
+    router.push({
+      pathname: "(drawer)/(article)/onearticle/",
+      params: {
+        title,
+        content,
+        list,
+        imgInside,
+        imgInsideArr,
+        imgInsideArrMg,
+        content2,
+        list2,
+        img,
+      },
+    });
   };
 
   return (
-    <Pressable onPress={handleContainerPress}>
+    <TouchableOpacity onPress={handleContainerPress}>
       <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.title}>{i18n.t(title)}</Text>
         <View
           style={[
             styles.category,
             {
               backgroundColor:
-                "pink" === "pink" ? COLORS.accent400 : COLORS.neutral250,
+                theme === "pink" ? COLORS.accent400 : COLORS.neutral250,
             },
           ]}
+          className="w-7"
         >
-          <Text
+          {/* <Text
             style={{
               fontFamily: "Regular",
-              color: "pink" === "pink" ? COLORS.neutral100 : COLORS.primary,
+              color: theme === "pink" ? COLORS.neutral100 : COLORS.primary,
             }}
           >
             {category}
-          </Text>
+          </Text> */}
         </View>
         <View style={styles.img}>
           <Image
@@ -87,12 +103,12 @@ const ArticleItem = ({
           />
         </View>
         <Text style={styles.content} numberOfLines={4}>
-          {content}
+          {i18n.t(content[0])}
         </Text>
         <Pressable onPress={handleTextPress}>
           <Text
             style={{
-              color: "pink" === "pink" ? COLORS.accent600 : COLORS.accent800,
+              color: theme === "pink" ? COLORS.accent600 : COLORS.accent800,
               fontFamily: "Regular",
               marginTop: 6,
             }}
@@ -101,7 +117,7 @@ const ArticleItem = ({
           </Text>
         </Pressable>
       </Animated.View>
-    </Pressable>
+    </TouchableOpacity>
   );
 };
 

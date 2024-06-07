@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { COLORS, SIZES } from "../constants";
 
-const ProgressBar = ({ percentage, isVisible }) => {
+const ProgressBar = ({ percentage, isVisible,text }) => {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -30,23 +30,8 @@ const ProgressBar = ({ percentage, isVisible }) => {
       style={[styles.container, { display: isVisible ? "block" : "none" }]}
       className="absolute top-0 left-0  bg-white flex items-center justify-center"
     >
-      <Text className="my-2 text-xl">Chargement de vos donnés</Text>
-      {/* <View className="h-[20] bg-[#e7e5e5] mx-auto w-[80%] rounded-xl overflow-hidden"> */}
-      {/* <View
-          style={[
-            styles.bar,
-            {
-              width: `${Math.round(progress)}%`,
-              alignItems:
-                Math.round(progress * 100) < 60 ? "flex-end" : "center",
-              // justifyItems: Math.round(progress * 100) < 60 ? "flex-end" : "center",
-            },
-          ]}
-        >
-          <Text className="text-white">{progress}%</Text>
-        </View> */}
+      <Text className="my-2 text-xl">{text}</Text>
 
-      {/* </View> */}
       <ActivityIndicator size={40} color={"#FF7575"} />
     </View>
   );

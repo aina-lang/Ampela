@@ -2,7 +2,7 @@ import {useState, useCallback, useContext} from 'react';
 import {View, ScrollView, Text, StyleSheet, Image, TouchableOpacity, TextInput, FlatList} from 'react-native';
 import HeaderWithGoBack from '@/components/header-with-go-back';
 import { COLORS, SIZES, images, icons } from '@/constants'; 
-import { ThemeContext } from '@/components/theme-context';
+// import { ThemeContext } from '@/components/theme-context';
 import {StateItem1, StateItem2, StateItem3} from '@/components/settings/state-item';
 import { useNavigation } from 'expo-router';
 

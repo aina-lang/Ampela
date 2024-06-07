@@ -1,6 +1,7 @@
 import { View, ScrollView, Text, StyleSheet, Image } from "react-native";
 import { COLORS, SIZES } from "@/constants";
 import HeaderWithGoBack from "@/components/header-with-go-back";
+import i18n from "@/constants/i18n";
 
 
 const ArticleContentScreen = ({ route, navigation }) => {
@@ -15,7 +16,7 @@ const ArticleContentScreen = ({ route, navigation }) => {
     list2,
     img,
   } = route.params;
-  const { t } = useTranslation();
+  // const { t } = useTranslation();
   // const language = i18next.language;
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -38,14 +39,14 @@ const ArticleContentScreen = ({ route, navigation }) => {
       <View style={{ marginTop: 20, paddingHorizontal: 20, gap: 12 }}>
         {content.map((c) => (
           <Text key={c} style={styles.content}>
-            {/* {t(c)} */}
+            {i18n.t(c)}
           </Text>
         ))}
         <View style={{ gap: 6 }}>
           {list
             ? list.map((c) => (
                 <Text key={c} style={styles.content}>
-                  {/* - {t(c)} */}
+                  - {i18n.t(c)}
                 </Text>
               ))
             : null}

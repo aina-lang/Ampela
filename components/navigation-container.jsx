@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { ThemeProvider } from "./theme-context";
+import { ThemeProvider } from "../hooks/theme-context";
 import DiscoveryScreen from "../screens/discovery/discovery-screen";
 import PersonalHealthTestScreen from "../screens/discovery/personal-health-test-screen";
 import LastMenstrualCycleStartAge from "../screens/discovery/last-menstrual-cycle-start-age";

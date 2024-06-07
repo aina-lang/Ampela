@@ -1,21 +1,21 @@
 import { useContext } from "react";
 import { ImageBackground, KeyboardAvoidingView, Platform } from "react-native";
 import { images } from "@/constants";
-import { ThemeContext } from "./theme-context";
+import { ThemeContext } from "@/hooks/theme-context";
 
 const BackgroundContainer = ({
   children,
   paddingBottom,
   paddingHorizontal,
 }) => {
-  // const { theme } = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ImageBackground
-        source={"pink" === "pink" ? images.bgRose : images.bgOrange}
+        source={theme === "pink" ? images.bgRose : images.bgOrange}
         resizeMode="repeat"
         style={{
           flex: 1,

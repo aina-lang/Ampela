@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from "react";
-import { SIZES } from "@/constants";
+import React, { useEffect, useState, useRef, useContext } from "react";
+import { COLORS, SIZES } from "@/constants";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import {
   View,
@@ -10,11 +10,12 @@ import {
   Animated,
   Easing,
 } from "react-native";
+import { ThemeContext } from "@/hooks/theme-context";
 
 function MyTabBar({ state, descriptors, navigation }) {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const translateY = useRef(new Animated.Value(0)).current;
-  
+  const { theme } = useContext(ThemeContext);
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       "keyboardDidShow",
@@ -99,9 +100,28 @@ function MyTabBar({ state, descriptors, navigation }) {
                 onLongPress={onLongPress}
                 style={[
                   styles.tabButton,
-
-                  route.name === "index" ? styles.indexTabButton : null,
-                  isFocused ? styles.tabButtonFocused : null,
+                  route.name === "index"
+                    ? [
+                        styles.indexTabButton,
+                        {
+                          backgroundColor:
+                            theme === "orange"
+                              ? COLORS.neutral250
+                              : COLORS.accent400,
+                        },
+                      ]
+                    : null,
+                  isFocused
+                    ? [
+                        styles.tabButtonFocused,
+                        {
+                          backgroundColor:
+                            theme === "orange"
+                              ? COLORS.accent800
+                              : COLORS.accent500,
+                        },
+                      ]
+                    : null,
                 ]}
               >
                 <Ionicons
@@ -154,17 +174,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   tabButtonFocused: {
-    backgroundColor: "#FF7575",
     borderRadius: 50,
   },
   indexTabButton: {
     position: "absolute",
     top: -20,
-
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "#FFADAD",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "black",
