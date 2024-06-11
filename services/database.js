@@ -1,10 +1,13 @@
 import * as SQLite from "expo-sqlite";
+import * as FileSystem from "expo-file-system";
 
 export const db = SQLite.openDatabaseSync("ampela.db");
 
 // db.closeSync();
 
 // SQLite.deleteDatabaseSync("ampela.db");
+
+
 
 export const addUser = async (
   username,
@@ -13,12 +16,14 @@ export const addUser = async (
   lastMenstruationDate,
   durationMenstruation,
   cycleDuration,
-  email
+  email,
+  photoUri
 ) => {
   const statement = await db.prepareAsync(
-    "INSERT INTO users (username, password, profession, lastMenstruationDate, durationMenstruation, cycleDuration, email) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO users (username, password, profession, lastMenstruationDate, durationMenstruation, cycleDuration, email, profileImage) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
   );
   try {
+   
     const result = await statement.executeAsync([
       username,
       password,
@@ -27,6 +32,7 @@ export const addUser = async (
       durationMenstruation,
       cycleDuration,
       email,
+      photoUri,
     ]);
     console.log("User added:", result);
     return result;
@@ -57,7 +63,8 @@ export const initializeDatabase = async () => {
         lastMenstruationDate DATE NULL,
         durationMenstruation INTEGER NULL,
         cycleDuration INTEGER NULL,
-        email TEXT NULL
+        email TEXT NULL,
+        profileImage TEXT NULL
       );
 
       CREATE TABLE IF NOT EXISTS cycles_menstruels (

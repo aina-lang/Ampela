@@ -1,18 +1,19 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   id: null,
-  username: '',
-  password: '',
-  profession: '',
+  username: "",
+  password: "",
+  profession: "",
   lastMenstruationDate: null,
   durationMenstruation: null,
   cycleDuration: null,
-  email: '',
+  email: "",
+  profileImage: null,
 };
 
 const userSlice = createSlice({
-  name: 'user',
+  name: "user",
   initialState,
   reducers: {
     updateUser: (state, action) => {

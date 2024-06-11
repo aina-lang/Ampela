@@ -10,6 +10,9 @@ import {
   TextInput,
   TextArea,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
 } from "react-native";
 
 import HeaderForum from "@/components/header-forum";
@@ -21,17 +24,19 @@ import BackgroundContainer from "@/components/background-container";
 import { addNewPost } from "@/services/firestoreAPI";
 import { getAuth } from "firebase/auth";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
-import { database } from "@/services/firebaseConfig";
+import { auth, database } from "@/services/firebaseConfig";
 import { Link, useNavigation } from "expo-router";
 import SearchForum from "@/components/SearchForum";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
+import AuthContent from "@/components/AuthContent";
+import { useBottomSheet } from "@/hooks/BottomSheetProvider";
 
 const index = () => {
   const navigation = useNavigation();
   const screenWidth = Dimensions.get("window").width + 200;
   const translateXAnim = useRef(new Animated.Value(screenWidth)).current;
   const [newPostContent, setNewPostContent] = useState("");
-  const [posts, setPosts] = useState([{},{},{}]);
+  const [posts, setPosts] = useState([{}, {}, {}]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isInputsDisabled, setIsInputsDisabled] = useState(false);
@@ -101,45 +106,58 @@ const index = () => {
       setIsLoading(false);
     }
   };
+  const { openBottomSheet } = useBottomSheet();
 
+  useEffect(() => {
+    if (!auth) {
+      openBottomSheet(<AuthContent />);
+    }
+  }, []);
   return (
-    <View style={styles.container}>
-      <BackgroundContainer paddingBottom={0} paddingHorizontal={2}>
-        {isLoading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
-          </View>
-        )}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <SafeAreaView style={styles.container}>
+        <BackgroundContainer paddingBottom={80} paddingHorizontal={2}>
+          {isLoading && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={COLORS.primary} />
+            </View>
+          )}
 
-        <View className=" pt-5 pb-10 px-5" style={{ height: SIZES.height * 0.2 }}>
-          <View className="flex-row justify-between items-center p-2 ">
-            <Link
-              href={"(drawer)/(forum)/addpost"}
-              className="flex-row space-x-2 p-2 bg-white rounded-md shadow-sm shadow-black"
-            >
-              <AntDesign name="edit" size={24} color={COLORS.accent600} />
-              <Text>Posez des questions</Text>
-            </Link>
+          <View
+            className=" pt-3 pb-10 px-4"
+            style={{ height: SIZES.height * 0.2 }}
+          >
+            <View className="flex-row justify-between items-center p-2 ">
+              <Link
+                href={"(drawer)/(forum)/addpost"}
+                className="flex-row space-x-2 p-2 bg-white rounded-md shadow-sm shadow-black"
+              >
+                <AntDesign name="edit" size={24} color={COLORS.accent600} />
+                <Text>Posez des questions</Text>
+              </Link>
+            </View>
+            <SearchForum />
           </View>
-          <SearchForum />
-        </View>
-        <View className="h-8" />
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          className="p-3 mx-auto scroll-pb-20"
-          style={{ width:"100%" }}
-        >
-          {posts.map((post, index) => (
-            <ForumItem key={index} post={post} navigation={navigation} />
-          ))}
-        </ScrollView>
-      </BackgroundContainer>
-    </View>
+          <View className="h-2" />
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            className="p-3 mx-auto scroll-pb-20"
+            style={{ width: "100%" }}
+          >
+            {posts.map((post, index) => (
+              <ForumItem key={index} post={post} navigation={navigation} />
+            ))}
+          </ScrollView>
+        </BackgroundContainer>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-
   loadingContainer: {
     position: "absolute",
     ...StyleSheet.absoluteFillObject,

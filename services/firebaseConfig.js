@@ -1,24 +1,29 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
-import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
-
+import { collection, getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+import { initializeAuth, getReactNativePersistence } from "firebase/auth";
+import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAJNzpZVgZKQTQXhBdgGDdkuBXsic1Y54k",
-  authDomain: "ampela-35b64.firebaseapp.com",
-  projectId: "ampela-35b64",
-  storageBucket: "ampela-35b64.appspot.com",
-  messagingSenderId: "223618739625",
-  appId: "1:223618739625:web:24910adc687a63dffa68b8"
-};
+  apiKey: "AIzaSyAOOnBDrFpofaRucEeuxDoxMWMF793HXkQ",
 
+  authDomain: "ampela-3b6c3.firebaseapp.com",
+
+  projectId: "ampela-3b6c3",
+
+  storageBucket: "ampela-3b6c3.appspot.com",
+
+  messagingSenderId: "868282996846",
+
+  appId: "1:868282996846:web:9a193de7425106bf7eae7f",
+};
 
 const app = initializeApp(firebaseConfig);
 
 export const database = getFirestore(app);
 export const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage),
 });
+export const usersRef = collection(database, "users");
+export const roomsRef = collection(database, "rooms");
+export const storage = getStorage(app);

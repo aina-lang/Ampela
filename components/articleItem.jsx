@@ -73,7 +73,7 @@ const ArticleItem = ({
   };
 
   return (
-    <TouchableOpacity onPress={handleContainerPress}>
+    <TouchableOpacity onPress={handleContainerPress} className="shadow-md shadow-black">
       <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
         <Text style={styles.title}>{i18n.t(title)}</Text>
         <View

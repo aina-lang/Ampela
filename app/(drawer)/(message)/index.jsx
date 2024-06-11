@@ -1,173 +1,87 @@
 import React, { useContext, useEffect, useState } from "react";
 import {
   View,
-  ScrollView,
-  Text,
   StyleSheet,
-  Image,
   TextInput,
+  FlatList,
+  ActivityIndicator,
 } from "react-native";
 import {
-  collection,
-  onSnapshot,
+  where,
   query,
+  getDocs,
+  collection,
   orderBy,
   limit,
 } from "firebase/firestore";
-import HeaderWithGoBack from "@/components/header-with-go-back";
-
-import { COLORS, SIZES, icons, images } from "@/constants";
+import { COLORS, SIZES } from "@/constants";
 import MessageItem from "@/components/messageItem";
-import { auth, database } from "@/services/firebaseConfig";
+import { database } from "@/services/firebaseConfig";
 import { useNavigation } from "expo-router";
 import { AntDesign } from "@expo/vector-icons";
 import i18n from "@/constants/i18n";
 import { ThemeContext } from "@/hooks/theme-context";
+import { useAuth } from "@/hooks/AuthContext";
 
-const index = () => {
-  // const { t } = useTranslation();
-  const { theme, toggleTheme } = useContext(ThemeContext);
+const MessagesScreen = () => {
+  const { theme } = useContext(ThemeContext);
   const navigation = useNavigation();
-  // const [users, setUsers] = useState([]);
-  // const currentUserUid = auth.currentUser.uid;
-  const [refreshList, setRefreshList] = useState(false);
+  const [users, setUsers] = useState([]);
   const [searchText, setSearchText] = useState("");
-  const [filteredUsers, setFilteredUsers] = useState([]);
-
+  const { user, userProfile } = useAuth();
+  const [loading, setLoading] = useState(true);
   const handleSearch = (text) => {
     setSearchText(text);
   };
-  const handleMessageItemPress = (user) => {
-    navigation.navigate(
-      "onemessage"
-      // , {
-      //   user,
-      //   onMessageSent: () => {
-      //     // fetchUsers();
-      //   },
-      //   handleRefreshList,
-      // }
+
+  const handleMessageItemPress = (target) => {
+    navigation.navigate("onemessage", { target });
+  };
+
+  useEffect(() => {
+    if (user) {
+      getUsers();
+    }
+  }, [user]);
+
+  const getUsers = async () => {
+    setLoading(true);
+    const q = query(
+      collection(database, "users"),
+      where("userId", "!=", user?.uid)
     );
+    const querySnapshot = await getDocs(q);
+    let data = [];
+    const userPromises = querySnapshot.docs.map(async (doc) => {
+      const userData = doc.data();
+      const roomId = getRoomId(user.uid, userData.userId);
+      const messagesRef = collection(database, "rooms", roomId, "messages");
+      const lastMessageQuery = query(
+        messagesRef,
+        orderBy("createdAt", "desc"),
+        limit(1)
+      );
+      const lastMessageSnapshot = await getDocs(lastMessageQuery);
+      const lastMessage = lastMessageSnapshot.docs[0]?.data();
+      userData.lastMessage = lastMessage?.createdAt || null;
+      return userData;
+    });
+    data = await Promise.all(userPromises);
+    data.sort(
+      (a, b) =>
+        (b.lastMessage ? b.lastMessage.seconds : 0) -
+        (a.lastMessage ? a.lastMessage.seconds : 0)
+    );
+    setUsers(data);
+    setLoading(false);
   };
 
-  const handleRefreshList = () => {
-    setRefreshList(!refreshList);
-    setUsers([]);
+  const getRoomId = (userId1, userId2) => {
+    const sortedIds = [userId1, userId2].sort();
+    const roomId = sortedIds.join("_");
+    return roomId;
   };
 
-  // const fetchUsers = () => {
-  //   const db = database;
-  //   const usersCollectionRef = collection(db, "users");
-
-  //   const unsubscribeUsers = onSnapshot(usersCollectionRef, (snapshot) => {
-  //     const unsubscribeMessages = [];
-  //     const userList = [];
-
-  //     snapshot.forEach((doc) => {
-  //       const userData = doc.data();
-  //       console.log(userData);
-  //       if (userData.uid !== currentUserUid && userData.role === "docteur") {
-  //         const conversationId =
-  //           currentUserUid < userData.uid
-  //             ? `${currentUserUid}_${userData.uid}`
-  //             : `${userData.uid}_${currentUserUid}`;
-
-  //         const messagesCollectionRef = collection(
-  //           db,
-  //           "conversations",
-  //           conversationId,
-  //           "messages"
-  //         );
-
-  //         const unsubscribe = onSnapshot(
-  //           query(
-  //             messagesCollectionRef,
-  //             orderBy("createdAt", "desc"),
-  //             limit(1)
-  //           ),
-  //           (messagesSnapshot) => {
-  //             const lastMessage = messagesSnapshot.docs[0]?.data();
-
-  //             userList.push({
-  //               ...userData,
-  //               lastMessage: lastMessage?.text || "",
-  //               lastMessageCreatedAt:
-  //                 lastMessage?.createdAt?.seconds * 1000 || 0,
-  //             });
-
-  //             if (userList.length === snapshot.size - 1) {
-  //               userList.sort(
-  //                 (a, b) => b.lastMessageCreatedAt - a.lastMessageCreatedAt
-  //               );
-  //               setUsers(userList);
-  //             }
-  //           }
-  //         );
-
-  //         unsubscribeMessages.push(unsubscribe);
-  //       }
-  //     });
-
-  //     return () => {
-  //       unsubscribeMessages.forEach((unsubscribe) => unsubscribe());
-  //       unsubscribeUsers();
-  //     };
-  //   });
-
-  //   // const newMessageEvent = EventListener.listen("newMessageSent", () => {
-  //   //   fetchUsers();
-  //   // });
-  // };
-
-  // useEffect(() => {
-  //   fetchUsers();
-  // }, [refreshList]);
-
-  // useEffect(() => {
-  const users = [
-    {
-      uid: 1,
-      urlImg: images.logo1,
-      pseudo: "mihangy",
-      profession: "sage femme",
-      lastMessage:
-        "Bonjour docteur klzbelkf zjklebf bzelkfboz zeokjbf izhefb zoihef ozebf opzheedefbn ",
-      actifIndicator: true,
-      // onPress={() => handleMessageItemPress(user)}
-      // customStyles={{ marginBottom: 10 }}
-    },
-    {
-      uid: 2,
-      urlImg: images.logo2,
-      pseudo: "mihangy",
-      profession: "sage femme",
-      lastMessage: "Bonjour docteur",
-      actifIndicator: false,
-      // onPress={() => handleMessageItemPress(user)}
-      // customStyles={{ marginBottom: 10 }}
-    },
-    {
-      uid: 3,
-      urlImg: images.logo2,
-      pseudo: "mihangy",
-      profession: "sage femme",
-      lastMessage: "Bonjour docteur",
-      actifIndicator: true,
-      // onPress={() => handleMessageItemPress(user)}
-      // customStyles={{ marginBottom: 10 }}
-    },
-    {
-      uid: 4,
-      urlImg: images.logo2,
-      pseudo: "mihangy",
-      profession: "sage femme",
-      lastMessage: "Bonjour docteur",
-      actifIndicator: false,
-      // onPress={() => handleMessageItemPress(user)}
-      // customStyles={{ marginBottom: 10 }}
-    },
-  ];
-  // });
   return (
     <View
       style={[
@@ -179,17 +93,14 @@ const index = () => {
       ]}
     >
       <View style={{ marginVertical: 30 }}>
-        <View
-          style={[styles.inputBox, { borderWidth: "pink" === "pink" ? 0 : 1 }]}
-          className="shadow-sm shadow-black "
-        >
+        <View style={[styles.inputBox]} className="shadow-sm shadow-black ">
           <TextInput
             style={{
               fontFamily: "Medium",
               fontSize: SIZES.medium,
               width: "90%",
             }}
-            placeholder={i18n.t('rechercher')}
+            placeholder={i18n.t("rechercher")}
             onChangeText={(text) => {
               handleSearch(text);
               const sanitizedText = text.replace(
@@ -198,44 +109,32 @@ const index = () => {
               );
               const regex = new RegExp(sanitizedText, "i");
               const usersFiltered = users.filter((i) => regex.test(i.pseudo));
-              setFilteredUsers(usersFiltered);
-
-              console.log(filteredUsers);
+              setUsers(usersFiltered);
             }}
           />
           <AntDesign name="search1" size={20} />
         </View>
       </View>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {searchText !== ""
-          ? filteredUsers.map((user, index) => (
-              <MessageItem
-                key={user.uid}
-                urlImg={{
-                  uri:
-                    "https://i.pravatar.cc/" +
-                    (Math.floor(Math.random() * 1000) + 1),
-                }}
-                name={user.pseudo}
-                job={user.profession}
-                lastMessage={user.lastMessage}
-                onPress={() => handleMessageItemPress(user)}
-                customStyles={{ marginBottom: 10 }}
-              />
-            ))
-          : users.map((user, index) => (
-              <MessageItem
-                key={user.uid}
-                urlImg={user.urlImg}
-                name={user.pseudo}
-                job={user.profession}
-                lastMessage={user.lastMessage}
-                onPress={() => handleMessageItemPress(user)}
-                customStyles={{ marginBottom: 10 }}
-                actifIndicator={user.actifIndicator}
-              />
-            ))}
-      </ScrollView>
+      {loading ? (
+        <ActivityIndicator
+          size="large"
+          color={COLORS.primary}
+          style={{ marginTop: 20 }}
+        />
+      ) : (
+        <FlatList
+          showsVerticalScrollIndicator={false}
+          data={users}
+          renderItem={({ item, index }) => (
+            <MessageItem
+              key={index}
+              onPress={() => handleMessageItemPress(item)}
+              customStyles={{ marginBottom: 10 }}
+              target={item}
+            />
+          )}
+        />
+      )}
     </View>
   );
 };
@@ -258,4 +157,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default index;
+export default MessagesScreen;

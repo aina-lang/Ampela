@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   FlatList,
-
   TouchableOpacity,
   SafeAreaView,
 } from "react-native";
@@ -20,6 +19,7 @@ import { addCycleMenstruel, addUser } from "@/services/database";
 import ProgressBar from "@/components/ProgreessBar";
 import { Redirect } from "expo-router";
 import { generateCycleMenstrualData } from "@/utils/menstruationUtils";
+import * as FileSystem from "expo-file-system";
 
 const durationMenstruations = [];
 const cycleDurations = [];
@@ -73,6 +73,20 @@ const QuestionsSeries = () => {
   const handleNextBtnPress = async () => {
     setIsTransactionInProgress(true);
 
+    const cycleData = generateCycleMenstrualData(
+      user.lastMenstruationDate,
+      user.cycleDuration,
+      user.durationMenstruation
+    );
+
+    // const localUri = `${FileSystem.documentDirectory}/${user.username}_profile.jpg`;
+    // await FileSystem.copyAsync({
+    //   from: user.profileImage,
+    //   to: localUri,
+    // });
+
+    // console.log(localUri);
+
     await addUser(
       user.username,
       user.password,
@@ -80,14 +94,9 @@ const QuestionsSeries = () => {
       user.lastMenstruationDate,
       user.durationMenstruation,
       user.cycleDuration,
-      user.email
+      user.email,
+      user.profileImage
     );
-
-    const cycleData =    generateCycleMenstrualData(
-      user.lastMenstruationDate,
-      user.cycleDuration,
-      user.durationMenstruation
-    )
     // console.log("USER ", user);
     // Boucle pour enregistrer chaque cycle dans la base de données
     for (let i = 0; i < cycleData.length; i++) {

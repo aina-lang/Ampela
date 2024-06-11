@@ -1,75 +1,163 @@
 import { COLORS, SIZES } from "@/constants";
+import { useAuth } from "@/hooks/AuthContext";
 import { ThemeContext } from "@/hooks/theme-context";
+import { database } from "@/services/firebaseConfig";
+import { Feather } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { useRoute } from "@react-navigation/native";
 import { useNavigation } from "expo-router";
-import React, { useState, useCallback, useEffect, useContext } from "react";
 import {
-  SafeAreaView,
-  Text,
-  Touchable,
-  TouchableOpacity,
+  Timestamp,
+  addDoc,
+  collection,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  setDoc,
+} from "firebase/firestore";
+import React, { useState, useEffect, useContext, useCallback } from "react";
+import {
   View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
 } from "react-native";
-import { GiftedChat, InputToolbar, Send } from "react-native-gifted-chat";
+import {
+  Bubble,
+  GiftedChat,
+  InputToolbar,
+  Send,
+} from "react-native-gifted-chat";
 
-export default function onemessage() {
+export default function OneMessageScreen() {
   const [messages, setMessages] = useState([]);
   const navigation = useNavigation();
   const { theme } = useContext(ThemeContext);
+  const route = useRoute();
+  const { target } = route.params;
+  const { user, userProfile } = useAuth();
 
   useEffect(() => {
-    setMessages([
-      {
-        _id: 1,
-        text: "Hello developer",
-        createdAt: new Date(),
-        user: {
-          _id: 2,
-          name: "Re",
-        },
-      },
-    ]);
+    createRoomIfNotExists();
+    const roomId = getRoomId(user?.uid, target?.userId);
+    const docRef = doc(database, "rooms", roomId);
+    const messagesRef = collection(docRef, "messages");
+    const q = query(messagesRef, orderBy("createdAt", "desc"));
+
+    const unsub = onSnapshot(q, (snapshot) => {
+      const allMessages = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        if (data.createdAt) {
+          const date = data.createdAt.toDate();
+          data.createdAt = date.toISOString();
+        }
+        return data;
+      });
+      setMessages(allMessages);
+    });
+
+    return unsub;
+  }, [user, target]);
+
+  const createRoomIfNotExists = async () => {
+    const roomId = getRoomId(user?.uid, target?.userId);
+    await setDoc(doc(database, "rooms", roomId), {
+      roomId,
+      createdAt: Timestamp.fromDate(new Date()),
+    });
+  };
+
+  const getRoomId = (userId1, userId2) => {
+    const sortedIds = [userId1, userId2].sort();
+    const roomId = sortedIds.join("_");
+    return roomId;
+  };
+
+  const handleSend = useCallback(async (newMessages = []) => {
+    console.log("yes", user);
+    try {
+      const roomId = getRoomId(user?.uid, target?.userId);
+      const docRef = doc(database, "rooms", roomId);
+      const messagesRef = collection(docRef, "messages");
+      let message = newMessages[0];
+
+      let myMsg = {
+        ...message,
+        userId: user?.uid,
+        avatar: userProfile?.profileImage,
+        expediteur: userProfile?.username,
+        createdAt: Timestamp.now(),
+      };
+
+      await addDoc(messagesRef, myMsg);
+
+      // setMessages((previousMessages) =>
+      //   GiftedChat.append(previousMessages, myMsg)
+      // );
+    } catch (error) {
+      console.error(error);
+    }
   }, []);
 
-  const onSend = useCallback((messages = []) => {
-    setMessages((previousMessages) =>
-      GiftedChat.append(previousMessages, messages)
+  console.log(userProfile?.profileImage);
+  const renderBubble = (props) => {
+    // console.log("currentMessage:", props.currentMessage);
+    // console.log("currentMessage.user:", props.currentMessage.user);
+    const { currentMessage } = props;
+    return (
+      <Bubble
+        key={currentMessage._id}
+        {...props}
+        wrapperStyle={{
+          left: {
+            backgroundColor:
+              theme === "pink" ? COLORS.neutral100 : "rgba(196, 196, 196, .5)",
+            borderRadius: 15,
+          },
+          right: {
+            backgroundColor:
+              theme === "pink" ? COLORS.accent500 : COLORS.accent800,
+            borderRadius: 15,
+          },
+        }}
+        textStyle={{
+          left: {
+            color: COLORS.primary,
+            fontFamily: "Regular",
+          },
+          right: {
+            color: "white",
+            fontFamily: "Regular",
+          },
+        }}
+        // position={
+        //   props.user._id === currentUser.uid ? "right" : "left"
+        // }
+        // bottomContainerStyle={m}
+      />
     );
-  }, []);
+  };
 
-  const customtInputToolbar = (props) => {
+  const customInputToolbar = (props) => {
     return (
       <View
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: "95%",
-          padding: 20,
-          alignSelf: "center",
-        }}
-        className="shadow-md shadow-black "
+        style={styles.inputToolbarContainer}
+        className="shadow-md shadow-black"
       >
-        <InputToolbar
-          {...props}
-          containerStyle={{
-            backgroundColor:
-              "pink" === "pink" ? "white" : "rgba(196, 196, 196, .2)",
-            borderTopWidth: 0,
-            borderRadius: 98,
-            paddingHorizontal: 10,
-          }}
-        />
+        <InputToolbar {...props} containerStyle={styles.inputToolbar} />
       </View>
     );
   };
 
   return (
-    <>
+    <SafeAreaView className="flex-1">
       <View
         className=" w-full flex-row items-center pt-8  rounded-b-lg justify-between  shadow-md shadow-black"
         style={{
-          backgroundColor:   theme=== "orange" ? COLORS.accent800 : COLORS.accent500,
+          backgroundColor:
+            theme === "orange" ? COLORS.accent800 : COLORS.accent500,
           height: SIZES.height * 0.16,
           paddingHorizontal: 16,
         }}
@@ -81,58 +169,74 @@ export default function onemessage() {
           >
             <AntDesign name="left" color={"white"} size={24} />
           </TouchableOpacity>
-          <Text style={{ fontSize: 20, fontWeight: "bold", color: "white" }}>
-            Aina
-          </Text>
+          <Text style={styles.headerTitle}>{target?.username}</Text>
         </View>
-        <TouchableOpacity
-          className="p-2 pl-0 "
-          onPress={() => navigation.navigate("(message)")}
-        >
+        <TouchableOpacity onPress={() => navigation.navigate("Settings")}>
           <AntDesign name="setting" color={"white"} size={24} />
         </TouchableOpacity>
       </View>
 
       <GiftedChat
+        showUserAvatar
         messages={messages}
-        onSend={(messages) => onSend(messages)}
+        onSend={(messages) => handleSend(messages)}
         user={{
-          _id: 0,
+          _id: user?.uid,
+          avatar: userProfile?.profileImage,
         }}
-        renderInputToolbar={(props) => customtInputToolbar(props)}
+        renderBubble={renderBubble}
+        renderInputToolbar={(props) => customInputToolbar(props)}
         renderSend={(props) => {
-         
-          // console.log(props.text);
-          const { text, messageIdGenerator, user, onSend } = props;
-          console.log(messageIdGenerator);
           return (
-            text != "" && (
-              <TouchableOpacity
-                onPress={() => {
-                  if (text && onSend) {
-                    onSend(
-                      {
-                        text: text.trim(),
-                        user: user,
-                        _id: 1,
-                      },
-                      true
-                    );
-                  }
-                }}
-                className={` h-full items-center justify-center w-[40px] rounded-md`}
-              >
-                <AntDesign
-                  name="arrowright"
-                  size={24}
-                  color={"rgb(248 113 113)"}
-                />
-                <Send/>
-              </TouchableOpacity>
-            )
+            <Send {...props}>
+              <View style={styles.sendButton}>
+                <Feather name="send" size={24} color={COLORS.accent800} />
+              </View>
+            </Send>
           );
         }}
       />
-    </>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: COLORS.accent800,
+    height: SIZES.height * 0.16,
+    paddingHorizontal: 16,
+    display: "absolute",
+  },
+  backButton: {
+    padding: 12,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "white",
+  },
+  settingsButton: {
+    padding: 12,
+  },
+  inputToolbarContainer: {
+    width: "95%",
+    padding: 20,
+    bottom: 0,
+    alignSelf: "center",
+  },
+  inputToolbar: {
+    backgroundColor: COLORS.neutral100,
+    borderTopWidth: 0,
+    borderRadius: 98,
+    paddingHorizontal: 10,
+  },
+  sendButton: {
+    height: "100%",
+    alignItems: "center",
+    // backgroundColor:"red",
+    justifyContent: "center",
+  },
+});

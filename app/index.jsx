@@ -10,13 +10,16 @@ import {
   schedulePushNotification,
 } from "@/utils/notifications";
 import * as Notifications from "expo-notifications";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useDispatch } from "react-redux";
+import { updatePreference } from "@/redux/preferenceSlice";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function Index() {
   const [loaded, setLoaded] = useState(false);
   const [isFirstTime, setIsFirstTime] = useState(null);
-  
+  const dispatch = useDispatch();
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -25,6 +28,13 @@ export default function Index() {
 
         if (firstLaunch.status) {
           initializeDatabase();
+          await AsyncStorage.setItem("user-theme", "pink");
+          await AsyncStorage.setItem("user-locale", "fr");
+          const preferenceData = {
+            theme: "pink",
+            language: "fr",
+          };
+          dispatch(updatePreference(preferenceData));
         }
 
         setLoaded(true);
@@ -52,7 +62,7 @@ export default function Index() {
   // scheduleNotification();
 
   const initialRouteName =
-    isFirstTime === null || isFirstTime === true ? "(discovery)" : "(drawer)/";
+    isFirstTime === null || isFirstTime === true ? "(discovery)" : "(drawer)/(message)";
 
   return <Redirect href={initialRouteName} />;
 }

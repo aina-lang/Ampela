@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,42 +8,26 @@ import {
   Dimensions,
   TouchableOpacity,
   SafeAreaView,
+  Image,
 } from "react-native";
-
+import * as MediaLibrary from "expo-media-library";
 import { COLORS, SIZES } from "../../constants";
 import { useNavigation } from "@react-navigation/native";
 import Feather from "@expo/vector-icons/Feather";
 import { useDispatch, useSelector } from "react-redux";
 import { updateUser } from "../../redux/userSlice";
+import * as ImagePicker from "expo-image-picker";
 
 const UsernameAndPasswordScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user);
-
+  
   const [nameText, setNameText] = useState("");
-  const [password, setPassword] = useState("");
-  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [isNextBtnDisabled, setIsNextBtnDisabled] = useState(true);
-  const [passwordShow1, setPasswordShow1] = useState(false);
-  const [passwordShow2, setPasswordShow2] = useState(false);
-  const [text, setText] = useState(
-    "(Au minimum 8 caractères, une majuscule, et un chiffre)"
-  );
-  const [colorText, setColorText] = useState("#000000");
-  const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
 
-  // useEffect(() => {
-  //   if (nameText !== "" && password !== "" && passwordConfirm !== "") {
-  //     if (passwordRegex.test(password) && password === passwordConfirm) {
-  //       setIsNextBtnDisabled(false);
-  //     } else {
-  //       setIsNextBtnDisabled(true);
-  //     }
-  //   } else {
-  //     setIsNextBtnDisabled(true);
-  //   }
-  // }, [nameText, password, passwordConfirm]);
+  const [profileImage, setProfileImage] = useState(null);
+
   useEffect(() => {
     if (nameText !== "") {
       setIsNextBtnDisabled(false);
@@ -56,31 +40,38 @@ const UsernameAndPasswordScreen = () => {
     setNameText(text);
   };
 
-  const handlePasswordChange = (text) => {
-    setPassword(text);
-    if (text === "") {
-      setText("(Au moins 8 caractères, une majuscule, et un chiffre)");
-      setColorText("#000000");
-    } else if (passwordRegex.test(text)) {
-      setText("Validé");
-      setColorText("green");
-    } else {
-      setColorText("red");
-      setText("(Au moins 8 caractères, une majuscule, et un chiffre)");
-    }
-  };
-
-  const handlePasswordConfirmChange = (text) => {
-    setPasswordConfirm(text);
-  };
-  const handleNextBtnPress = () => {
+  const handleNextBtnPress = async () => {
     const userData = {
       username: nameText,
-      // password,
+      profileImage,
     };
+    await MediaLibrary.saveToLibraryAsync(profileImage);
     dispatch(updateUser(userData));
     console.log("User Data:", { ...user, ...userData });
     navigation.navigate("lastMenstrualCycleStart");
+  };
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission refusée",
+        "Désolé, nous avons besoin des permissions pour accéder aux images!"
+      );
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    console.log(result);
+    if (!result.canceled) {
+      setProfileImage(result.assets[0].uri);
+    }
   };
 
   return (
@@ -89,11 +80,11 @@ const UsernameAndPasswordScreen = () => {
         style={styles.title}
         className="bg-[#FF7575] text-white rounded-br-[150] pt-20 px-2 shadow-lg shadow-black"
       >
-        Quel est votre nom d'utlisateur
+        Quel est votre nom d'utilisateur
       </Text>
       <View className=" " style={{ height: SIZES.height * 0.6 }}>
         <View style={styles.inputBoxDeeper}>
-          <Text>Pseudo pour utoilser l'application</Text>
+          <Text>Pseudo pour utiliser l'application</Text>
           <View style={styles.inputContainer}>
             <TextInput
               cursorColor={COLORS.accent400}
@@ -104,73 +95,34 @@ const UsernameAndPasswordScreen = () => {
               className=""
             />
           </View>
-
-          {/* <View>
-            <View className="flex flex-row" style={styles.inputContainer}>
-              <TextInput
-                secureTextEntry={passwordShow1}
-                cursorColor={COLORS.accent400}
-                placeholder="Mot de passe"
-                value={password}
-                onChangeText={handlePasswordChange}
-                style={styles.input}
-                className=" w-[85%]"
-              />
-              <TouchableOpacity
-                className="flex-grow   items-center justify-center"
-                onPress={() => setPasswordShow1(!passwordShow1)}
-              >
-                <Feather
-                  name={passwordShow1 === true ? "eye" : "eye-off"}
-                  size={20}
-                />
-              </TouchableOpacity>
+        </View>
+        <View className="  justify-center items-center">
+          <TouchableOpacity onPress={pickImage}>
+            <View style={styles.imagePicker}>
+              {profileImage ? (
+                <Image source={{ uri: profileImage }} style={styles.image} />
+              ) : (
+                <>
+                  <Text>Photo de profil</Text>
+                  <Feather name="camera" size={40} color={COLORS.neutral400} />
+                </>
+              )}
             </View>
-            <Text
-              style={{
-                fontFamily: "Medium",
-                fontSize: SIZES.small,
-                color: colorText,
-              }}
-            >
-              {text}
-            </Text>
-          </View> */}
-
-          {/* <View className="flex flex-row" style={styles.inputContainer}>
-            <TextInput
-              secureTextEntry={passwordShow2}
-              cursorColor={COLORS.accent400}
-              placeholder="Confirmez le mot de passe"
-              value={passwordConfirm}
-              onChangeText={handlePasswordConfirmChange}
-              style={styles.input}
-              className=" w-[85%]"
-            />
-            <TouchableOpacity
-              className="flex-grow   items-center justify-center"
-              onPress={() => setPasswordShow2(!passwordShow2)}
-            >
-              <Feather
-                name={passwordShow2 === true ? "eye" : "eye-off"}
-                size={20}
-              />
-            </TouchableOpacity>
-          </View> */}
+          </TouchableOpacity>
         </View>
       </View>
       <View
         style={styles.btnBox}
-        className="flex items-center  justify-between flex-row p-5"
+        className="flex items-center justify-between flex-row p-5"
       >
         <TouchableOpacity
-          className="p-3  items-center rounded-md px-5"
+          className="p-3 items-center rounded-md px-5"
           onPress={() => navigation.goBack()}
         >
-          <Text className="text-[#8a8888]">Précedent</Text>
+          <Text className="text-[#8a8888]">Précédent</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          className="p-3  items-center rounded-md px-5 shadow-md shadow-black"
+          className="p-3 items-center rounded-md px-5 shadow-md shadow-black"
           onPress={handleNextBtnPress}
           disabled={isNextBtnDisabled}
           style={{
@@ -218,6 +170,21 @@ const styles = StyleSheet.create({
   btnBox: {
     height: SIZES.height * 0.15,
     width: SIZES.width,
+  },
+  imagePicker: {
+    width: SIZES.width - 70,
+    height: SIZES.width - 70,
+    borderRadius: 200,
+    backgroundColor: "rgb(243 244 246)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#c0bdbd",
+  },
+  image: {
+    width: SIZES.width - 70,
+    height: SIZES.width - 70,
+    borderRadius: 200,
   },
 });
 
