@@ -1,42 +1,27 @@
-import i18n from '@/constants/i18n';
-import { updatePreference } from '@/redux/preferenceSlice';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
+// import React, { createContext, useEffect } from "react";
+// import { usePersistedState, useSelector } from "@legendapp/state/react";
+// import AsyncStorage from "@legendapp/state/persist-plugins/async-storage";
+// import { preferenceState } from "@/legendstate/AmpelaStates";
+// export const ThemeContext = createContext();
 
-export const ThemeContext = createContext();
+// export const ThemeProvider = ({ children }) => {
+//   const theme = useSelector(() => preferenceState.get());
 
-export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(null);
-  const dispatch = useDispatch();
+//   console.log(theme);
+//   useEffect(() => {
+//     const updateTheme = async () => {
+//       const preferenceData = {
+//         theme: theme,
+//       };
+//       await updatePreference(preferenceData);
+//     };
 
-    useEffect(() => {
-    const loadTheme = async () => {
-      try {
-        const storedTheme = await AsyncStorage.getItem('user-theme');
-        if (storedTheme) {
-          i18n.locale = storedTheme;
-          setTheme(storedTheme);
-        }
-      } catch (error) {
-        console.error('Failed to load locale from AsyncStorage:', error);
-      }
-    };
-    loadTheme();
-  }, []);
+//     updateTheme();
+//   }, [theme, dispatch]);
 
-  const toggleTheme = async(theme) => {
-    setTheme(theme);
-    await AsyncStorage.setItem('user-theme', theme);
-    const preferenceData = {
-      theme: theme,
-    };
-    dispatch(updatePreference(preferenceData));
-  };
-
-  return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-};
+//   return (
+//     <ThemeContext.Provider value={{ theme, setTheme }}>
+//       {children}
+//     </ThemeContext.Provider>
+//   );
+// };

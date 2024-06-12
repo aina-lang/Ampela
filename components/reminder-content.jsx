@@ -11,16 +11,9 @@ import {
   Modal,
   Alert,
 } from "react-native";
-import { useDispatch, useSelector } from "react-redux";
-import { setSelectedParams } from "../redux/notificationSlice";
-import * as Notifications from "expo-notifications";
 
 import { COLORS, SIZES } from "../constants";
-import {
-  scheduleMenstruationNotifications,
-  scheduleOvulationNotifications,
-  schedulePillNotifications,
-} from "@/redux/actions";
+
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -34,15 +27,15 @@ const ReminderContent = ({
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [active, setActive] = useState(pills ? "Aujourd'hui" : "3 jours");
   // const [modalIsActive, setModalIsActive] = useState(isActive);
-  const {
-    menstruationNotifications,
-    ovulationNotifications,
-    pillNotifications,
-  } = useSelector((state) => state.reminder);
+  // const {
+  //   menstruationNotifications,
+  //   ovulationNotifications,
+  //   pillNotifications,
+  // } = useSelector((state) => state.reminder);
 
   const hourScrollViewRef = useRef(null);
   const minuteScrollViewRef = useRef(null);
-  const dispatch = useDispatch();
+
 
   // const selectedParams = useSelector(
   //   (state) => state.notification.selectedParams
@@ -77,15 +70,15 @@ const ReminderContent = ({
   // };
 
   const handleRegisterBtnPress = () => {
-    if (menstruationNotifications) {
-      scheduleMenstruationNotifications();
-    }
-    if (ovulationNotifications) {
-      scheduleOvulationNotifications();
-    }
-    if (pillNotifications) {
-      schedulePillNotifications();
-    }
+    // if (menstruationNotifications) {
+    //   scheduleMenstruationNotifications();
+    // }
+    // if (ovulationNotifications) {
+    //   scheduleOvulationNotifications();
+    // }
+    // if (pillNotifications) {
+    //   schedulePillNotifications();
+    // }
     onRegisterButtonPress(type, selectedHour, selectedMinute, active);
   };
 

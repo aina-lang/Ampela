@@ -6,10 +6,12 @@ import { COLORS, SIZES } from "@/constants";
 import i18n from "@/constants/i18n";
 import { ThemeContext } from "@/hooks/theme-context";
 import { useContext } from "react";
+import { useSelector } from "@legendapp/state/react";
+import { preferenceState } from "@/legendstate/AmpelaStates";
 
 const ArticleCategory = ({ active, onPress, children }) => {
   //   const { t } = useTranslation();
-  const { theme } = useContext(ThemeContext);
+  const { theme } = useSelector(() => preferenceState.get());
   const containerStyle = active
     ? [
         styles.container,

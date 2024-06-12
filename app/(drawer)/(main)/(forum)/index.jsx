@@ -1,118 +1,37 @@
-import { useRef, useContext, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   ScrollView,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  Animated,
-  Dimensions,
-  TextInput,
-  TextArea,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
 } from "react-native";
-
-import HeaderForum from "@/components/header-forum";
 import ForumItem from "@/components/forum-item";
-// import { ThemeContext } from "@/components/theme-context";
 import { COLORS, SIZES } from "@/constants";
 import BackgroundContainer from "@/components/background-container";
-
-import { addNewPost } from "@/services/firestoreAPI";
-import { getAuth } from "firebase/auth";
-import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
-import { auth, database } from "@/services/firebaseConfig";
+import { auth } from "@/services/firebaseConfig";
 import { Link, useNavigation } from "expo-router";
 import SearchForum from "@/components/SearchForum";
-import { AntDesign, Ionicons } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
 import AuthContent from "@/components/AuthContent";
 import { useBottomSheet } from "@/hooks/BottomSheetProvider";
 
 const index = () => {
   const navigation = useNavigation();
-  const screenWidth = Dimensions.get("window").width + 200;
-  const translateXAnim = useRef(new Animated.Value(screenWidth)).current;
-  const [newPostContent, setNewPostContent] = useState("");
   const [posts, setPosts] = useState([{}, {}, {}]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isInputsDisabled, setIsInputsDisabled] = useState(false);
 
-  // useEffect(() => {
-  //   const unsubscribe = onSnapshot(
-  //     query(collection(database, "posts"), orderBy("createdAt", "desc")),
-  //     (snapshot) => {
-  //       const newPosts = snapshot.docs.map((doc) => doc.data());
-
-  //       setPosts(newPosts);
-  //     }
-  //   );
-
-  //   return () => unsubscribe();
-  // }, []);
-
-  const handleAskQuestionBtnPress = () => {
-    // Animated.timing(translateXAnim, {
-    //   toValue: 0,
-    //   duration: 0,
-    //   useNativeDriver: true,
-    // }).start();
-    navigation.navigate("(drawer)/(forum)");
-  };
-
-  const handleCancelBtnPress = () => {
-    setIsInputsDisabled(false);
-    Animated.timing(translateXAnim, {
-      toValue: screenWidth,
-      duration: 0,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const handleSendBtnPress = async () => {
-    setIsInputsDisabled(true);
-    setIsLoading(true);
-    const newPostData = {
-      content: newPostContent,
-      authorId: getAuth().currentUser.uid,
-      like: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    try {
-      const response = await addNewPost(newPostData);
-      if (response && response.msg === "no-auth") {
-        console.log("L'utilisateur n'est pas authentifié.");
-      } else {
-        console.log("Nouveau post ajouté avec succès.");
-
-        setIsFormOpen(false);
-        setNewPostContent("");
-
-        Animated.timing(translateXAnim, {
-          toValue: screenWidth,
-          duration: 0,
-          useNativeDriver: true,
-        }).start();
-      }
-    } catch (error) {
-      console.error("Erreur lors de l'ajout du nouveau post : ", error);
-    } finally {
-      setIsInputsDisabled(false);
-      setIsLoading(false);
-    }
-  };
   const { openBottomSheet } = useBottomSheet();
 
   useEffect(() => {
-    if (!auth) {
+    if (!auth.currentUser) {
       openBottomSheet(<AuthContent />);
     }
   }, []);
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}

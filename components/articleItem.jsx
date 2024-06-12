@@ -12,6 +12,8 @@ import { COLORS } from "@/constants";
 import i18n from "@/constants/i18n";
 import { ThemeContext } from "@/hooks/theme-context";
 import { useNavigation, useRouter } from "expo-router";
+import { preferenceState } from "@/legendstate/AmpelaStates";
+import { useSelector } from "@legendapp/state/react";
 
 const ArticleItem = ({
   title,
@@ -27,7 +29,7 @@ const ArticleItem = ({
   img,
 }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const { theme } = useContext(ThemeContext);
+  const { theme } = useSelector(() => preferenceState.get());
   
   const router = useRouter();
   useEffect(() => {

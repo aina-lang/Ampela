@@ -1,40 +1,35 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import * as SplashScreen from "expo-splash-screen";
 import { useFonts } from "expo-font";
 import { Redirect } from "expo-router";
 import { initializeDatabase, isFirstLaunch } from "@/services/database";
-import {
-  registerForPushNotificationsAsync,
-  scheduleCycleNotifications,
-  scheduleNotification,
-  schedulePushNotification,
-} from "@/utils/notifications";
-import * as Notifications from "expo-notifications";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useDispatch } from "react-redux";
-import { updatePreference } from "@/redux/preferenceSlice";
+import { observer } from "@legendapp/state/react";
+import { updatePreference } from "@/legendstate/AmpelaStates";
 
 SplashScreen.preventAutoHideAsync();
 
-export default function Index() {
+const Index = observer(() => {
   const [loaded, setLoaded] = useState(false);
   const [isFirstTime, setIsFirstTime] = useState(null);
-  const dispatch = useDispatch();
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const firstLaunch = await isFirstLaunch();
         setIsFirstTime(firstLaunch.status);
 
-        if (firstLaunch.status) {
+        if (
+          firstLaunch == undefined ||
+          firstLaunch.status ||
+          firstLaunch.status == null ||
+          firstLaunch.status == undefined
+        ) {
           initializeDatabase();
-          await AsyncStorage.setItem("user-theme", "pink");
-          await AsyncStorage.setItem("user-locale", "fr");
           const preferenceData = {
             theme: "pink",
             language: "fr",
           };
-          dispatch(updatePreference(preferenceData));
+          updatePreference(preferenceData);
         }
 
         setLoaded(true);
@@ -58,11 +53,12 @@ export default function Index() {
   if (!fontsLoaded || !loaded) {
     return null;
   }
-
-  // scheduleNotification();
-
   const initialRouteName =
-    isFirstTime === null || isFirstTime === true ? "(discovery)" : "(drawer)/(message)";
+    isFirstTime === null || isFirstTime === true
+      ? "(discovery)"
+      : "(drawer)/(main)";
 
   return <Redirect href={initialRouteName} />;
-}
+});
+
+export default Index;

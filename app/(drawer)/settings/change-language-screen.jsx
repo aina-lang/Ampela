@@ -2,51 +2,48 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { SIZES, COLORS, images } from "@/constants";
 import HeaderWithGoBack from "@/components/header-with-go-back";
 import { useNavigation } from "expo-router";
-import ProgressBar from "@/components/ProgreessBar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import i18n from "@/constants/i18n";
-import { updatePreference } from "@/redux/preferenceSlice";
-import { useDispatch } from "react-redux";
 import { ThemeContext } from "@/hooks/theme-context";
 import { useContext } from "react";
+import { preferenceState, updatePreference } from "@/legendstate/AmpelaStates";
+import { useSelector } from "@legendapp/state/react";
 
 const ChangeLanguageScreen = () => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
-  const {theme} = useContext(ThemeContext);
+  const { theme,language } = useSelector(() => preferenceState.get());
   const changeLanguage = async (lang) => {
     try {
       i18n.locale = lang;
       const preferenceData = {
         language: lang,
       };
-      dispatch(updatePreference(preferenceData));
-      await AsyncStorage.setItem("user-locale", lang);
+      await updatePreference(preferenceData);
     } catch (error) {
       console.error("Failed to save locale to AsyncStorage:", error);
-    } finally {
     }
   };
 
   return (
     <>
-     
       <View
         style={[
           styles.container,
           {
             backgroundColor:
-             theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
+              theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
           },
         ]}
       >
         <HeaderWithGoBack title="Langues" navigation={navigation} />
-     
+
         <View style={{ gap: 20, marginTop: 20 }}>
           <TouchableOpacity
             style={{
               backgroundColor:
-              i18n.locale === "fr" ? "rgba(226,68,92, .8)" : "rgba(226,68,92, .4)",
+                language === "fr"
+                  ? "rgba(226,68,92, .8)"
+                  : "rgba(226,68,92, .4)",
               borderRadius: 5,
               flexDirection: "row",
               alignItems: "center",
@@ -68,7 +65,9 @@ const ChangeLanguageScreen = () => {
           <TouchableOpacity
             style={{
               backgroundColor:
-              i18n.locale === "mg" ? "rgba(226,68,92, .8)" : "rgba(226,68,92, .4)",
+                language === "mg"
+                  ? "rgba(226,68,92, .8)"
+                  : "rgba(226,68,92, .4)",
               borderRadius: 5,
               flexDirection: "row",
               alignItems: "center",

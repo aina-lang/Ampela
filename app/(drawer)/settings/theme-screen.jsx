@@ -8,20 +8,17 @@ import {
   TouchableOpacity,
 } from "react-native";
 import HeaderWithGoBack from "@/components/header-with-go-back";
-// import { ThemeContext } from '@/components/theme-context';
-// import { useTranslation } from 'react-i18next';
-
 import { SIZES, COLORS, images } from "@/constants";
 import { useNavigation } from "expo-router";
 import { ThemeContext } from "@/hooks/theme-context";
+import { preferenceState, updatePreference } from "@/legendstate/AmpelaStates";
+import { useSelector } from "@legendapp/state/react";
 
 const ThemeScreen = () => {
-  // const {t} = useTranslation();
-  const { theme, toggleTheme } = useContext(ThemeContext);
+  const { theme,language } = useSelector(() => preferenceState.get());
   const navigation = useNavigation();
   const handleThemeChange = (theme) => {
-    toggleTheme(theme);
-    console.log(theme);
+    updatePreference({ theme });
   };
   return (
     <View

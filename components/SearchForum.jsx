@@ -6,7 +6,7 @@ import {
   Pressable,
   TouchableOpacity,
 } from "react-native";
-// import { useTranslation } from 'react-i18next';
+
 import { SIZES, icons } from "@/constants";
 import i18n from "@/constants/i18n";
 import { AntDesign } from "@expo/vector-icons";

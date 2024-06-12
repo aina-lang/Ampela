@@ -1,18 +1,19 @@
 import { View, ScrollView, Text, StyleSheet, Image } from "react-native";
 import { COLORS, SIZES } from "@/constants";
-import HeaderWithGoBack from "@/components/header-with-go-back";
 import { images } from "@/constants";
 import { useRoute } from "@react-navigation/native";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import i18n from "@/constants/i18n";
-import { ThemeContext } from "@/hooks/theme-context";
-import { useContext, useEffect } from "react";
+
 import Animated, {
   interpolate,
   useAnimatedRef,
   useAnimatedStyle,
   useScrollViewOffset,
 } from "react-native-reanimated";
+import { useSelector } from "@legendapp/state/react";
+import { preferenceState } from "@/legendstate/AmpelaStates";
+import { useEffect } from "react";
 
 const onearticle = () => {
   const route = useRoute();
@@ -29,7 +30,7 @@ const onearticle = () => {
     list2,
     img,
   } = params;
-  const { theme } = useContext(ThemeContext);
+  const { theme } = useSelector(() => preferenceState.get());
 
   const scrollRef = useAnimatedRef();
   const scrollOffset = useScrollViewOffset(scrollRef);

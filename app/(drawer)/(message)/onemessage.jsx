@@ -1,9 +1,11 @@
 import { COLORS, SIZES } from "@/constants";
 import { useAuth } from "@/hooks/AuthContext";
 import { ThemeContext } from "@/hooks/theme-context";
+import { preferenceState } from "@/legendstate/AmpelaStates";
 import { database } from "@/services/firebaseConfig";
 import { Feather } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { useSelector } from "@legendapp/state/react";
 import { useRoute } from "@react-navigation/native";
 import { useNavigation } from "expo-router";
 import {
@@ -34,9 +36,9 @@ import {
 export default function OneMessageScreen() {
   const [messages, setMessages] = useState([]);
   const navigation = useNavigation();
-  const { theme } = useContext(ThemeContext);
+  const { theme } = useSelector(() => preferenceState.get());
   const route = useRoute();
-  const { target } = route.params;
+  const { target } = route?.params;
   const { user, userProfile } = useAuth();
 
   useEffect(() => {

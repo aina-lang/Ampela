@@ -31,7 +31,6 @@ const DATA = [
 const ArticlesScreen = () => {
   const [text, setText] = useState("");
   const navigation = useNavigation();
-  const user = useSelector((state) => state.user);
   const flatListRef = useRef(null);
 
   const [activeCategory, setActiveCategory] = useState("Menstruations");

@@ -5,13 +5,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
- 
 } from "react-native";
 import { COLORS, SIZES } from "../../constants";
 import { Calendar } from "react-native-calendars";
 import { useNavigation } from "@react-navigation/native";
-import { useDispatch, useSelector } from "react-redux";
-import { updateUser } from "../../redux/userSlice";
+import { useSelector } from "@legendapp/state/react";
+import { updateUser, userState } from "@/legendstate/AmpelaStates";
 
 const LastMenstrualCycleStartAge = () => {
   const [selected, setSelected] = useState(
@@ -23,9 +22,7 @@ const LastMenstrualCycleStartAge = () => {
   const [isNextBtnDisabled, setIsNextBtnDisabled] = useState(true);
 
   const navigation = useNavigation();
-  const dispatch = useDispatch();
-  const user = useSelector((state) => state.user);
-
+  const user = useSelector(() => userState.get());
   useEffect(() => {
     if (selected) {
       setIsNextBtnDisabled(false);
@@ -36,7 +33,7 @@ const LastMenstrualCycleStartAge = () => {
     const userData = {
       lastMenstruationDate: selected,
     };
-    dispatch(updateUser(userData));
+    updateUser(userData);
     // console.log(selected);
   }, [selected]);
   const handleNextBtnPress = () => {

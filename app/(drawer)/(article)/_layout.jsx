@@ -3,14 +3,14 @@ import React, { useContext } from "react";
 import { Stack, useNavigation } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { COLORS, SIZES } from "@/constants";
-import { useSelector } from "react-redux";
-import { ThemeContext } from "@/hooks/theme-context";
+
 import { AntDesign } from "@expo/vector-icons";
+import { useSelector } from "@legendapp/state/react";
+import { preferenceState } from "@/legendstate/AmpelaStates";
 
 const _layout = () => {
-  const user = useSelector((state) => state.user);
   const navigation = useNavigation();
-  const { theme } = useContext(ThemeContext);
+  const { theme } = useSelector(() => preferenceState.get());
   return (
     <Stack
       screenOptions={{

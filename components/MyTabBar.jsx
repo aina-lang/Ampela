@@ -10,12 +10,13 @@ import {
   Animated,
   Easing,
 } from "react-native";
-import { ThemeContext } from "@/hooks/theme-context";
+import { useSelector } from "@legendapp/state/react";
+import { preferenceState } from "@/legendstate/AmpelaStates";
 
 function MyTabBar({ state, descriptors, navigation }) {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const translateY = useRef(new Animated.Value(0)).current;
-  const { theme } = useContext(ThemeContext);
+  const { theme } = useSelector(() => preferenceState.get());
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       "keyboardDidShow",

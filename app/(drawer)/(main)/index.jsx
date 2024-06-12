@@ -1,5 +1,12 @@
 import { useState, useContext } from "react";
-import { View, ScrollView, Text, StyleSheet, Button } from "react-native";
+import {
+  View,
+  ScrollView,
+  Text,
+  StyleSheet,
+  Button,
+  SafeAreaView,
+} from "react-native";
 
 import { COLORS, SIZES } from "@/constants";
 import ReminderContent from "@/components/reminder-content";
@@ -7,24 +14,26 @@ import BackgroundContainer from "@/components/background-container";
 import IndicationCalendar from "@/components/calendar/indication-calendar";
 import { Calendar, LocaleConfig } from "react-native-calendars";
 import ReminderItem from "@/components/calendar/reminder-item";
-import { useSelector } from "react-redux";
 import { useNavigation } from "expo-router";
 import moment from "moment";
-
-import { ThemeContext } from "@/hooks/theme-context";
 import { useBottomSheet } from "@/hooks/BottomSheetProvider";
 import AuthContent from "@/components/AuthContent";
+import { useSelector } from "@legendapp/state/react";
+import {
+  cycleMenstruelState,
+  preferenceState,
+  userState,
+} from "@/legendstate/AmpelaStates";
 
 const index = () => {
-  const user = useSelector((state) => state.user);
-  const navigation = useNavigation();
+  const user = useSelector(() => userState.get());
   const [howmanytimeReminder1, setHowmanytimeReminder1] = useState("?");
   const [howmanytimeReminder2, setHowmanytimeReminder2] = useState("?");
   const [howmanytimeReminder3, setHowmanytimeReminder3] = useState("?");
   const [scrollDisabled, setScrollDisabled] = useState(true);
   const [reminderModalIsVisible, setReminderModalIsVisible] = useState(false);
   const [reminderInfo, setReminderInfo] = useState({ as: "", time: "" });
-  const { theme } = useContext(ThemeContext);
+  const { theme } = useSelector(() => preferenceState.get());
   const [time1, setTime1] = useState({
     hour: 0,
     minutes: 0,
@@ -164,7 +173,9 @@ const index = () => {
         return null;
     }
   };
-  const cycles = useSelector((state) => state.cycleMenstruel.cyclesData);
+
+  const { cyclesData } = useSelector(() => cycleMenstruelState.get());
+  cycles = cyclesData;
 
   const markedDates = {};
 
@@ -224,14 +235,8 @@ const index = () => {
 
   generateMarkedDates();
 
-  const { openBottomSheet } = useBottomSheet();
-
-  const handleOpenBottomSheet = () => {
-    openBottomSheet(<AuthContent />);
-  };
-
   return (
-    <>
+    <SafeAreaView className="flex-1 ">
       <ReminderContent
         isActive={reminderModalIsVisible}
         setReminderModalIsVisible={setReminderModalIsVisible}
@@ -246,7 +251,6 @@ const index = () => {
         showsVerticalScrollIndicator={false}
       >
         <BackgroundContainer>
-          {/* <Button onPress={handleOpenBottomSheet} title="open bottom" /> */}
           <View style={styles.calendar}>
             <Calendar
               disableAllTouchEventsForDisabledDays={true}
@@ -318,7 +322,7 @@ const index = () => {
           </View>
         </BackgroundContainer>
       </ScrollView>
-    </>
+    </SafeAreaView>
   );
 };
 

@@ -1,14 +1,15 @@
-import { useContext } from "react";
+
 import { ImageBackground, KeyboardAvoidingView, Platform } from "react-native";
 import { images } from "@/constants";
-import { ThemeContext } from "@/hooks/theme-context";
+import { useSelector } from "@legendapp/state/react";
+import { preferenceState } from "@/legendstate/AmpelaStates";
 
 const BackgroundContainer = ({
   children,
   paddingBottom,
   paddingHorizontal,
 }) => {
-  const { theme } = useContext(ThemeContext);
+  const { theme } = useSelector(() => preferenceState.get());
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}

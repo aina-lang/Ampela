@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, {useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,19 +7,17 @@ import {
   TouchableOpacity,
   SafeAreaView,
 } from "react-native";
-import { useDispatch, useSelector } from "react-redux";
 import { COLORS, SIZES } from "../../constants";
 import { useNavigation } from "@react-navigation/native";
-import { updateUser } from "../../redux/userSlice";
 import {
   ResponseOfQuestion0,
   ResponseOfQuestion1,
 } from "@/components/response-of-question";
 import { addCycleMenstruel, addUser } from "@/services/database";
-import ProgressBar from "@/components/ProgreessBar";
-import { Redirect } from "expo-router";
+import ProgressBar from "@/components/ProgressBar";
 import { generateCycleMenstrualData } from "@/utils/menstruationUtils";
-import * as FileSystem from "expo-file-system";
+import { updateUser, userState } from "@/legendstate/AmpelaStates";
+import { useSelector } from "@legendapp/state/react";
 
 const durationMenstruations = [];
 const cycleDurations = [];
@@ -38,13 +36,12 @@ for (let i = 2; i < 46; i++) {
 
 const QuestionsSeries = () => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
   const [response0, setResponse0] = useState(durationMenstruations[0]);
   const [response1, setResponse1] = useState(cycleDurations[0]);
   const [isNextBtnDisabled, setIsNextBtnDisabled] = useState(true);
   const dontRememberText = "je m'en souviens pas";
   const [isTransactionInProgress, setIsTransactionInProgress] = useState(false);
-  const user = useSelector((state) => state.user);
+  const user = useSelector(() => userState.get());
 
   const handleResponsePress0 = (item) => {
     setResponse0(item);
@@ -125,14 +122,14 @@ const QuestionsSeries = () => {
     const userData = {
       durationMenstruation: getNumberFromString(response0),
     };
-    dispatch(updateUser(userData));
+   updateUser(userData);
   }, [response0]);
 
   useEffect(() => {
     const userData = {
       cycleDuration: getNumberFromString(response1),
     };
-    dispatch(updateUser(userData));
+   updateUser(userData);
   }, [response1]);
 
   return (
@@ -247,7 +244,7 @@ const QuestionsSeries = () => {
           <Text className="text-white">Terminer</Text>
         </TouchableOpacity>
       </View>
-      <ProgressBar percentage={10} isVisible={isTransactionInProgress} />
+      {/* <ProgressBar percentage={10} isVisible={isTransactionInProgress} /> */}
     </SafeAreaView>
   );
 };

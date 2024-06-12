@@ -1,14 +1,13 @@
-import { useContext } from "react";
+
 import { View, Text, StyleSheet } from "react-native";
-// import { useTranslation } from 'react-i18next';
-// import { ThemeContext } from '../theme-context';
 import { COLORS } from "../../constants";
 import i18n from "@/constants/i18n";
-import { ThemeContext } from "@/hooks/theme-context";
+import { useSelector } from "@legendapp/state/react";
+import { preferenceState } from "@/legendstate/AmpelaStates";
+
 
 const IndicationCalendar = ({ title }) => {
-  const {theme} = useContext(ThemeContext);
-  // const {t} = useTranslation();
+  const { theme } = useSelector(() => preferenceState.get());
   let titleText = null;
   let bgColor = null;
   let borderWidth = null;

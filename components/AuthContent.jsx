@@ -9,7 +9,6 @@ import {
   FlatList,
 } from "react-native";
 import { COLORS } from "@/constants";
-import { useSelector } from "react-redux";
 import { auth, database, storage } from "@/services/firebaseConfig";
 import {
   createUserWithEmailAndPassword,
@@ -18,16 +17,17 @@ import {
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { addDoc, collection, doc, getDoc, setDoc } from "firebase/firestore";
 import { useProgress } from "@/hooks/ProgressContext";
-import ProgressBar from "./ProgreessBar";
+import ProgressBar from "./ProgressBar";
+import { useSelector } from "@legendapp/state/react";
+import { userState } from "@/legendstate/AmpelaStates";
 
 const { width } = Dimensions.get("window");
 
 const AuthContent = () => {
-  const user = useSelector((state) => state.user);
+  const user = useSelector(() => userState.get());
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
-
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -94,12 +94,12 @@ const AuthContent = () => {
     }
   };
 
-  const { showProgress, hideProgress, isVisible } = useProgress();
+  // const { showProgress, hideProgress, isVisible } = useProgress();
 
   const handleSignUp = async () => {
     console.log(user);
     try {
-      showProgress("Signing Up...");
+      // showProgress("Signing Up...");
 
       // Création de l'utilisateur avec email et mot de passe
       const userCredential = await createUserWithEmailAndPassword(
@@ -153,16 +153,16 @@ const AuthContent = () => {
       setSignupEmail("");
       setSignupPassword("");
       setConfirmPassword("");
-      hideProgress();
+      // hideProgress();
     } catch (error) {
-      hideProgress();
+      // hideProgress();
       console.error("Erreur lors de l'inscription:", error.message);
     }
   };
 
   const handleLogin = async () => {
     try {
-      showProgress("Logging In...");
+      // showProgress("Logging In...");
 
       const userCredential = await signInWithEmailAndPassword(
         auth,
@@ -182,10 +182,10 @@ const AuthContent = () => {
         console.error("No such user document!");
       }
 
-      hideProgress();
+      // hideProgress();
     } catch (error) {
       console.error("Erreur lors de la connexion:", error.message);
-      hideProgress();
+      // hideProgress();
       // setLoginError(true);
     }
   };
@@ -361,30 +361,26 @@ const AuthContent = () => {
 
   return (
     <>
-      {isVisible ? (
-        <ProgressBar />
-      ) : (
-        <FlatList
-          ref={flatListRef}
-          data={pages}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.key}
-          renderItem={({ item }) => (
-            <View style={styles.pageContainer}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.infoText}>
-                Si vous voulez poser des questions, commenter ou réagir, et
-                envoyer des messages (forum, message privé), veuillez vous
-                connecter ou créer un compte. Cela synchronisera également vos
-                données.
-              </Text>
-              {item.content}
-            </View>
-          )}
-        />
-      )}
+      <FlatList
+        ref={flatListRef}
+        data={pages}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item) => item.key}
+        renderItem={({ item }) => (
+          <View style={styles.pageContainer}>
+            <Text style={styles.title}>{item.title}</Text>
+            <Text style={styles.infoText}>
+              Si vous voulez poser des questions, commenter ou réagir, et
+              envoyer des messages (forum, message privé), veuillez vous
+              connecter ou créer un compte. Cela synchronisera également vos
+              données.
+            </Text>
+            {item.content}
+          </View>
+        )}
+      />
     </>
   );
 };

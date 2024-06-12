@@ -1,62 +1,56 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { getAllCycle, getUser, setFirstLaunchFalse } from "@/services/database";
 import { Tabs, useNavigation } from "expo-router";
-import { useDispatch, useSelector } from "react-redux";
-import { updateUser } from "@/redux/userSlice";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import MyTabBar from "@/components/MyTabBar";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View, SafeAreaView } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { COLORS, SIZES } from "@/constants";
-import { updateCycleMenstruelData } from "@/redux/cycleSlice";
+import { useSelector } from "@legendapp/state/react";
 import {
-  generateCycleMenstrualData,
-  getOvulationDate,
-} from "@/utils/menstruationUtils";
-import moment from "moment";
-import { ThemeContext } from "@/hooks/theme-context";
+  userState,
+  cycleMenstruelState,
+  updateUser,
+  updateCycleMenstruelData,
+  preferenceState,
+} from "@/legendstate/AmpelaStates";
 
-export default function TabLayout() {
-  const user = useSelector((state) => state.user);
-
-  const dispatch = useDispatch();
+const TabLayout = () => {
+  const user = useSelector(() => userState.get());
   const navigation = useNavigation();
-  const { theme } = useContext(ThemeContext);
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const userFromSqlite = await getUser();
+  const { theme } = useSelector(() => preferenceState.get());
 
-        await setFirstLaunchFalse();
+  // useEffect(() => {
+  //   async function fetchData() {
+  //     try {
+  //       const userFromSqlite = await getUser();
+  //       await setFirstLaunchFalse();
+  //       updateUser(userFromSqlite);
 
-        // console.log("FROM SQILTE ", userFromSqlite);
-        dispatch(updateUser(userFromSqlite));
-        // console.log(user);
-        const cyclesFromSqlite = await getAllCycle();
-        // console.log("Cycles FROM SQLITE ", cyclesFromSqlite);
-        dispatch(updateCycleMenstruelData(cyclesFromSqlite));
-      } catch (error) {
-        console.error("Error:", error);
-      }
-    }
+  //       const cyclesFromSqlite = await getAllCycle();
+  //       updateCycleMenstruelData(cyclesFromSqlite);
+  //     } catch (error) {
+  //       console.error("Error:", error);
+  //     }
+  //   }
 
-    fetchData();
-  }, []);
+  //   fetchData();
+  // }, []);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
       <Tabs
         screenOptions={{
           header: () => (
             <View
-              className=" w-full flex-row items-center pt-8  rounded-b-lg justify-between  shadow-md shadow-black"
+              className="w-full flex-row items-center pt-8 rounded-b-lg justify-between shadow-md shadow-black"
               style={{
-                backgroundColor:  theme === "orange" ? COLORS.accent800 : COLORS.accent500,
+                backgroundColor:
+                  theme === "orange" ? COLORS.accent800 : COLORS.accent500,
                 height: SIZES.height * 0.16,
                 paddingHorizontal: 16,
               }}
             >
-              <View className="flex flex-row  items-center justify-center ">
+              <View className="flex flex-row items-center justify-center">
                 <TouchableOpacity className="p-2 pl-0 mr-3">
                   <Ionicons
                     name="menu"
@@ -73,13 +67,13 @@ export default function TabLayout() {
               </View>
               <View className="flex-row">
                 <TouchableOpacity
-                  className="p-2 pl-0 "
+                  className="p-2 pl-0"
                   onPress={() => navigation.navigate("(message)")}
                 >
                   <Ionicons name="chatbubble" color={"white"} size={24} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  className="p-2 pl-0 "
+                  className="p-2 pl-0"
                   onPress={() => navigation.navigate("(message)")}
                 >
                   <Ionicons
@@ -91,7 +85,6 @@ export default function TabLayout() {
               </View>
             </View>
           ),
-
           tabBarShowLabel: false,
           tabBarHideOnKeyboard: true,
         }}
@@ -107,21 +100,21 @@ export default function TabLayout() {
         <Tabs.Screen
           name="(forum)"
           options={{
-            title: "forum",
+            title: "Forum",
             tabBarIcon: "globe-outline",
             headerShown: false,
           }}
         />
-
         <Tabs.Screen
           name="(article)"
           options={{
-            title: "article",
+            title: "Article",
             tabBarIcon: "book",
             headerShown: false,
           }}
         />
       </Tabs>
-    </GestureHandlerRootView>
   );
-}
+};
+
+export default TabLayout;

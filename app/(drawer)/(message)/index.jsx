@@ -5,6 +5,7 @@ import {
   TextInput,
   FlatList,
   ActivityIndicator,
+  Text,
 } from "react-native";
 import {
   where,
@@ -16,26 +17,43 @@ import {
 } from "firebase/firestore";
 import { COLORS, SIZES } from "@/constants";
 import MessageItem from "@/components/messageItem";
-import { database } from "@/services/firebaseConfig";
+import { auth, database } from "@/services/firebaseConfig";
 import { useNavigation } from "expo-router";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import i18n from "@/constants/i18n";
-import { ThemeContext } from "@/hooks/theme-context";
 import { useAuth } from "@/hooks/AuthContext";
+import { preferenceState } from "@/legendstate/AmpelaStates";
+import { useSelector } from "@legendapp/state/react";
+import NetInfo, { useNetInfo } from "@react-native-community/netinfo";
+import AuthContent from "@/components/AuthContent";
+import { useBottomSheet } from "@/hooks/BottomSheetProvider";
 
 const MessagesScreen = () => {
-  const { theme } = useContext(ThemeContext);
+  const { theme } = useSelector(() => preferenceState.get());
   const navigation = useNavigation();
   const [users, setUsers] = useState([]);
   const [searchText, setSearchText] = useState("");
   const { user, userProfile } = useAuth();
   const [loading, setLoading] = useState(true);
+
+  const { isConnected, isInternetReachable } = useNetInfo();
+
   const handleSearch = (text) => {
     setSearchText(text);
   };
 
+  const { openBottomSheet } = useBottomSheet();
+
+  useEffect(() => {
+    if (!auth.currentUser) {
+      openBottomSheet(<AuthContent />);
+    }
+  }, []);
+
   const handleMessageItemPress = (target) => {
-    navigation.navigate("onemessage", { target });
+    if (user) {
+      navigation.navigate("onemessage", { target });
+    }
   };
 
   useEffect(() => {
@@ -44,26 +62,60 @@ const MessagesScreen = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (user) {
+      getUsers();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isConnected) {
+      setLoading(false);
+      return;
+    }
+
+    if (isInternetReachable) {
+      getUsers();
+    }
+  }, [isConnected]);
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      if (!state.isConnected) {
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const getUsers = async () => {
     setLoading(true);
-    const q = query(
-      collection(database, "users"),
-      where("userId", "!=", user?.uid)
-    );
+    let q;
+    if (user) {
+      q = query(
+        collection(database, "users"),
+        where("userId", "!=", user?.uid)
+      );
+    } else {
+      q = query(collection(database, "users"));
+    }
     const querySnapshot = await getDocs(q);
     let data = [];
     const userPromises = querySnapshot.docs.map(async (doc) => {
       const userData = doc.data();
-      const roomId = getRoomId(user.uid, userData.userId);
-      const messagesRef = collection(database, "rooms", roomId, "messages");
-      const lastMessageQuery = query(
-        messagesRef,
-        orderBy("createdAt", "desc"),
-        limit(1)
-      );
-      const lastMessageSnapshot = await getDocs(lastMessageQuery);
-      const lastMessage = lastMessageSnapshot.docs[0]?.data();
-      userData.lastMessage = lastMessage?.createdAt || null;
+      if (user) {
+        const roomId = getRoomId(user.uid, userData.userId);
+        const messagesRef = collection(database, "rooms", roomId, "messages");
+        const lastMessageQuery = query(
+          messagesRef,
+          orderBy("createdAt", "desc"),
+          limit(1)
+        );
+        const lastMessageSnapshot = await getDocs(lastMessageQuery);
+        const lastMessage = lastMessageSnapshot.docs[0]?.data();
+        userData.lastMessage = lastMessage?.createdAt || null;
+      }
       return userData;
     });
     data = await Promise.all(userPromises);
@@ -78,8 +130,7 @@ const MessagesScreen = () => {
 
   const getRoomId = (userId1, userId2) => {
     const sortedIds = [userId1, userId2].sort();
-    const roomId = sortedIds.join("_");
-    return roomId;
+    return sortedIds.join("_");
   };
 
   return (
@@ -92,36 +143,43 @@ const MessagesScreen = () => {
         },
       ]}
     >
-      <View style={{ marginVertical: 30 }}>
-        <View style={[styles.inputBox]} className="shadow-sm shadow-black ">
-          <TextInput
-            style={{
-              fontFamily: "Medium",
-              fontSize: SIZES.medium,
-              width: "90%",
-            }}
-            placeholder={i18n.t("rechercher")}
-            onChangeText={(text) => {
-              handleSearch(text);
-              const sanitizedText = text.replace(
-                /[-[\]{}()*+?.,\\^$|#\s]/g,
-                "\\$&"
-              );
-              const regex = new RegExp(sanitizedText, "i");
-              const usersFiltered = users.filter((i) => regex.test(i.pseudo));
-              setUsers(usersFiltered);
-            }}
+      {!isConnected || !isInternetReachable ? (
+        <View style={styles.offlineContainer}>
+          <MaterialCommunityIcons
+            name="wifi-off"
+            size={24}
+            color="red"
+            style={styles.icon}
           />
-          <AntDesign name="search1" size={20} />
+          <Text style={styles.text}>Hors ligne</Text>
         </View>
-      </View>
-      {loading ? (
-        <ActivityIndicator
-          size="large"
-          color={COLORS.primary}
-          style={{ marginTop: 20 }}
-        />
       ) : (
+        <View style={{ marginVertical: 30 }}>
+          <View style={[styles.inputBox]} className="shadow-sm shadow-black">
+            <TextInput
+              style={{
+                fontFamily: "Medium",
+                fontSize: SIZES.medium,
+                width: "90%",
+              }}
+              placeholder={i18n.t("rechercher")}
+              onChangeText={(text) => {
+                handleSearch(text);
+                const sanitizedText = text.replace(
+                  /[-[\]{}()*+?.,\\^$|#\s]/g,
+                  "\\$&"
+                );
+                const regex = new RegExp(sanitizedText, "i");
+                const usersFiltered = users.filter((i) => regex.test(i.pseudo));
+                setUsers(usersFiltered);
+              }}
+            />
+            <AntDesign name="search1" size={20} />
+          </View>
+        </View>
+      )}
+
+      {!loading && isConnected && isInternetReachable && (
         <FlatList
           showsVerticalScrollIndicator={false}
           data={users}
@@ -131,8 +189,17 @@ const MessagesScreen = () => {
               onPress={() => handleMessageItemPress(item)}
               customStyles={{ marginBottom: 10 }}
               target={item}
+              disabled={!user}
             />
           )}
+        />
+      )}
+
+      {loading && isConnected && isInternetReachable && (
+        <ActivityIndicator
+          size="large"
+          color={COLORS.primary}
+          style={{ marginTop: 20 }}
         />
       )}
     </View>
@@ -154,6 +221,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 99,
+  },
+  icon: {
+    marginRight: 5,
+  },
+  text: {
+    color: "red",
+    fontWeight: "bold",
   },
 });
 

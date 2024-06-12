@@ -7,8 +7,6 @@ export const db = SQLite.openDatabaseSync("ampela.db");
 
 // SQLite.deleteDatabaseSync("ampela.db");
 
-
-
 export const addUser = async (
   username,
   password,
@@ -23,7 +21,6 @@ export const addUser = async (
     "INSERT INTO users (username, password, profession, lastMenstruationDate, durationMenstruation, cycleDuration, email, profileImage) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
   );
   try {
-   
     const result = await statement.executeAsync([
       username,
       password,

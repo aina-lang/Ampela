@@ -14,15 +14,12 @@ import * as MediaLibrary from "expo-media-library";
 import { COLORS, SIZES } from "../../constants";
 import { useNavigation } from "@react-navigation/native";
 import Feather from "@expo/vector-icons/Feather";
-import { useDispatch, useSelector } from "react-redux";
-import { updateUser } from "../../redux/userSlice";
 import * as ImagePicker from "expo-image-picker";
+import { updateUser } from "@/legendstate/AmpelaStates";
 
 const UsernameAndPasswordScreen = () => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
-  const user = useSelector((state) => state.user);
-  
+
   const [nameText, setNameText] = useState("");
   const [isNextBtnDisabled, setIsNextBtnDisabled] = useState(true);
 
@@ -46,8 +43,8 @@ const UsernameAndPasswordScreen = () => {
       profileImage,
     };
     await MediaLibrary.saveToLibraryAsync(profileImage);
-    dispatch(updateUser(userData));
-    console.log("User Data:", { ...user, ...userData });
+    updateUser(userData);
+    // console.log("User Data:", { ...user, ...userData });
     navigation.navigate("lastMenstrualCycleStart");
   };
 

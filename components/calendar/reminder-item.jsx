@@ -2,10 +2,12 @@ import { useContext, useState } from "react";
 import { View, Text, Switch, StyleSheet, TouchableOpacity } from "react-native";
 import { COLORS, SIZES } from "../../constants";
 import { ThemeContext } from "@/hooks/theme-context";
+import { useSelector } from "@legendapp/state/react";
+import { preferenceState } from "@/legendstate/AmpelaStates";
 
 const ReminderItem = ({ as, time, onPress, howmanytimeReminder }) => {
   const [isEnabled, setIsEnabled] = useState(false);
-  const { theme } = useContext(ThemeContext);
+  const { theme } = useSelector(() => preferenceState.get());
   const toggleSwitch = () => {
     setIsEnabled((v) => !v);
   };

@@ -3,13 +3,13 @@ import React, { useContext } from "react";
 import { Stack, useNavigation } from "expo-router";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { COLORS, SIZES } from "@/constants";
-import { useSelector } from "react-redux";
-import { ThemeContext } from "@/hooks/theme-context";
+import { preferenceState, userState } from "@/legendstate/AmpelaStates";
+import { useSelector } from "@legendapp/state/react";
 
 const _layout = () => {
-  const user = useSelector((state) => state.user);
+  const user = useSelector(() => userState.get());
   const navigation = useNavigation();
-  const { theme } = useContext(ThemeContext);
+  const { theme } = useSelector(() => preferenceState.get());
   return (
     <Stack
       screenOptions={{
