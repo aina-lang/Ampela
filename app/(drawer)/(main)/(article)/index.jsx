@@ -54,13 +54,13 @@ const ArticlesScreen = () => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <SafeAreaView style={styles.container} className="">
-        <BackgroundContainer paddingBottom={50}>
+        <BackgroundContainer paddingBottom={0}>
        
           <SearchArticles text={text} onChange={handleTextInputChange} />
 
           <FlatList
             data={DATA}
-            style={{ height: 70, marginTop: 10 }}
+            style={{ height: 50, marginTop: 5 }}
             renderItem={({ item }) => (
               <ArticleCategory
                 onPress={() => handleArticleCategoryPress(item)}

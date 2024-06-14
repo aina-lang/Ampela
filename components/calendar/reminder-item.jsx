@@ -1,15 +1,44 @@
-import { useContext, useState } from "react";
+import React, { useState } from "react";
 import { View, Text, Switch, StyleSheet, TouchableOpacity } from "react-native";
 import { COLORS, SIZES } from "../../constants";
-import { ThemeContext } from "@/hooks/theme-context";
 import { useSelector } from "@legendapp/state/react";
 import { preferenceState } from "@/legendstate/AmpelaStates";
+import * as BackgroundFetch from 'expo-background-fetch';
+import * as TaskManager from 'expo-task-manager';
+import * as Notifications from 'expo-notifications';
+
+const registerBackgroundTask = async (notificationDate, title, body) => {
+  const status = await BackgroundFetch.getStatusAsync();
+  if (status === BackgroundFetch.Status.Restricted || status === BackgroundFetch.Status.Denied) {
+    console.log('Background execution is restricted or denied.');
+    return;
+  }
+
+  const isRegistered = await TaskManager.isTaskRegisteredAsync('BACKGROUND_NOTIFICATION_TASK');
+  if (!isRegistered) {
+    await BackgroundFetch.registerTaskAsync('BACKGROUND_NOTIFICATION_TASK', {
+      minimumInterval: 60,
+      stopOnTerminate: false, 
+      startOnBoot: true,
+      data: { notificationDate, title, body }, 
+    });
+  }
+};
 
 const ReminderItem = ({ as, time, onPress, howmanytimeReminder }) => {
   const [isEnabled, setIsEnabled] = useState(false);
   const { theme } = useSelector(() => preferenceState.get());
-  const toggleSwitch = () => {
-    setIsEnabled((v) => !v);
+
+  const toggleSwitch = async () => {
+    setIsEnabled(previousState => !previousState);
+    if (!isEnabled) {
+      const notificationDate = new Date();
+      notificationDate.setHours(time.hour);
+      notificationDate.setMinutes(time.minutes);
+      await registerBackgroundTask(notificationDate.toISOString(), as, `Il est temps pour ${as.toLowerCase()}`);
+    } else {
+      await BackgroundFetch.unregisterTaskAsync('BACKGROUND_NOTIFICATION_TASK');
+    }
   };
 
   return (

@@ -6,32 +6,32 @@ import Link from "@/components/link";
 import { useNavigation } from "expo-router";
 import i18n from "@/constants/i18n";
 import { ThemeContext } from "@/hooks/theme-context";
+import { useSelector } from "@legendapp/state/react";
+import { preferenceState } from "@/legendstate/AmpelaStates";
 
 const contentData = [
   {
     subtitle: "calendrierDuCycleMenstruel",
-    content: "calendrierDuCycleMenstruelContent"
+    content: "calendrierDuCycleMenstruelContent",
   },
   {
     subtitle: "articles",
-    content: "articleContent"
+    content: "articleContent",
   },
   {
     subtitle: "forumEtMessagePriveAvecLePersonnelDeSante",
-    content: "forumEtMessagePriveAvecLePersonnelDeSanteContent"
+    content: "forumEtMessagePriveAvecLePersonnelDeSanteContent",
   },
   {
     subtitle: "parametresEtPartageDeLapplication",
-    content: "parametresEtPartageDeLapplicationContent"
-  }
-]
-
+    content: "parametresEtPartageDeLapplicationContent",
+  },
+];
 
 const InfoScreen = () => {
-  const {theme} = useContext(ThemeContext);
-  const navigation=useNavigation()
-  const [data, setData] = useState([]); 
-  
+  const { theme, language } = useSelector(() => preferenceState.get());
+  const navigation = useNavigation();
+  const [data, setData] = useState([]);
 
   return (
     <View
@@ -39,36 +39,37 @@ const InfoScreen = () => {
         styles.container,
         {
           backgroundColor:
-            theme=== "pink" ? COLORS.neutral200 : COLORS.neutral100,
+            theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
         },
       ]}
     >
       <HeaderWithGoBack title={i18n.t("infoAmpela")} navigation={navigation} />
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={{marginTop: 20}}>
-        <Text style={styles.text}>
-          {i18n.t("introInfo")}
-      </Text>
+        <View style={{ marginTop: 20 }}>
+          <Text style={styles.text}>{i18n.t("introInfo")}</Text>
         </View>
-      
-      <View style={styles.contentContainer}>
-        {
-          contentData.map((content) => {
-            return (<View key={content.subtitle}>
-              <Text style={styles.subtitle}>{i18n.t(content.subtitle)}</Text>
-              <Text style={styles.text}>{i18n.t(content.content)}</Text>
-            </View>)
-          })
-        }
-      </View>
-      
-      <View style={{marginTop: 30, marginBottom: 15}}> 
-      <Text style={styles.text}>{i18n.t("partenariat")} : UNFPA Madagascar, Orange Madagascar </Text>
-      <Text style={styles.text}>{i18n.t("siteWeb")}: <Link url="https://www.google.com">www.ampela.com</Link></Text>
 
-      </View>
+        <View style={styles.contentContainer}>
+          {contentData.map((content) => {
+            return (
+              <View key={content.subtitle}>
+                <Text style={styles.subtitle}>{i18n.t(content.subtitle)}</Text>
+                <Text style={styles.text}>{i18n.t(content.content)}</Text>
+              </View>
+            );
+          })}
+        </View>
 
-      </ScrollView>     
+        <View style={{ marginTop: 30, marginBottom: 15 }}>
+          <Text style={styles.text}>
+            {i18n.t("partenariat")} : UNFPA Madagascar, Orange Madagascar{" "}
+          </Text>
+          <Text style={styles.text}>
+            {i18n.t("siteWeb")}:{" "}
+            <Link url="https://www.google.com">www.ampela.com</Link>
+          </Text>
+        </View>
+      </ScrollView>
     </View>
   );
 };
@@ -80,17 +81,17 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     gap: 10,
-    marginTop: 15           
+    marginTop: 15,
   },
   text: {
     fontFamily: "Regular",
     fontSize: SIZES.medium,
-    lineHeight: 22
+    lineHeight: 22,
   },
   subtitle: {
     fontFamily: "SBold",
-    fontSize: SIZES.large
-  }
+    fontSize: SIZES.large,
+  },
 });
 
 export default InfoScreen;

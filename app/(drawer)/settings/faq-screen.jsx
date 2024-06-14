@@ -16,8 +16,8 @@ const FaqScreen = () => {
     return (
         <View style={styles.container}>
             <HeaderWithGoBack title="F.A.Q" navigation={navigation} />
-            <ScrollView showsVerticalScrollIndicator={false}>
-                <View style={{gap: 10}}>
+            <ScrollView showsVerticalScrollIndicator={false} style={{paddingVertical:20}}>
+                <View style={{gap: 10,paddingBottom:30}} >
                 {
                     data.map((d) => (
                         <FaqItem key={d.id} question={i18n.t(d.question)} response={i18n.t(d.response)} list={d.list ? d.list : ""} />

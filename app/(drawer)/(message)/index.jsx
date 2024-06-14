@@ -222,8 +222,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderRadius: 99,
   },
+
+  offlineContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+  },
   icon: {
-    marginRight: 5,
+    marginBottom: 8,
   },
   text: {
     color: "red",

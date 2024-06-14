@@ -23,13 +23,13 @@ const _layout = () => {
               paddingHorizontal: 16,
             }}
           >
-            <View className="flex flex-row  items-center justify-center ">
+            <View className="flex flex-row  items-center justify-center "  onPress={() => navigation.goBack()}>
               <TouchableOpacity className="p-2 pl-0 mr-3">
                 <Ionicons
                   name="arrow-back"
-                  color={"white"}
-                  size={35}
-                  onPress={() => navigation.goBack()}
+                  color={theme === "pink" ? "white" : COLORS.accent800}
+                  size={24}
+                 
                 />
               </TouchableOpacity>
               <Text

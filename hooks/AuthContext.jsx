@@ -1,7 +1,14 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, database } from "@/services/firebaseConfig"; // Assurez-vous que firebaseConfig est correctement configuré
-import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import { auth, database } from "@/services/firebaseConfig"; 
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
 
 export const AuthContext = createContext();
 
@@ -11,7 +18,6 @@ export const AuthContextProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setIsAuthenticated(true);
@@ -32,7 +38,7 @@ export const AuthContextProvider = ({ children }) => {
 
           setUserProfile(userProfile);
         } else {
-          console.error("No such user document!");
+          // console.error("No such user document!");
         }
 
         setUser(user);

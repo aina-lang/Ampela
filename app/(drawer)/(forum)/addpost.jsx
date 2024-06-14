@@ -1,26 +1,31 @@
-import React, { useEffect, useLayoutEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   View,
   Text,
   TextInput,
   Button,
-  FlatList,
   Image,
   StyleSheet,
   TouchableOpacity,
+  ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useNavigation } from "expo-router";
-import { SIZES } from "@/constants";
-import { Ionicons } from "@expo/vector-icons";
+
+import { collection, addDoc, updateDoc } from "firebase/firestore";
+import { auth, database } from "@/services/firebaseConfig";
+import { AuthContext } from "@/hooks/AuthContext";
 
 const AddPost = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [photos, setPhotos] = useState();
+  const [photos, setPhotos] = useState(null);
+  const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
-  const [showTabBar, setShowTabBar] = useState(true);
+  const { userProfile } = useContext(AuthContext);
 
+  console.log(userProfile);
   const selectPhotos = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
@@ -29,25 +34,54 @@ const AddPost = () => {
       quality: 1,
     });
 
-    // console.log(result);
-
     if (!result.canceled) {
       setPhotos(result.assets[0].uri);
     }
   };
 
-  const submitPost = () => {
-    // console.log({ title, description, photos });
+  const submitPost = async () => {
+    setLoading(true);
+    try {
+      const data = {
+        title,
+        description,
+        photos,
+        authorId: auth.currentUser.uid,
+        authorName: userProfile.username,
+        like: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const docRef = await addDoc(collection(database, "posts"), data);
+
+      const postId = docRef.id;
+
+      console.log(postId);
+
+      await updateDoc(docRef, { postId });
+
+      setTitle("");
+      setDescription("");
+      setPhotos(null);
+
+      navigation.goBack();
+    } catch (error) {
+      console.error("Error adding document: ", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Text style={styles.label}>Title</Text>
       <TextInput
         style={styles.input}
         value={title}
         onChangeText={setTitle}
         placeholder="Enter title"
+        editable={!loading}
       />
       <Text style={styles.label}>Description</Text>
       <TextInput
@@ -56,13 +90,22 @@ const AddPost = () => {
         onChangeText={setDescription}
         placeholder="Enter description"
         multiline
+        editable={!loading}
       />
-      <Button title="Add Photos" onPress={selectPhotos} />
+      <Button title="Add Photos" onPress={selectPhotos} disabled={loading} />
       {photos && <Image source={{ uri: photos }} style={styles.photo} />}
-      <TouchableOpacity style={styles.submitButton} onPress={submitPost}>
-        <Text style={styles.submitButtonText}>Submit Post</Text>
+      <TouchableOpacity
+        style={styles.submitButton}
+        onPress={submitPost}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={styles.submitButtonText}>Submit Post</Text>
+        )}
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -87,6 +130,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     marginRight: 8,
+    marginTop: 16,
   },
   submitButton: {
     backgroundColor: "#007bff",

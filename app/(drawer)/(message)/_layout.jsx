@@ -5,6 +5,7 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import { COLORS, SIZES } from "@/constants";
 import { preferenceState, userState } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
+import { Ionicons } from "@expo/vector-icons";
 
 const _layout = () => {
   const user = useSelector(() => userState.get());
@@ -27,7 +28,7 @@ const _layout = () => {
                 className="p-2 pl-0 mr-3"
                 onPress={() => navigation.goBack()}
               >
-                <AntDesign name="left" color={"white"} size={24} />
+                 <Ionicons name="arrow-back" color={"white"} size={24} />
               </TouchableOpacity>
               <Text
                 style={{ fontSize: 20, fontWeight: "bold", color: "white" }}

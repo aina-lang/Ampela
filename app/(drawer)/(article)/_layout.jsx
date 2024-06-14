@@ -30,10 +30,9 @@ const _layout = () => {
                 className="p-2 pl-0 mr-3"
                 onPress={() => navigation.goBack()}
               >
-                <AntDesign
-                  name="left"
+                 <Ionicons name="arrow-back"
                   color={theme === "pink" ? "white" : COLORS.accent800}
-                  size={35}
+                  size={24}
                 />
               </TouchableOpacity>
               {/* <Text
@@ -67,7 +66,6 @@ const _layout = () => {
           </View>
         ),
       }}
- 
     ></Stack>
   );
 };

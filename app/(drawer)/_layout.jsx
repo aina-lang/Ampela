@@ -5,27 +5,25 @@ import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
 import { useRouter } from "expo-router";
 import { Drawer } from "expo-router/drawer";
-import {
-  Image,
-  Text,
-  TouchableOpacity,
-  View,
-  SafeAreaView,
-} from "react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 import { BottomSheetProvider } from "@/hooks/BottomSheetProvider";
 import { observer, useSelector } from "@legendapp/state/react";
 import { AuthContextProvider } from "@/hooks/AuthContext";
 import { preferenceState, userState } from "@/legendstate/AmpelaStates";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 const DrawerComponent = () => {
   const router = useRouter();
   const { theme } = useSelector(() => preferenceState.get());
   const user = useSelector(() => userState.get());
-
+  const insets = useSafeAreaInsets();
   return (
-
-      <GestureHandlerRootView style={{ flex: 1 }}>
+    <SafeAreaView className="flex-1" style={{ marginTop: -(insets.top + 40) }}>
+      <GestureHandlerRootView>
         <BottomSheetProvider>
           <AuthContextProvider>
             <Drawer
@@ -38,16 +36,18 @@ const DrawerComponent = () => {
                   showsVerticalScrollIndicator={false}
                 >
                   <View
-                    className="w-full -top-10 justify-center items-center space-y-2"
+                    className="w-full -top-8 justify-center items-center space-y-2"
                     style={{
                       backgroundColor:
                         theme === "pink"
                           ? COLORS.neutral200
                           : COLORS.neutral280,
-                      height: SIZES.height * 0.42,
+                      height: SIZES.height * 0.45,
                     }}
                   >
-                    <TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => router.push("settings/account-screen")}
+                    >
                       <Image
                         source={
                           user.profileImage
@@ -167,6 +167,7 @@ const DrawerComponent = () => {
           </AuthContextProvider>
         </BottomSheetProvider>
       </GestureHandlerRootView>
+    </SafeAreaView>
   );
 };
 

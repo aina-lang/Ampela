@@ -81,7 +81,7 @@ const ChangeLanguageScreen = () => {
               Malagasy
             </Text>
             <Image
-              source={images.madagascarImg}
+              source={images.madaImg}
               style={{ width: 30, height: 20, borderRadius: 5 }}
             />
           </TouchableOpacity>

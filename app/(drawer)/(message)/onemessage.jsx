@@ -179,6 +179,7 @@ export default function OneMessageScreen() {
       </View>
 
       <GiftedChat
+      
         showUserAvatar
         messages={messages}
         onSend={(messages) => handleSend(messages)}

@@ -1,9 +1,9 @@
 import React from "react";
-import { ScrollView, StyleSheet } from "react-native";
-import ArticleItem from "./articleItem";
+import { FlatList, StyleSheet } from "react-native";
 import { SIZES, data } from "@/constants";
+import ArticleItem from "./articleItem";
 
-const showActiveCatategoryContent = (activeCategory) => {
+const showActiveCategoryContent = (activeCategory) => {
   let content = null;
   switch (activeCategory) {
     case "Menstruations":
@@ -24,13 +24,16 @@ const showActiveCatategoryContent = (activeCategory) => {
     default:
       console.log("This category doesn't exist");
   }
-  return {
-    content: content,
-  };
+  return content;
 };
 
 const ArticleContent = ({ navigation, activeCategory, text }) => {
-  const content = showActiveCatategoryContent(activeCategory);
+  const content = showActiveCategoryContent(activeCategory);
+
+  const filteredContent = content.filter((c) =>
+    c.title.toLocaleLowerCase().includes(text.toLocaleLowerCase())
+  );
+
   const handleArticleItemPress = (
     title,
     content,
@@ -54,36 +57,31 @@ const ArticleContent = ({ navigation, activeCategory, text }) => {
       img,
     });
   };
+
   return (
-    <ScrollView
-      style={styles.container}
+    <FlatList
+      data={filteredContent}
+      renderItem={({ item }) => (
+        <ArticleItem
+          onPress={handleArticleItemPress}
+          navigation={navigation}
+          title={item.title}
+          category={item.category}
+          content={item.content}
+          list={item.list ? item.list : null}
+          imgInside={item.imgInside ? item.imgInside : false}
+          imgInsideArr={item.imgInsideArr ? item.imgInsideArr : null}
+          imgInsideArrMg={item.imgInsideArrMg ? item.imgInsideArrMg : null}
+          content2={item.content2 ? item.content2 : null}
+          list2={item.list2 ? item.list2 : null}
+          img={item.urlImg}
+        />
+      )}
+      keyExtractor={(item) => item.title}
       showsVerticalScrollIndicator={false}
-      className=" shadow-inner shadow-black"
-    >
-      {content.content.map((c) => {
-        if (c.title.toLocaleLowerCase().includes(text.toLocaleLowerCase())) {
-          return (
-            <ArticleItem
-              onPress={handleArticleItemPress}
-              navigation={navigation}
-              key={c.title}
-              title={c.title}
-              category={c.category}
-              content={c.content}
-              list={c.list ? c.list : null}
-              imgInside={c.imgInside ? c.imgInside : false}
-              imgInsideArr={c.imgInsideArr ? c.imgInsideArr : null}
-              imgInsideArrMg={c.imgInsideArrMg ? c.imgInsideArrMg : null}
-              content2={c.content2 ? c.content2 : null}
-              list2={c.list2 ? c.list2 : null}
-              img={c.urlImg}
-            />
-          );
-        } else {
-          return null;
-        }
-      })}
-    </ScrollView>
+      style={styles.container}
+      contentContainerStyle={{  paddingBottom: 80 }}
+    />
   );
 };
 

@@ -3,10 +3,6 @@ import * as FileSystem from "expo-file-system";
 
 export const db = SQLite.openDatabaseSync("ampela.db");
 
-// db.closeSync();
-
-// SQLite.deleteDatabaseSync("ampela.db");
-
 export const addUser = async (
   username,
   password,
@@ -103,8 +99,6 @@ export const isFirstLaunch = async () => {
 
     return result;
   } catch (error) {
-    // console.error("Error checking first launch:", error);
-    // throw error;
     return { status: true };
   }
 };
@@ -123,7 +117,6 @@ export const setFirstLaunchFalse = async () => {
 };
 
 export const addCycleMenstruel = async (
-  // userId,
   fecundityPeriodEnd,
   fecundityPeriodStart,
   month,
@@ -137,7 +130,6 @@ export const addCycleMenstruel = async (
     const result = await db.runAsync(
       "INSERT INTO cycles_menstruels ( month, ovulationDate, fecundityPeriodStart,startMenstruationDate,endMenstruationDate, fecundityPeriodEnd, nextMenstruationStartDate, nextMenstruationEndDate) VALUES ( ?, ?,?, ?, ?, ?, ?, ?)",
       [
-        // userId,
         month,
         ovulationDate,
         fecundityPeriodStart,
@@ -159,7 +151,6 @@ export const addCycleMenstruel = async (
 export const getAllCycle = async () => {
   const allRows = await db.getAllAsync("SELECT * FROM cycles_menstruels");
   for (const row of allRows) {
-    // console.log(row);
   }
   return allRows;
 };

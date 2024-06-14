@@ -1,12 +1,13 @@
-import { useState, useContext, useEffect } from 'react';
+import { useState} from 'react';
 import { Text, View, StyleSheet, Pressable, Image } from 'react-native';
 import { COLORS, SIZES, icons } from '@/constants';
-import { ThemeContext } from '../../hooks/theme-context';
 import i18n from '@/constants/i18n';
+import { preferenceState } from '@/legendstate/AmpelaStates';
+import { useSelector } from '@legendapp/state/react';
 
 
 const FaqItem = ({question, response, list}) => {
-    const {theme} = useContext(ThemeContext);
+    const { theme, language } = useSelector(() => preferenceState.get());
     // const {t} = useTranslation();
     const [active, setActive] = useState(false);
    
@@ -15,7 +16,7 @@ const FaqItem = ({question, response, list}) => {
     }
     
     return (
-        <Pressable onPress={handlePress} style={[styles.container, {backgroundColor: theme=== 'pink' ? COLORS.neutral200  : COLORS.neutral280}]}>
+        <Pressable onPress={handlePress} style={[styles.container, {backgroundColor: theme=== 'pink' ? COLORS.neutral200  : COLORS.neutral280,marginVertical:10}]}>
             <View style={{flexDirection: "row",  alignItems: "flex-start", justifyContent: "space-between"}}>
                 <View style={{width: "90%"}}>
                 <Text style={styles.question}>{question}</Text>
