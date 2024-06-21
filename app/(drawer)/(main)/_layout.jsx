@@ -54,12 +54,12 @@ const TabLayout = () => {
             }}
           >
             <View className="flex flex-row items-center justify-center">
-              <TouchableOpacity className="p-2 pl-0 mr-3">
+              <TouchableOpacity className="p-2 pl-0 mr-3"   onPress={() => navigation.openDrawer()}>
                 <Ionicons
                   name="menu"
                   color={"white"}
                   size={35}
-                  onPress={() => navigation.openDrawer()}
+                
                 />
               </TouchableOpacity>
               <Text

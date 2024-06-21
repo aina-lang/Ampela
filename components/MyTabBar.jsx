@@ -64,7 +64,7 @@ function MyTabBar({ state, descriptors, navigation }) {
           const label = options.tabBarLabel ?? options.title ?? route.name;
           const icon = options.tabBarIcon;
           const isFocused = state.index === index;
-          console.log(route.name);
+          // console.log(route.name);
           const onPress = () => {
             const event = navigation.emit({
               type: "tabPress",

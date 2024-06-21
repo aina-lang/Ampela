@@ -1,272 +1,122 @@
-import { useState, useCallback, useContext } from "react";
-import {
-  View,
-  ScrollView,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  TextInput,
-  FlatList,
-} from "react-native";
-import HeaderWithGoBack from "@/components/header-with-go-back";
-import { COLORS, SIZES, images, icons } from "@/constants";
-// import { ThemeContext } from '@/components/theme-context';
-import {
-  StateItem1,
-  StateItem2,
-  StateItem3,
-} from "@/components/settings/state-item";
-import { useNavigation } from "expo-router";
-import { preferenceState, userState } from "@/legendstate/AmpelaStates";
-import { useSelector } from "@legendapp/state/react";
+import React from 'react';
+import { StyleSheet, Text, View, Button } from 'react-native';
+import * as BackgroundFetch from 'expo-background-fetch';
+import * as TaskManager from 'expo-task-manager';
 
-const FLUX_DATA = ["Léger", "Normal", "Abondant"];
-const SYMPTOMS_DATA = ["Acné", "Ballonnement", "Crampe", "Douleur de dos"];
-const EMOTIONS_DATA = ["Calme", "Heureux", "Triste", "Stressé"];
+const BACKGROUND_FETCH_TASK = 'background-fetch';
 
-const AccountScreen = () => {
-  const { theme } = useSelector(() => preferenceState.get());
-  const user = useSelector(() => userState.get());
-  const navigation = useNavigation();
-  const [flux, setFlux] = useState(null);
-  const [symptom, setSymptom] = useState(null);
-  const [emotion, setEmotion] = useState(null);
-  console.log(user);
-  // callbacks
-  const handleFluxPress = useCallback((item) => {
-    setFlux(item);
+// Define the background fetch task function
+async function backgroundFetchTask() {
+  try {
+    const now = Date.now();
+    console.log(`Got background fetch call at date: ${new Date(now).toISOString()}`);
+    // Simulate fetching data from a server
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Be sure to return the successful result type!
+    return BackgroundFetch.BackgroundFetchResult.NewData;
+  } catch (err) {
+    console.error(err);
+    return BackgroundFetch.BackgroundFetchResult.Failed;
+  }
+}
+
+// Register the task with TaskManager
+TaskManager.defineTask(BACKGROUND_FETCH_TASK, backgroundFetchTask);
+
+// Register the task
+async function registerBackgroundFetchAsync() {
+  try {
+    await BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
+      minimumInterval: 1, // 1 minute for testing, adjust as needed
+      stopOnTerminate: false, // android only
+      startOnBoot: true, // android only
+    });
+    console.log('Task registered');
+  } catch (err) {
+    console.error('Task registration failed:', err);
+  }
+}
+
+// Unregister the task
+async function unregisterBackgroundFetchAsync() {
+  try {
+    await BackgroundFetch.unregisterTaskAsync(BACKGROUND_FETCH_TASK);
+    console.log('Task unregistered');
+  } catch (err) {
+    console.error('Task unregistration failed:', err);
+  }
+}
+
+// Manual trigger for testing
+async function triggerBackgroundFetchTask() {
+  console.log('Manually triggering background fetch task');
+  const result = await backgroundFetchTask();
+  console.log(`Manual trigger result: ${result}`);
+}
+
+export default function BackgroundFetchScreen() {
+  const [isRegistered, setIsRegistered] = React.useState(false);
+  const [status, setStatus] = React.useState(null);
+
+  React.useEffect(() => {
+    checkStatusAsync();
   }, []);
-  const handleSymptomPress = useCallback((item) => {
-    setSymptom(item);
-  }, []);
-  const handleEmotionPress = useCallback((item) => {
-    setEmotion(item);
-  }, []);
+
+  const checkStatusAsync = async () => {
+    const status = await BackgroundFetch.getStatusAsync();
+    const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_FETCH_TASK);
+    setStatus(status);
+    setIsRegistered(isRegistered);
+  };
+
+  const toggleFetchTask = async () => {
+    if (isRegistered) {
+      await unregisterBackgroundFetchAsync();
+    } else {
+      await registerBackgroundFetchAsync();
+    }
+
+    checkStatusAsync();
+  };
+
   return (
-    <View
-      style={{
-        paddingHorizontal: 20,
-        flex: 1,
-        backgroundColor: COLORS.neutral100,
-      }}
-    >
-      <HeaderWithGoBack title="Compte" navigation={navigation} />
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        style={[
-          styles.container,
-          {
-            backgroundColor:
-              theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
-          },
-        ]}
-      >
-        <View style={styles.profil}>
-          <Image
-            source={
-              user.profileImage ? { uri: user.profileImage } : images.doctor01
-            }
-            style={{ height: 150, width: 150, borderRadius: 150 }}
-          />
-          <TouchableOpacity style={styles.flex}>
-            <Text
-              style={[
-                styles.uploadImgText,
-                {
-                  color: theme === "pink" ? COLORS.accent600 : COLORS.accent800,
-                },
-              ]}
-            >
-              Changer la photo
-            </Text>
-            <Image
-              source={
-                theme === "pink" ? icons.uploadIcon : icons.uploadOrangeIcon
-              }
-              style={styles.uploadImg}
-            />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.inputContainer}>
-          <TextInput value="Eleanor Pena" style={styles.input} />
-          <TextInput value="eleanorpena@gmail.com" style={styles.input} />
-          <TextInput placeholder="Nouveau mail" style={styles.input} />
-          <TouchableOpacity
-            style={[
-              styles.saveBtn,
-              {
-                backgroundColor:
-                  theme === "pink" ? COLORS.accent600 : COLORS.accent800,
-              },
-            ]}
-          >
-            <Text
-              style={{
-                fontFamily: "Medium",
-                color: COLORS.neutral100,
-                fontSize: SIZES.small,
-              }}
-            >
-              Sauvegarder
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <View>
-          <Text style={styles.title}>Flux</Text>
-          <FlatList
-            data={FLUX_DATA}
-            renderItem={({ item }) => {
-              let urlImg = null;
-              switch (item) {
-                case "Léger":
-                  urlImg = icons.fluxLegerIcon;
-                  break;
-                case "Normal":
-                  urlImg = icons.fluxNormalIcon;
-                  break;
-                case "Abondant":
-                  urlImg = icons.fluxAbondantIcon;
-                  break;
-                default:
-                  return;
-              }
-              return (
-                <StateItem1
-                  text={item}
-                  active={flux === item ? true : false}
-                  urlImg={urlImg}
-                  onPress={() => handleFluxPress(item)}
-                />
-              );
-            }}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-          />
-        </View>
-        <View>
-          <Text style={styles.title}>Symptômes</Text>
-          <FlatList
-            data={SYMPTOMS_DATA}
-            renderItem={({ item }) => {
-              let urlImg = null;
-              switch (item) {
-                case "Acné":
-                  urlImg = icons.acneIcon;
-                  break;
-                case "Ballonnement":
-                  urlImg = icons.ballonnementIcon;
-                  break;
-                case "Crampe":
-                  urlImg = icons.crampeIcon;
-                  break;
-                case "Douleur de dos":
-                  urlImg = icons.douleurDeDosIcon;
-                  break;
-                default:
-                  return;
-              }
-              return (
-                <StateItem2
-                  text={item}
-                  urlImg={urlImg}
-                  active={symptom === item ? true : false}
-                  onPress={() => handleSymptomPress(item)}
-                />
-              );
-            }}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-          />
-        </View>
-        <View>
-          <Text style={styles.title}>Emotions</Text>
-          <FlatList
-            data={EMOTIONS_DATA}
-            renderItem={({ item }) => {
-              let urlImg = null;
-              switch (item) {
-                case "Calme":
-                  urlImg = icons.calmeIcon;
-                  break;
-                case "Heureux":
-                  urlImg = icons.heureuxIcon;
-                  break;
-                case "Triste":
-                  urlImg = icons.tristeIcon;
-                  break;
-                case "Stressé":
-                  urlImg = icons.stresseIcon;
-                  break;
-                default:
-                  return;
-              }
-              return (
-                <StateItem3
-                  text={item}
-                  urlImg={urlImg}
-                  active={emotion === item ? true : false}
-                  onPress={() => handleEmotionPress(item)}
-                />
-              );
-            }}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-          />
-        </View>
-      </ScrollView>
+    <View style={styles.screen}>
+      <View style={styles.textContainer}>
+        <Text>
+          Background fetch status:{' '}
+          <Text style={styles.boldText}>
+            {status !== null ? BackgroundFetch.BackgroundFetchStatus[status] : 'Unknown'}
+          </Text>
+        </Text>
+        <Text>
+          Background fetch task name:{' '}
+          <Text style={styles.boldText}>
+            {isRegistered ? BACKGROUND_FETCH_TASK : 'Not registered yet!'}
+          </Text>
+        </Text>
+      </View>
+      <Button
+        title={isRegistered ? 'Unregister BackgroundFetch task' : 'Register BackgroundFetch task'}
+        onPress={toggleFetchTask}
+      />
+      <Button
+        title="Trigger BackgroundFetch task manually"
+        onPress={triggerBackgroundFetchTask}
+      />
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  profil: {
-    alignItems: "center",
-    gap: 15,
-    paddingVertical: 30,
+  textContainer: {
+    margin: 10,
   },
-  uploadImgText: {
-    fontFamily: "Regular",
-    fontSize: SIZES.small,
-  },
-  flex: {
-    display: "flex",
-    flexDirection: "row",
-    gap: 10,
-  },
-  uploadImg: {
-    width: 20,
-    height: 20,
-  },
-  inputContainer: {
-    gap: 10,
-    marginBottom: 20,
-  },
-  input: {
-    fontFamily: "Regular",
-    width: "100%",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 100,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.neutral100,
-  },
-  saveBtn: {
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 100,
-    alignSelf: "flex-end",
-  },
-  title: {
-    fontFamily: "SBold",
-    fontSize: SIZES.xLarge,
-    marginBottom: 15,
-    marginTop: 20,
+  boldText: {
+    fontWeight: 'bold',
   },
 });
-
-export default AccountScreen;

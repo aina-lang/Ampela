@@ -1,5 +1,5 @@
 // import { useContext } from "react";
-import { Pressable, Text, StyleSheet } from "react-native";
+import { Pressable, Text, StyleSheet, TouchableOpacity } from "react-native";
 // import { useTranslation } from "react-i18next";
 // import { ThemeContext } from "./theme-context";
 import { COLORS, SIZES } from "@/constants";
@@ -46,13 +46,13 @@ const ArticleCategory = ({ active, onPress, children }) => {
       break;
   }
   return (
-    <Pressable
+    <TouchableOpacity
       style={containerStyle}
       onPress={onPress}
       className={`${active ? "shadow-md shadow-black " : ""}`}
     >
       <Text style={textStyle}>{i18n.t(text)}</Text>
-    </Pressable>
+    </TouchableOpacity>
   );
 };
 

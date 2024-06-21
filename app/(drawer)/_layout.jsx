@@ -5,8 +5,8 @@ import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
 import { useRouter } from "expo-router";
 import { Drawer } from "expo-router/drawer";
-import { Image, Text, TouchableOpacity, View } from "react-native";
-import { BottomSheetProvider } from "@/hooks/BottomSheetProvider";
+import { Image, Share, Text, TouchableOpacity, View } from "react-native";
+
 import { observer, useSelector } from "@legendapp/state/react";
 import { AuthContextProvider } from "@/hooks/AuthContext";
 import { preferenceState, userState } from "@/legendstate/AmpelaStates";
@@ -15,16 +15,29 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { ModalProvider } from "@/hooks/ModalProvider";
 
 const DrawerComponent = () => {
   const router = useRouter();
   const { theme } = useSelector(() => preferenceState.get());
   const user = useSelector(() => userState.get());
   const insets = useSafeAreaInsets();
+
+  const urlAmpela = "https://ampela.mg";
+
+  const onShare = async () => {
+    try {
+      const result = await Share.share({
+        message: `Inviter vos amis a utilser Ampela \n ${urlAmpela}`,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <SafeAreaView className="flex-1" style={{ marginTop: -(insets.top + 40) }}>
       <GestureHandlerRootView>
-        <BottomSheetProvider>
+        <ModalProvider>
           <AuthContextProvider>
             <Drawer
               screenOptions={{
@@ -64,9 +77,29 @@ const DrawerComponent = () => {
                     <Text className="text-[16px] font-bold">
                       {user.username || "Utilisateur"}
                     </Text>
-                    <Text>{user.profession || "Ampela user"}</Text>
+                    <Text>{user.email || "Ampela user"}</Text>
                   </View>
-
+                  <Text className="pl-4">Mon compte</Text>
+                  <View className="pl-4">
+                    <DrawerItem
+                      label="Apropos de moi"
+                      onPress={() => router.push("settings/updateaccount")}
+                      icon={({ color, size }) => (
+                        <Ionicons name="language" color={color} size={size} />
+                      )}
+                    />
+                    <DrawerItem
+                      label="Changer mon mot de passe"
+                      onPress={() => router.push("settings/changepassword")}
+                      icon={({ color, size }) => (
+                        <Ionicons
+                          name="color-palette-outline"
+                          color={color}
+                          size={size}
+                        />
+                      )}
+                    />
+                  </View>
                   <Text className="pl-4">Général</Text>
                   <View className="pl-4">
                     <DrawerItem
@@ -113,7 +146,7 @@ const DrawerComponent = () => {
                     />
                     <DrawerItem
                       label="Partager"
-                      onPress={() => {}}
+                      onPress={onShare}
                       icon={({ color, size }) => (
                         <Ionicons
                           name="share-social-outline"
@@ -165,7 +198,7 @@ const DrawerComponent = () => {
               )}
             />
           </AuthContextProvider>
-        </BottomSheetProvider>
+        </ModalProvider>
       </GestureHandlerRootView>
     </SafeAreaView>
   );

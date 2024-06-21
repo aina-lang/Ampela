@@ -43,7 +43,7 @@ const SearchArticles = () => {
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    marginVertical: 30,
+    marginVertical: 20,
     backgroundColor: "rgba(255, 255, 255, .8)",
     borderRadius: 100,
     paddingVertical: 10,

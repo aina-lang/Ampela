@@ -26,7 +26,7 @@ import { preferenceState } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 import NetInfo, { useNetInfo } from "@react-native-community/netinfo";
 import AuthContent from "@/components/AuthContent";
-import { useBottomSheet } from "@/hooks/BottomSheetProvider";
+import { useBottomSheet, useModal } from "@/hooks/ModalProvider";
 
 const MessagesScreen = () => {
   const { theme } = useSelector(() => preferenceState.get());
@@ -42,12 +42,12 @@ const MessagesScreen = () => {
     setSearchText(text);
   };
 
-  const { openBottomSheet } = useBottomSheet();
+  const { openModal } = useModal();
 
   useEffect(() => {
-    if (!auth.currentUser) {
-      openBottomSheet(<AuthContent />);
-    }
+    // if (!auth.currentUser) {
+      openModal(<AuthContent />);
+    // }
   }, []);
 
   const handleMessageItemPress = (target) => {

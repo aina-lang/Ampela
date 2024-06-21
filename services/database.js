@@ -3,6 +3,8 @@ import * as FileSystem from "expo-file-system";
 
 export const db = SQLite.openDatabaseSync("ampela.db");
 
+// db.closeAsync();
+// SQLite.deleteDatabaseAsync("ampela.db")
 export const addUser = async (
   username,
   password,
@@ -90,6 +92,7 @@ export const isFirstLaunch = async () => {
   try {
     let result = await db.getFirstAsync("SELECT * FROM first_time");
 
+    // console.log(result);
     if (!result) {
       await db.runAsync("INSERT INTO first_time (status) VALUES (1);");
       result = { status: 1 };
@@ -108,7 +111,7 @@ export const setFirstLaunchFalse = async () => {
     const result = await db.runAsync(`
       UPDATE first_time SET status = 0 WHERE id = 1;
     `);
-    console.log("First launch flag set:", result);
+    // console.log("First launch flag set:", result);
     return result;
   } catch (error) {
     console.error("Error setting first launch flag:", error);

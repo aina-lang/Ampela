@@ -66,7 +66,9 @@ const onearticle = () => {
     };
   });
 
-  useEffect(()=>{console.log(content2);},[])
+  useEffect(() => {
+    console.log(content2);
+  }, []);
 
   return (
     <Animated.ScrollView
@@ -104,8 +106,9 @@ const onearticle = () => {
           <View style={{ width: "45%" }}>
             <Animated.Image
               source={img}
-              style={[imageAnimatedStyle, { width: 150, height: 150 }]}
+              style={[imageAnimatedStyle, { width: 170, height: 170 }]}
               resizeMode="contain"
+              sharedTransitionTag={title}
             />
           </View>
         </View>

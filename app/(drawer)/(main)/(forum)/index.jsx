@@ -17,7 +17,7 @@ import { Link, useNavigation } from "expo-router";
 import SearchForum from "@/components/SearchForum";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import AuthContent from "@/components/AuthContent";
-import { useBottomSheet } from "@/hooks/BottomSheetProvider";
+import { useBottomSheet, useModal } from "@/hooks/ModalProvider";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { useNetInfo } from "@react-native-community/netinfo";
 
@@ -25,7 +25,7 @@ const Index = () => {
   const navigation = useNavigation();
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { openBottomSheet } = useBottomSheet();
+  const { openModal } = useModal();
   const { isConnected, isInternetReachable } = useNetInfo();
 
   useEffect(() => {
@@ -46,7 +46,7 @@ const Index = () => {
 
   useEffect(() => {
     if (!auth.currentUser) {
-      openBottomSheet(<AuthContent />);
+      openModal(<AuthContent />);
     }
   }, []);
 

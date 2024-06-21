@@ -87,7 +87,7 @@ const ArticleContent = ({ navigation, activeCategory, text }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 20,
+    marginTop: 5,
   },
   title: {
     fontFamily: "Bold",

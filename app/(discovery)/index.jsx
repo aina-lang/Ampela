@@ -154,52 +154,6 @@ const index = () => {
                 {item.description}
               </Text>
             </View>
-            <View
-              style={{
-                justifyContent:
-                  currentBoard === 0 ? "flex-end" : "space-between",
-              }}
-              className="flex flex-row items-center justify-between  w-full absolute bottom-0 p-5"
-            >
-              {currentBoard !== 0 && (
-                <TouchableOpacity
-                  onPress={prevHandled}
-                  className="p-3 rounded-md "
-                >
-                  <Text>Retour</Text>
-                </TouchableOpacity>
-              )}
-
-              {currentBoard != OnBoarding.length - 1 ? (
-                <TouchableOpacity
-                  style={{ backgroundColor: COLORS.accent500 }}
-                  onPress={nextHandled}
-                  className="p-3 rounded-md shadow-md shadow-black"
-                >
-                  <Text className="text-white"> Suivant </Text>
-                  {/* <AntDesign
-                    name="right"
-                    size={20}
-                    color="white"
-                    className="ml-3"
-                  /> */}
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={{ backgroundColor: COLORS.accent500 }}
-                  onPress={getStartedHandler}
-                  className="p-3 rounded-md shadow-md shadow-black"
-                >
-                  <Text className="text-white"> Commencer </Text>
-                  {/* <AntDesign
-                    name="right"
-                    size={20}
-                    color="white"
-                    className="ml-3"
-                  /> */}
-                </TouchableOpacity>
-              )}
-            </View>
           </View>
         ))}
       </Animated.ScrollView>
@@ -210,6 +164,48 @@ const index = () => {
     <SafeAreaView className={`flex-1 bg-white justify-center items-center`}>
       {renderContent()}
       {RenderDots()}
+      <View
+        style={{
+          justifyContent: currentBoard === 0 ? "flex-end" : "space-between",
+        }}
+        className="flex flex-row items-center justify-between  w-full absolute bottom-0 p-5"
+      >
+        {currentBoard !== 0 && (
+          <TouchableOpacity onPress={prevHandled} className="p-3 rounded-md ">
+            <Text>Retour</Text>
+          </TouchableOpacity>
+        )}
+
+        {currentBoard != OnBoarding.length - 1 ? (
+          <TouchableOpacity
+            style={{ backgroundColor: COLORS.accent500 }}
+            onPress={nextHandled}
+            className="p-3 rounded-md shadow-md shadow-black"
+          >
+            <Text className="text-white"> Suivant </Text>
+            {/* <AntDesign
+                    name="right"
+                    size={20}
+                    color="white"
+                    className="ml-3"
+                  /> */}
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={{ backgroundColor: COLORS.accent500 }}
+            onPress={getStartedHandler}
+            className="p-3 rounded-md shadow-md shadow-black"
+          >
+            <Text className="text-white"> Commencer </Text>
+            {/* <AntDesign
+                    name="right"
+                    size={20}
+                    color="white"
+                    className="ml-3"
+                  /> */}
+          </TouchableOpacity>
+        )}
+      </View>
       <View className="absolute top-10 right-5">
         <TouchableOpacity onPress={skipHandler}>
           <Text className="text-[16px]"> Ignorer</Text>

@@ -20,6 +20,8 @@ import { useProgress } from "@/hooks/ProgressContext";
 import ProgressBar from "./ProgressBar";
 import { useSelector } from "@legendapp/state/react";
 import { userState } from "@/legendstate/AmpelaStates";
+import { Ionicons } from "@expo/vector-icons";
+import { useModal } from "@/hooks/ModalProvider";
 
 const { width } = Dimensions.get("window");
 
@@ -38,7 +40,7 @@ const AuthContent = () => {
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [loginErrorPresent, setLoginErrorPresent] = useState(false);
   const [signupErrorPresent, setSignupErrorPresent] = useState(false);
-
+  const { closeModal } = useModal();
   const handleLoginEmailChange = (text) => {
     setLoginEmail(text);
     if (!text) {
@@ -361,6 +363,9 @@ const AuthContent = () => {
 
   return (
     <>
+      <TouchableOpacity className="absolute z-50 top-5 right-5" onPress={closeModal}>
+        <Text>Non merci</Text>
+      </TouchableOpacity>
       <FlatList
         ref={flatListRef}
         data={pages}
@@ -380,6 +385,7 @@ const AuthContent = () => {
             {item.content}
           </View>
         )}
+        contentContainerStyle={{ backgroundColor: "white" }}
       />
     </>
   );

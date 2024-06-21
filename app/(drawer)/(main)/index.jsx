@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState } from "react";
 import {
   View,
   ScrollView,
@@ -9,15 +9,13 @@ import {
 } from "react-native";
 
 import { COLORS, SIZES } from "@/constants";
-import ReminderContent from "@/components/reminder-content";
 import BackgroundContainer from "@/components/background-container";
 import IndicationCalendar from "@/components/calendar/indication-calendar";
 import { Calendar, LocaleConfig } from "react-native-calendars";
 import ReminderItem from "@/components/calendar/reminder-item";
-import { useNavigation } from "expo-router";
+
 import moment from "moment";
-import { useBottomSheet } from "@/hooks/BottomSheetProvider";
-import AuthContent from "@/components/AuthContent";
+
 import { useSelector } from "@legendapp/state/react";
 import {
   cycleMenstruelState,
@@ -27,12 +25,10 @@ import {
 
 const index = () => {
   const user = useSelector(() => userState.get());
-  const [howmanytimeReminder1, setHowmanytimeReminder1] = useState("?");
-  const [howmanytimeReminder2, setHowmanytimeReminder2] = useState("?");
-  const [howmanytimeReminder3, setHowmanytimeReminder3] = useState("?");
+  const [howmanytimeReminder1, setHowmanytimeReminder1] = useState("quotidien");
+  const [howmanytimeReminder2, setHowmanytimeReminder2] = useState("quotidien");
+  const [howmanytimeReminder3, setHowmanytimeReminder3] = useState("quotidien");
   const [scrollDisabled, setScrollDisabled] = useState(true);
-  const [reminderModalIsVisible, setReminderModalIsVisible] = useState(false);
-  const [reminderInfo, setReminderInfo] = useState({ as: "", time: "" });
   const { theme } = useSelector(() => preferenceState.get());
   const [time1, setTime1] = useState({
     hour: 0,
@@ -237,14 +233,6 @@ const index = () => {
 
   return (
     <SafeAreaView className="flex-1 ">
-      <ReminderContent
-        isActive={reminderModalIsVisible}
-        setReminderModalIsVisible={setReminderModalIsVisible}
-        pills={false}
-        type={reminderInfo.as}
-        onRegisterButtonPress={handleRegisterButtonPress}
-      />
-
       <ScrollView
         scrollEnabled={scrollDisabled}
         style={styles.container}
@@ -294,7 +282,7 @@ const index = () => {
             ]}
             className="p-2"
           >
-            <Text style={styles.reminderTitle}>rappels</Text>
+            <Text style={styles.reminderTitle}>Rappels</Text>
             <View
               style={{
                 gap: 10,

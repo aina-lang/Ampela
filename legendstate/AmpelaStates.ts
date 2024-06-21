@@ -6,11 +6,12 @@ import {
 import { ObservablePersistFirebase } from "@legendapp/state/persist-plugins/firebase";
 import { ObservablePersistAsyncStorage } from "@legendapp/state/persist-plugins/async-storage";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { initializeApp } from "firebase/app";
 import { firebaseConfig } from "@/services/firebaseConfig";
+import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
 
 const app = initializeApp(firebaseConfig);
+
 const database = getDatabase(app);
 
 configureObservablePersistence({
@@ -22,7 +23,7 @@ configureObservablePersistence({
   },
   pluginRemote: ObservablePersistFirebase,
   // remoteOptions: {
-   
+
   // },
 });
 
