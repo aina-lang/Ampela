@@ -8,13 +8,21 @@ import {
   Button,
   TouchableOpacity,
   SafeAreaView,
+  ScrollView,
+  FlatList,
 } from "react-native";
 import CheckBox, { Checkbox } from "expo-checkbox";
 import { Link } from "expo-router";
 import { COLORS, FONT, SIZES } from "@/constants";
 import { useNavigation } from "@react-navigation/native";
+import { useSelector } from "@legendapp/state/react";
+import { preferenceState } from "@/legendstate/AmpelaStates";
+import { I18n } from "i18n-js";
+import i18n from "@/constants/i18n";
 
 const confidentiality = () => {
+  const { theme } = useSelector(() => preferenceState.get());
+
   let bouncyCheckbox1Ref = null;
   let bouncyCheckbox2Ref = null;
   const navigation = useNavigation();
@@ -24,7 +32,7 @@ const confidentiality = () => {
   const [isNextBtnDisabled, setIsNextBtnDisabled] = useState(true);
 
   useEffect(() => {
-    if (checkbox1 === true && checkbox2 === true) {
+    if ( checkbox2 === true) {
       setIsNextBtnDisabled(false);
     } else {
       setIsNextBtnDisabled(true);
@@ -35,6 +43,9 @@ const confidentiality = () => {
     navigation.navigate("username");
   });
 
+  const prevHandled = () => {
+    navigation.goBack();
+  };
   const handleAcceptAllBtnPress = useCallback(() => {
     if (checkbox1 === false) {
       bouncyCheckbox1Ref?.onPress();
@@ -44,27 +55,51 @@ const confidentiality = () => {
     }
   });
 
+  const confidentialiteData = [
+    {
+      title: "utilisation",
+      description:
+        "  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat",
+    },
+    {
+      title: "utilisation",
+      description:
+        "  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat",
+    },
+  ];
+
+  const renderItem = ({ item }) => (
+    <View className="p-3 max-w-[98%]">
+      <Text className="font-bold  mb-2" style={{ fontSize: 20 }}>
+        {item.title}
+      </Text>
+      <Text style={{ fontSize: 16, textAlign: "left", lineHeight: 25 }}>
+        {item.description}
+      </Text>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <Text
         style={styles.confidentialityTitle}
         className="bg-[#FF7575] text-white rounded-br-[150] pt-20 shadow-lg shadow-black"
       >
-        Confidentialité
+        {i18n.t("confidentialite")}
       </Text>
       <View
         style={[styles.confidentialityContainer]}
-        className=" flex items-center justify-center p-8"
+        className=" flex items-center justify-center p-2"
       >
         <View>
-          <View style={styles.confidentialityItem}>
+          {/* <View style={styles.confidentialityItem}>
             <CheckBox
               value={checkbox1}
               onValueChange={setCheckbox1}
               color={checkbox1 ? "#FF7575" : ""}
-            />
+            /> */}
 
-            <Pressable onPress={() => setCheckbox1(!checkbox1)}>
+          {/* <Pressable onPress={() => setCheckbox1(!checkbox1)}>
               <Text style={styles.confidentialityText}>
                 J'accepte{" "}
                 <Link
@@ -82,17 +117,26 @@ const confidentiality = () => {
                 </Link>
                 .
               </Text>
-            </Pressable>
-          </View>
+            </Pressable> */}
+          {/* </View> */}
           <View style={styles.confidentialityItem}>
-            <Checkbox
-              value={checkbox2}
-              onValueChange={setCheckbox2}
-              color={checkbox2 ? "#FF7575" : ""}
+            <FlatList
+              data={confidentialiteData}
+              renderItem={renderItem}
+              contentContainerStyle={{
+                // backgroundColor: "green",
+                width: SIZES.width,
+              }}
             />
-            <Pressable onPress={() => setCheckbox2(!checkbox2)}>
-              <Text style={styles.confidentialityText}>
-                J'accepte le traitement de mes données personnelles de santé
+            <View className="mt-3 flex-row space-x-3 ml-3">
+              <Checkbox
+                value={checkbox2}
+                onValueChange={setCheckbox2}
+                color={checkbox2 ? "#FF7575" : ""}
+              />
+              <Pressable onPress={() => setCheckbox2(!checkbox2)}>
+                <Text style={styles.confidentialityText}>
+                  {/* J'accepte le traitement de mes données personnelles de santé
                 dans le but de bénéficier des fontions de l'application{" "}
                 <Link
                   href="https://jonathan-boyer.fr"
@@ -100,9 +144,11 @@ const confidentiality = () => {
                 >
                   Ampela
                 </Link>{" "}
-                .
-              </Text>
-            </Pressable>
+                . */}
+                  Accepter
+                </Text>
+              </Pressable>
+            </View>
           </View>
           {/* {!isAllChecked ? ( 
             <Button
@@ -122,8 +168,11 @@ const confidentiality = () => {
       </View>
       <View
         style={styles.btnBox}
-        className="flex items-center  justify-end flex-row  p-5"
+        className="flex items-center  justify-between flex-row  p-5"
       >
+        <TouchableOpacity onPress={prevHandled} className="p-3 rounded-md ">
+          <Text>Retour</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           className="p-3  items-center rounded-md px-5 shadow-md shadow-black"
           onPress={handleNextBtnPress}
@@ -155,9 +204,6 @@ const styles = StyleSheet.create({
     height: SIZES.height * 0.3,
   },
   confidentialityItem: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
     marginTop: 20,
   },
   confidentialityText: {

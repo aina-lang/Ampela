@@ -1,4 +1,3 @@
-
 import { ImageBackground, KeyboardAvoidingView, Platform } from "react-native";
 import { images } from "@/constants";
 import { useSelector } from "@legendapp/state/react";
@@ -22,6 +21,7 @@ const BackgroundContainer = ({
           flex: 1,
           paddingHorizontal: paddingHorizontal ? paddingHorizontal : 20,
           paddingBottom: paddingBottom ? paddingBottom : null,
+          // paddingTop: 110,
         }}
       >
         {children}

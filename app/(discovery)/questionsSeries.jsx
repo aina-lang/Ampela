@@ -76,13 +76,7 @@ const QuestionsSeries = () => {
       user.durationMenstruation
     );
 
-    // const localUri = `${FileSystem.documentDirectory}/${user.username}_profile.jpg`;
-    // await FileSystem.copyAsync({
-    //   from: user.profileImage,
-    //   to: localUri,
-    // });
 
-    // console.log(localUri);
 
     await addUser(
       user.username,
@@ -94,7 +88,7 @@ const QuestionsSeries = () => {
       user.email,
       user.profileImage
     );
-    // console.log("USER ", user);
+    
     // Boucle pour enregistrer chaque cycle dans la base de données
     for (let i = 0; i < cycleData.length; i++) {
       const cycle = cycleData[i];

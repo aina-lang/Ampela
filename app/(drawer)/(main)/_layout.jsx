@@ -45,7 +45,7 @@ const TabLayout = () => {
       screenOptions={{
         header: () => (
           <View
-            className="w-full flex-row items-center pt-8 rounded-b-lg justify-between shadow-md shadow-black"
+            className="w-full flex-row items-center pt-8 rounded-b-lg justify-between shadow-md shadow-black absolute "
             style={{
               backgroundColor:
                 theme === "orange" ? COLORS.accent800 : COLORS.accent500,

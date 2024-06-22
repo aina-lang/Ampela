@@ -2,14 +2,12 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { SIZES, COLORS, images } from "@/constants";
 import HeaderWithGoBack from "@/components/header-with-go-back";
 import { useNavigation } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import i18n from "@/constants/i18n";
-import { ThemeContext } from "@/hooks/theme-context";
-import { useContext } from "react";
 import { preferenceState, updatePreference } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
+import { useCallback } from "react";
 
-const ChangeLanguageScreen = () => {
+const selectlanguage = () => {
   const navigation = useNavigation();
   const { theme, language } = useSelector(() => preferenceState.get());
   const changeLanguage = async (lang) => {
@@ -24,26 +22,25 @@ const ChangeLanguageScreen = () => {
     }
   };
 
+  const handleNextBtnPress = useCallback(() => {
+    navigation.navigate("confidentiality");
+  });
+
   return (
     <>
-      <View
-        style={[
-          styles.container,
-          {
-            backgroundColor:
-              theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
-          },
-        ]}
-      >
-        <HeaderWithGoBack title="Langues" navigation={navigation} />
+      <View style={[styles.container, {}]}>
+        <Text
+          style={styles.confidentialityTitle}
+          className="bg-[#FF7575] text-white rounded-br-[150] pt-20 shadow-lg shadow-black"
+        >
+          Choisissez votre langue
+        </Text>
 
-        <View style={{ gap: 20, marginTop: 20 }}>
+        <View className=" p-10 flex-1  pt-20 space-y-8">
           <TouchableOpacity
             style={{
               backgroundColor:
-                language === "fr"
-                  ? "rgba(226,68,92, .8)"
-                  : "rgba(226,68,92, .4)",
+                language === "fr" ? "#FF7575" : "rgba(255,117,117,.4)",
               borderRadius: 5,
               flexDirection: "row",
               alignItems: "center",
@@ -65,9 +62,7 @@ const ChangeLanguageScreen = () => {
           <TouchableOpacity
             style={{
               backgroundColor:
-                language === "mg"
-                  ? "rgba(226,68,92, .8)"
-                  : "rgba(226,68,92, .4)",
+                language === "mg" ? "#FF7575" : "rgba(255,117,117,.4)",
               borderRadius: 5,
               flexDirection: "row",
               alignItems: "center",
@@ -86,6 +81,21 @@ const ChangeLanguageScreen = () => {
             />
           </TouchableOpacity>
         </View>
+        <View
+          style={styles.btnBox}
+          className="flex items-center  justify-end flex-row  p-5"
+        >
+          <TouchableOpacity
+            className="p-3  items-center rounded-md px-5 shadow-md shadow-black"
+            onPress={handleNextBtnPress}
+            
+            style={{
+              backgroundColor:  "#FF7575",
+            }}
+          >
+            <Text className="text-white">Suivant</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </>
   );
@@ -93,10 +103,8 @@ const ChangeLanguageScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 20,
     flex: 1,
-    // alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: COLORS.neutral100,
   },
   header: {
     marginTop: 40,
@@ -117,6 +125,32 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 25,
   },
+  confidentialityContainer: {
+    width: SIZES.width,
+    height: SIZES.height * 0.6,
+  },
+  confidentialityTitle: {
+    fontSize: SIZES.width * 0.08,
+    fontFamily: "Bold",
+    textAlign: "center",
+    height: SIZES.height * 0.3,
+  },
+  confidentialityItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    marginTop: 20,
+  },
+  confidentialityText: {
+    fontFamily: "Regular",
+    fontSize: SIZES.width * 0.05,
+    lineHeight: 24,
+    paddingRight: 20,
+  },
+  btnBox: {
+    height: SIZES.height * 0.15,
+    width: SIZES.width,
+  },
 });
 
-export default ChangeLanguageScreen;
+export default selectlanguage;

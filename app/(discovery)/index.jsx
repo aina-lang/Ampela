@@ -3,10 +3,9 @@ import React, { useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Animated from "react-native-reanimated";
 import { COLORS, SIZES, images } from "@/constants";
-import { Image } from "react-native";
 import { AntDesign } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-
+import { Image } from "expo-image";
 const OnBoarding = [
   {
     title: "  Bienvenue sur Ampela",
@@ -81,11 +80,11 @@ const index = () => {
   };
 
   const skipHandler = () => {
-    navigation.navigate("confidentiality");
+    navigation.navigate("selectlanguage");
   };
 
   const getStartedHandler = () => {
-    navigation.navigate("confidentiality");
+    navigation.navigate("selectlanguage");
   };
 
   const RenderDots = () => {
@@ -134,13 +133,13 @@ const index = () => {
             className={`bg-white `}
           >
             <View
-              className={""}
+              className={"p-4"}
               style={{ height: SIZES.height * 0.6, width: SIZES.width }}
             >
               <Image
                 source={item.img}
-                resizeMethod="cover"
-                style={{ width: "99%", height: "100%" }}
+                contentFit="contain"
+                style={{ width: "100%", height: "100%" }}
               />
             </View>
             <View className="flex items-center justify-center p-5">

@@ -59,10 +59,10 @@ const Index = () => {
         <BackgroundContainer paddingBottom={0} paddingHorizontal={2}>
           <View
             style={{
-              paddingTop: 12,
+              // paddingTop: 12,
               paddingBottom: 40,
               paddingHorizontal: 16,
-              height: SIZES.height * 0.2,
+              height: SIZES.height * 0.15,
             }}
           >
             <View style={styles.headerContainer}>

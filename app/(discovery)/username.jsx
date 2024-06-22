@@ -42,7 +42,10 @@ const UsernameAndPasswordScreen = () => {
       username: nameText,
       profileImage,
     };
-    await MediaLibrary.saveToLibraryAsync(profileImage);
+    if (profileImage != null) {
+      await MediaLibrary.saveToLibraryAsync(profileImage);
+    }
+
     updateUser(userData);
     // console.log("User Data:", { ...user, ...userData });
     navigation.navigate("lastMenstrualCycleStart");

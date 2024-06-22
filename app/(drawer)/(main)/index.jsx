@@ -237,6 +237,7 @@ const index = () => {
         scrollEnabled={scrollDisabled}
         style={styles.container}
         showsVerticalScrollIndicator={false}
+        className=""
       >
         <BackgroundContainer>
           <View style={styles.calendar}>
@@ -338,7 +339,7 @@ const styles = StyleSheet.create({
     marginTop: 60,
   },
   calendar: {
-    marginTop: 50,
+    marginTop: 130,
     marginBottom: 20,
   },
   indications: {

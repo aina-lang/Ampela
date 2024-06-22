@@ -83,9 +83,9 @@ const DrawerComponent = () => {
                   <View className="pl-4">
                     <DrawerItem
                       label="Apropos de moi"
-                      onPress={() => router.push("settings/updateaccount")}
+                      onPress={() => router.push("settings/account")}
                       icon={({ color, size }) => (
-                        <Ionicons name="language" color={color} size={size} />
+                        <AntDesign name="user" color={color} size={size} />
                       )}
                     />
                     <DrawerItem
@@ -169,7 +169,7 @@ const DrawerComponent = () => {
                   </View>
                   <Text className="pl-4">Feed-back</Text>
                   <View className="pl-4">
-                    <DrawerItem
+                    {/* <DrawerItem
                       label="Rapport de bug"
                       onPress={() => {}}
                       icon={({ color, size }) => (
@@ -179,10 +179,10 @@ const DrawerComponent = () => {
                           size={size}
                         />
                       )}
-                    />
+                    /> */}
                     <DrawerItem
                       label="Envoyer des feedbacks"
-                      onPress={() => {}}
+                      onPress={() => router.push("settings/feedback")}
                       icon={({ color, size }) => (
                         <Ionicons
                           name="chatbox-ellipses-outline"

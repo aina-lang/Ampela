@@ -9,10 +9,9 @@ const HeaderWithGoBack = ({ navigation, title, iconLeft, onIconLeftPress }) => {
   const { theme } = useSelector(() => preferenceState.get());
   return (
     <View
-      className=" flex-row items-center  z-50 justify-between  pt-8 self-center shadow-md shadow-black rounded-b-lg"
+      className=" flex-row items-center  z-50 justify-between  pt-8 self-center shadow-md shadow-black rounded-b-lg absolute top-0"
       style={{
-        backgroundColor:
-          theme === "pink" ? COLORS.accent400 : COLORS.neutral280,
+        backgroundColor: theme === "pink" ? COLORS.accent400 : COLORS.accent800,
         height: SIZES.height * 0.16,
         paddingHorizontal: 16,
         width: SIZES.width,
@@ -27,15 +26,12 @@ const HeaderWithGoBack = ({ navigation, title, iconLeft, onIconLeftPress }) => {
       >
         <Ionicons
           name="arrow-back"
-          color={theme === "pink" ? "white" : "black"}
+          color={theme === "pink" ? "white" : "white"}
           size={24}
         />
       </TouchableOpacity>
       <Text
-        style={[
-          styles.medium,
-          { color: theme === "pink" ? "white" : "black"},
-        ]}
+        style={[styles.medium, { color: theme === "pink" ? "white" : "white" }]}
       >
         {title}
       </Text>
@@ -57,8 +53,8 @@ const styles = StyleSheet.create({
   },
   medium: {
     fontFamily: "Medium",
-    fontSize: 20,
-    marginRight:8
+    fontSize: 18,
+    marginRight: 8,
   },
 });
 

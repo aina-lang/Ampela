@@ -16,7 +16,7 @@ import { COLORS, SIZES, images, icons } from "@/constants";
 import { useNavigation } from "expo-router";
 import { preferenceState, userState } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, FontAwesome } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import BackgroundService from "react-native-background-actions";
 import * as TaskManager from "expo-task-manager";
@@ -108,33 +108,17 @@ const AccountScreen = () => {
     });
 
     if (!result.canceled) {
-      // userState.set((prev) => ({ ...prev, profileImage: result.uri }));
+      userState.set((prev) => ({ ...prev, profileImage:result.assets[0].uri}));
       setProfileImage(result.assets[0].uri);
     }
   };
-
-  // const startBackgroundService = async () => {
-  //   const options = {
-  //     taskName: 'MyTask',
-  //     taskTitle: 'My Task Running',
-  //     taskDesc: 'Description of the task',
-
-  //   };
-
-  //   try {
-  //     await BackgroundService.start(() => console.log('Task started'), options);
-  //   } catch (error) {
-  //     console.error('Error starting background service:', error);
-  //   }
-  // };
-
-  // startBackgroundService();
 
   return (
     <View
       style={{
         flex: 1,
         backgroundColor: COLORS.neutral100,
+        justifyContent: "center",
       }}
     >
       <HeaderWithGoBack title="Apropos de moi" navigation={navigation} />
@@ -149,65 +133,77 @@ const AccountScreen = () => {
         ]}
       >
         <View style={styles.profil}>
-          <Image
-            source={profileImage ? { uri: profileImage } : images.doctor01}
-            style={{ height: 150, width: 150, borderRadius: 150 }}
-          />
           <TouchableOpacity
-            style={styles.flex}
+            className=" w-[150] h-[150] rounded-full relative"
             onPress={handleProfileImageChange}
           >
-            <Text
-              style={[
-                styles.uploadImgText,
-                {
-                  color: theme === "pink" ? COLORS.accent600 : COLORS.accent800,
-                },
-              ]}
-            >
-              Changer la photo
-            </Text>
             <Image
-              source={
-                theme === "pink" ? icons.uploadIcon : icons.uploadOrangeIcon
-              }
-              style={styles.uploadImg}
+              source={profileImage ? { uri: profileImage } : images.doctor01}
+              style={{ height: 150, width: 150, borderRadius: 150 }}
+            />
+
+            <AntDesign
+              name="camera"
+              size={30}
+              style={{
+                display: "absolute",
+                top: -45,
+                right: -100,
+                backgroundColor: "white",
+                borderRadius: 100,
+                padding: 10,
+                width: 50,
+              }}
+              color={COLORS.accent600}
             />
           </TouchableOpacity>
-        </View>
-        <View className="mt-10 ">
           <View className="p-2 flex-row space-x-3 mt-3">
-            <Text>Pseudo :</Text>
-            <Text className="font-bold">{user.username}</Text>
+            <Text className="font-bold text-[18px]">{user.username}</Text>
             <TouchableOpacity onPress={() => handleEditPress("username")}>
-              <AntDesign name="edit" size={20} />
+              <AntDesign name="edit" size={24} />
             </TouchableOpacity>
           </View>
-          <View className="p-2 flex-row space-x-3">
-            <Text>Duree du cycle :</Text>
-            <Text className="font-bold">{user.cycleDuration} jours </Text>
-            <TouchableOpacity onPress={() => handleEditPress("cycleDuration")}>
-              <AntDesign name="edit" size={20} />
-            </TouchableOpacity>
+        </View>
+        <View className="mt-10 py-5 ">
+          <View className="p-2 flex-row justify-between">
+            <View className="flex-row items-center space-x-2">
+              <FontAwesome name="calendar" color={"green"} size={30} />
+              <Text className="text-[18]">Durée du cycle :</Text>
+              <Text className="font-bold text-[18]">
+                {user.cycleDuration} jours
+              </Text>
+            </View>
           </View>
-          <View className="p-2 flex-row space-x-3">
-            <Text>Duree du regle :</Text>
-            <Text className="font-bold">{user.durationMenstruation} jours</Text>
-            <TouchableOpacity
-              onPress={() => handleEditPress("durationMenstruation")}
-            >
-              <AntDesign name="edit" size={20} />
-            </TouchableOpacity>
+          <View className="p-2 flex-row justify-between">
+            <View className="flex-row items-center space-x-2">
+              <FontAwesome name="calendar-check-o" color={"green"} size={30} />
+              <Text className="text-[18]">Durée des règles :</Text>
+              <Text className="font-bold text-[18]">
+                {user.durationMenstruation} jours
+              </Text>
+            </View>
           </View>
-          <View className="p-2 flex-row space-x-3">
-            <Text>Premier jour du dernier cycle :</Text>
-            <Text className="font-bold">{user.lastMenstruationDate}</Text>
-            <TouchableOpacity
-              onPress={() => handleEditPress("lastMenstruationDate")}
-            >
-              <AntDesign name="edit" size={20} />
-            </TouchableOpacity>
+          <View className="p-2 flex-row justify-between">
+            <View className="flex-row items-center space-x-2">
+              <FontAwesome name="calendar-plus-o" color={"green"} size={30} />
+              <Text className="text-[18]">Premier jour du dernier cycle :</Text>
+              <Text className="font-bold text-[18]">
+                {user.lastMenstruationDate}
+              </Text>
+            </View>
           </View>
+          <TouchableOpacity
+            style={{ backgroundColor: COLORS.accent500 }}
+            onPress={()=>{
+              navigation.navigate("settings/updatecycleinfo")
+            }}
+            className="p-3 rounded-md mx-2 mt-5 shadow-md shadow-black flex-row justify-center space-x-2 items-center"
+          >
+            <Text className="text-white">
+              Modifier les informations du cycles
+            </Text>
+            {/* <AntDesign name="right" size={20} color="white" className="ml-3" /> */}
+          </TouchableOpacity>
         </View>
       </ScrollView>
       <Modal
@@ -256,8 +252,17 @@ const AccountScreen = () => {
                   : "Entrez la date du dernier cycle"
               }
             />
-            <Button title="Enregistrer" onPress={handleSave} />
-            <Button title="Annuler" onPress={() => setIsModalVisible(false)} />
+            <View className="flex-row space-x-2 justify-between w-full  mt-3">
+              <Button
+                title="Enregistrer"
+                onPress={handleSave}
+                color={COLORS.accent600}
+              />
+              <Button
+                title="Annuler"
+                onPress={() => setIsModalVisible(false)}
+              />
+            </View>
           </View>
         </View>
       </Modal>
@@ -268,7 +273,8 @@ const AccountScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
+    paddingTop: 120,
   },
   profil: {
     alignItems: "center",
