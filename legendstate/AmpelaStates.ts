@@ -22,9 +22,6 @@ configureObservablePersistence({
     },
   },
   pluginRemote: ObservablePersistFirebase,
-  // remoteOptions: {
-
-  // },
 });
 
 const cycleMenstruelState = observable({
@@ -62,6 +59,7 @@ const preferenceState = observable({
 persistObservable(preferenceState, {
   local: "preference",
   pluginRemote: ObservablePersistFirebase,
+  
   remote: {
     onSetError: (err: unknown) => console.error(err),
     firebase: {

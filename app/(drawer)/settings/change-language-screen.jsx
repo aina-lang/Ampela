@@ -3,7 +3,7 @@ import { SIZES, COLORS, images } from "@/constants";
 import HeaderWithGoBack from "@/components/header-with-go-back";
 import { useNavigation } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import i18n from "@/constants/i18n";
+import i18n, { loadLocale } from "@/constants/i18n";
 import { ThemeContext } from "@/hooks/theme-context";
 import { useContext } from "react";
 import { preferenceState, updatePreference } from "@/legendstate/AmpelaStates";
@@ -18,7 +18,7 @@ const ChangeLanguageScreen = () => {
       const preferenceData = {
         language: lang,
       };
-      await updatePreference(preferenceData);
+      updatePreference(preferenceData);
     } catch (error) {
       console.error("Failed to save locale to AsyncStorage:", error);
     }

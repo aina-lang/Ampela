@@ -27,7 +27,7 @@ const index = () => {
         const firstLaunch = await isFirstLaunch();
         const isFirstTimeLaunch = firstLaunch?.status ?? 1;
         setIsFirstTime(isFirstTimeLaunch);
-
+        // await loadLocale();
         if (isFirstTimeLaunch) {
           await initializeDatabase();
           const preferenceData = {
@@ -53,7 +53,9 @@ const index = () => {
   }, [fontsLoaded, loaded]);
 
   const initialRouteName =
-    isFirstTime === null || isFirstTime === 1 ? "(discovery)/" : "(drawer)/(main)/";
+    isFirstTime === null || isFirstTime === 1
+      ? "(discovery)/"
+      : "(drawer)/(main)/";
 
   if (!fontsLoaded || !loaded) {
     return (

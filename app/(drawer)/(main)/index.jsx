@@ -177,24 +177,7 @@ const index = () => {
 
   const generateMarkedDates = () => {
     cycles.forEach((cycle) => {
-      for (let i = 0; i < user.durationMenstruation; i++) {
-        markedDates[
-          moment(cycle.startMenstruationDate)
-            .add(i, "days")
-            .format("YYYY-MM-DD")
-        ] = {
-          customStyles: {
-            container: {
-              backgroundColor:
-                theme === "orange" ? COLORS.accent800 : COLORS.accent600,
-            },
-            text: {
-              color: "#fff",
-            },
-          },
-        };
-      }
-
+      // FECONDITY
       let start = moment(cycle.fecundityPeriodStart);
       let end = moment(cycle.fecundityPeriodEnd);
 
@@ -213,6 +196,7 @@ const index = () => {
         start = start.add(1, "day");
       }
 
+      // OVULATION
       markedDates[cycle.ovulationDate] = {
         customStyles: {
           container: {
@@ -226,6 +210,25 @@ const index = () => {
           },
         },
       };
+
+      // MENSTRUATION
+      for (let i = 0; i < user.durationMenstruation; i++) {
+        markedDates[
+          moment(cycle.startMenstruationDate)
+            .add(i, "days")
+            .format("YYYY-MM-DD")
+        ] = {
+          customStyles: {
+            container: {
+              backgroundColor:
+                theme === "orange" ? COLORS.accent800 : COLORS.accent600,
+            },
+            text: {
+              color: "#fff",
+            },
+          },
+        };
+      }
     });
   };
 

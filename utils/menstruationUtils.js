@@ -1,7 +1,6 @@
 import moment from "moment";
 
 export function getOvulationDate(lastMenstruationDate, cycleDurations) {
-  
   // console.log(moment(lastMenstruationDate).format("YYYY-MM-DD"));
   const ovulationDate = moment(lastMenstruationDate).add(
     cycleDurations - 14,
@@ -90,7 +89,7 @@ export function generateCycleMenstrualData(
       fecundityPeriodEnd: fecundityPeriod.endFecondityDate,
       startMenstruationDate: moment(lastMenstruationDate1).format("YYYY-MM-DD"),
       endMenstruationDate: moment(lastMenstruationDate1)
-        .add(2, "days")
+        .add(parseInt(menstruationDuration) - 1, "days")
         .format("YYYY-MM-DD"),
       nextMenstruationDate: menstruationPeriod.nextMenstruationDate,
       nextMenstruationEndDate: menstruationPeriod.nextMenstruationEndDate,
@@ -105,6 +104,5 @@ export function generateCycleMenstrualData(
   }
 
   console.log(cyclesData);
-
   return cyclesData;
 }
