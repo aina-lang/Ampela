@@ -16,8 +16,8 @@ export function getOvulationDate(lastMenstruationDate, cycleDurations) {
 }
 
 export function getFecundityPeriod(lastMenstruationDate, cycleDurations) {
-  const j1 = cycleDurations - 18;
-  const j2 = cycleDurations - 11;
+  const j1 = parseInt(cycleDurations) - 18;
+  const j2 = parseInt(cycleDurations) - 12;
 
   const startFecondityDate = moment(lastMenstruationDate)
     .add(j1, "days")
@@ -62,6 +62,7 @@ export function generateCycleMenstrualData(
 
   let lastMenstruationDate1 = moment(startDate);
   let temp = lastMenstruationDate1;
+
   for (let i = 0; i < 12; i++) {
     // Calcule les informations pour le cycle menstruel de ce mois
 

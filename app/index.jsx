@@ -55,7 +55,7 @@ const index = () => {
   const initialRouteName =
     isFirstTime === null || isFirstTime === 1
       ? "(discovery)/"
-      : "(drawer)/(main)/";
+      : "(discovery)/";
 
   if (!fontsLoaded || !loaded) {
     return (
