@@ -1,4 +1,4 @@
-import React, {useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   FlatList,
   TouchableOpacity,
   SafeAreaView,
+  Modal,
+  ActivityIndicator,
 } from "react-native";
 import { COLORS, SIZES } from "../../constants";
 import { useNavigation } from "@react-navigation/native";
@@ -14,7 +16,6 @@ import {
   ResponseOfQuestion1,
 } from "@/components/response-of-question";
 import { addCycleMenstruel, addUser } from "@/services/database";
-import ProgressBar from "@/components/ProgressBar";
 import { generateCycleMenstrualData } from "@/utils/menstruationUtils";
 import { updateUser, userState } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
@@ -39,20 +40,22 @@ const QuestionsSeries = () => {
   const [response0, setResponse0] = useState(durationMenstruations[0]);
   const [response1, setResponse1] = useState(cycleDurations[0]);
   const [isNextBtnDisabled, setIsNextBtnDisabled] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const dontRememberText = "je m'en souviens pas";
-  const [isTransactionInProgress, setIsTransactionInProgress] = useState(false);
   const user = useSelector(() => userState.get());
 
   const handleResponsePress0 = (item) => {
     setResponse0(item);
   };
+
   const handleResponsePress1 = (item) => {
     setResponse1(item);
   };
 
   function getNumberFromString(strs) {
     if (strs === dontRememberText) {
-      return 28;
+      return 28; // Valeur par défaut si l'utilisateur ne se souvient pas
     } else {
       const arrs = strs.split(" ");
       return parseInt(arrs[0], 10);
@@ -68,35 +71,39 @@ const QuestionsSeries = () => {
   }, [response0, response1]);
 
   const handleNextBtnPress = async () => {
-    setIsTransactionInProgress(true);
+    setIsLoading(true);
 
+    // Ajustez la valeur du cycle de menstruation et de la durée des menstruations
+    const cycleDuration = getNumberFromString(response1);
+    const durationMenstruation = getNumberFromString(response0);
+
+    // Générer les données du cycle menstruel
     const cycleData = generateCycleMenstrualData(
       user.lastMenstruationDate,
-      user.cycleDuration,
-      user.durationMenstruation
+      cycleDuration,
+      durationMenstruation
     );
-
-
 
     await addUser(
       user.username,
       user.password,
       user.profession,
       user.lastMenstruationDate,
-      user.durationMenstruation,
-      user.cycleDuration,
+      durationMenstruation,
+      cycleDuration,
       user.email,
       user.profileImage
     );
-    
+
     // Boucle pour enregistrer chaque cycle dans la base de données
     for (let i = 0; i < cycleData.length; i++) {
       const cycle = cycleData[i];
-      // console.log(cycle.month);
-      console.log({ ...cycle });
+
+      // Mise à jour du pourcentage de progression
+      setProgress(((i + 1) / cycleData.length) * 100);
+
       // Ajout du cycle menstruel dans la base de données
       await addCycleMenstruel(
-        // user.id,
         cycle.fecundityPeriodEnd,
         cycle.fecundityPeriodStart,
         cycle.month,
@@ -108,7 +115,7 @@ const QuestionsSeries = () => {
       );
     }
 
-    setIsTransactionInProgress(false);
+    setIsLoading(false);
     navigation.navigate("(drawer)");
   };
 
@@ -116,25 +123,25 @@ const QuestionsSeries = () => {
     const userData = {
       durationMenstruation: getNumberFromString(response0),
     };
-   updateUser(userData);
+    updateUser(userData);
   }, [response0]);
 
   useEffect(() => {
     const userData = {
       cycleDuration: getNumberFromString(response1),
     };
-   updateUser(userData);
+    updateUser(userData);
   }, [response1]);
 
   return (
     <SafeAreaView style={styles.container}>
       <Text
         style={styles.title}
-        className="bg-[#FF7575] text-white rounded-br-[150] pt-20 px-2 shadow-lg shadow-black"
+        className="bg-[#FF7575] text-white rounded-br-[150px] pt-20 px-2 shadow-lg shadow-black"
       >
         Indiquez vos durées menstruelles et de cycle
       </Text>
-      <View style={styles.content} className=" flex justify-center">
+      <View style={styles.content} className="flex justify-center">
         <View style={styles.contentItem}>
           <Text style={styles.question}>Durée de vos règles </Text>
           <FlatList
@@ -178,7 +185,7 @@ const QuestionsSeries = () => {
           />
           <View
             style={{ width: SIZES.width - 40, marginTop: 15 }}
-            className=" mx-auto"
+            className="mx-auto"
           >
             <TouchableOpacity
               style={[
@@ -197,7 +204,7 @@ const QuestionsSeries = () => {
                     response1 === dontRememberText ? COLORS.accent600 : null,
                 },
               ]}
-              className=" shadow-md shadow-black"
+              className="shadow-sm shadow-black" // Change shadow-md to shadow-sm
               onPress={() => {
                 handleResponsePress1(dontRememberText);
               }}
@@ -219,16 +226,16 @@ const QuestionsSeries = () => {
       </View>
       <View
         style={styles.btnBox}
-        className="flex items-center  justify-between flex-row p-5"
+        className="flex items-center justify-between flex-row p-5"
       >
         <TouchableOpacity
-          className="p-3  items-center rounded-md px-5"
+          className="p-3 items-center rounded-md px-5"
           onPress={() => navigation.goBack()}
         >
           <Text className="text-[#8a8888]">Précedent</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          className="p-3  items-center rounded-md px-5 shadow-md shadow-black"
+          className="p-3 items-center rounded-md px-5 shadow-sm shadow-black" // Change shadow-md to shadow-sm
           onPress={handleNextBtnPress}
           disabled={isNextBtnDisabled}
           style={{
@@ -238,7 +245,21 @@ const QuestionsSeries = () => {
           <Text className="text-white">Terminer</Text>
         </TouchableOpacity>
       </View>
-      {/* <ProgressBar percentage={10} isVisible={isTransactionInProgress} /> */}
+
+      {/* Modal de chargement */}
+      <Modal transparent={true} visible={isLoading} animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+            <Text style={styles.modalText}>
+              Chargement de vos données... {Math.round(progress)}%
+            </Text>
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${progress}%` }]} />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -270,6 +291,37 @@ const styles = StyleSheet.create({
   btnBox: {
     height: SIZES.height * 0.15,
     width: SIZES.width,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    width: 250,
+    padding: 20,
+    backgroundColor: "white",
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  modalText: {
+    marginVertical: 10,
+    fontSize: 16,
+    color: COLORS.primary,
+  },
+  progressBarContainer: {
+    width: "100%",
+    height: 10,
+    backgroundColor: "#e7e5e5",
+    borderRadius: 5,
+    overflow: "hidden",
+    marginTop: 10,
+  },
+  progressBar: {
+    height: "100%",
+    backgroundColor: COLORS.accent600,
+    borderRadius: 5,
   },
 });
 

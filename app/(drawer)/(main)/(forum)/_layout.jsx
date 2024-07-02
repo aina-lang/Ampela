@@ -7,7 +7,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "@legendapp/state/react";
 import { preferenceState } from "@/legendstate/AmpelaStates";
 
-
 const _layout = () => {
   const navigation = useNavigation();
   const { theme } = useSelector(() => preferenceState.get());
@@ -24,14 +23,14 @@ const _layout = () => {
               paddingHorizontal: 16,
             }}
           >
-            <View className="flex flex-row  items-center justify-center ">
-              <TouchableOpacity className="p-2 pl-0 mr-3"  onPress={() => navigation.openDrawer()}>
-                <Ionicons
-                  name="menu"
-                  color={"white"}
-                  size={35}
-                 
-                />
+            <View className="flex flex-row items-center justify-center">
+              <TouchableOpacity
+                className="p-2 pl-0 mr-3 space-y-1"
+                onPress={() => navigation.openDrawer()}
+              >
+                <View className="h-[5] w-7 bg-white rounded-md" />
+                <View className="h-[5] w-8 bg-white rounded-md ml-[2px]" />
+                <View className="h-[5] w-7 bg-white rounded-md" />
               </TouchableOpacity>
               <Text
                 style={{ fontSize: 20, fontWeight: "bold", color: "white" }}

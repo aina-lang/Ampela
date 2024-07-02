@@ -1,16 +1,10 @@
-// import { useContext } from "react";
 import { Pressable, Text, StyleSheet, TouchableOpacity } from "react-native";
-// import { useTranslation } from "react-i18next";
-// import { ThemeContext } from "./theme-context";
 import { COLORS, SIZES } from "@/constants";
 import i18n from "@/constants/i18n";
-import { ThemeContext } from "@/hooks/theme-context";
-import { useContext } from "react";
 import { useSelector } from "@legendapp/state/react";
 import { preferenceState } from "@/legendstate/AmpelaStates";
 
 const ArticleCategory = ({ active, onPress, children }) => {
-  //   const { t } = useTranslation();
   const { theme } = useSelector(() => preferenceState.get());
   const containerStyle = active
     ? [

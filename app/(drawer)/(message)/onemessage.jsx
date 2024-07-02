@@ -1,6 +1,5 @@
 import { COLORS, SIZES } from "@/constants";
 import { useAuth } from "@/hooks/AuthContext";
-import { ThemeContext } from "@/hooks/theme-context";
 import { preferenceState } from "@/legendstate/AmpelaStates";
 import { database } from "@/services/firebaseConfig";
 import { Feather } from "@expo/vector-icons";

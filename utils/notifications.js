@@ -129,3 +129,22 @@ export async function scheduleCycleNotifications(
     dailyPillReminderTime
   );
 }
+
+TaskManager.defineTask("BACKGROUND_FETCH_TASK", async () => {
+  try {
+    console.log("data");
+    return BackgroundFetch.Result.NewData;
+  } catch (error) {
+    return BackgroundFetch.Result.Failed;
+  }
+});
+
+const registerBackgroundFetch = async () => {
+  await BackgroundFetch.registerTaskAsync("BACKGROUND_FETCH_TASK", {
+    minimumInterval: 60,
+    stopOnTerminate: false,
+    startOnBoot: true,
+  });
+};
+
+registerBackgroundFetch();

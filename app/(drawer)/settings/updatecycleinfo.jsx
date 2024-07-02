@@ -6,48 +6,26 @@ import {
   TouchableOpacity,
   Alert,
   ScrollView,
-  FlatList,
   TextInput,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
-import { COLORS, SIZES } from "@/constants";
+import { COLORS } from "@/constants";
 import HeaderWithGoBack from "@/components/header-with-go-back";
 import { useNavigation } from "expo-router";
+import { preferenceState } from "@/legendstate/AmpelaStates";
 import {
-  ResponseOfQuestion0,
-  ResponseOfQuestion1,
-} from "@/components/response-of-question";
-
-const durationMenstruations = [];
-const cycleDurations = [];
-
-for (let i = 2; i < 46; i++) {
-  let text = null;
-  if (i > 2 && i < 8) {
-    text = i + " jours";
-    durationMenstruations.push(text);
-  }
-  if (i > 20 && i < 46) {
-    text = i + " jours";
-    cycleDurations.push(text);
-  }
-}
+  deleteCycleById,
+  addCycleMenstruel,
+  getAllCycle,
+} from "@/services/database";
 
 const UpdateCycleInfo = () => {
   const navigation = useNavigation();
   const [selectedDate, setSelectedDate] = useState(null);
   const [cycleDuration, setCycleDuration] = useState("");
   const [periodDuration, setPeriodDuration] = useState("");
-  const [response0, setResponse0] = useState(durationMenstruations[0]);
-  const [response1, setResponse1] = useState(cycleDurations[0]);
-
-  const handleResponsePress0 = (item) => {
-    if (selectedDate) setResponse0(item);
-  };
-
-  const handleResponsePress1 = (item) => {
-    if (selectedDate) setResponse1(item);
-  };
+  const { theme } = preferenceState.get();
+  const isDateSelected = !!selectedDate;
 
   const getFirstDayOfLastMonth = () => {
     const now = new Date();
@@ -63,7 +41,17 @@ const UpdateCycleInfo = () => {
     setSelectedDate(day.dateString);
   };
 
-  const handleUpdateCycleInfo = () => {
+  const getRemainingMonths = (startDate, endDate) => {
+    const months = [];
+    let current = new Date(startDate);
+    while (current <= endDate) {
+      months.push(new Date(current));
+      current.setMonth(current.getMonth() + 1);
+    }
+    return months;
+  };
+
+  const handleUpdateCycleInfo = async () => {
     if (!selectedDate) {
       Alert.alert("Erreur", "Veuillez choisir une date");
       return;
@@ -79,26 +67,115 @@ const UpdateCycleInfo = () => {
       return;
     }
 
-    Alert.alert(
-      "Succès",
-      `Information du cycle mise à jour pour la date: ${selectedDate}\nDurée du cycle: ${cycleDuration}\nDurée des règles: ${periodDuration}`
-    );
-    navigation.goBack();
+    if (parseInt(periodDuration) > 8) {
+      Alert.alert("Erreur", "La durée des règles ne peut pas dépasser 8 jours");
+      return;
+    }
+
+    if (parseInt(periodDuration) < 1) {
+      Alert.alert("Erreur", "La durée des règles doit être d'au moins 1 jour");
+      return;
+    }
+
+    try {
+
+      const allCycles = await getAllCycle();
+
+
+      let lastDeletedCycleDate = new Date(selectedDate);
+      for (const cycle of allCycles) {
+        const cycleStartDate = new Date(cycle.startMenstruationDate);
+        if (cycleStartDate >= lastDeletedCycleDate) {
+          await deleteCycleById(cycle.id);
+          if (cycleStartDate > lastDeletedCycleDate) {
+            lastDeletedCycleDate = cycleStartDate;
+          }
+        }
+      }
+
+      const startMenstruationDate = new Date(selectedDate);
+      const endMenstruationDate = new Date(startMenstruationDate);
+      endMenstruationDate.setDate(
+        endMenstruationDate.getDate() + parseInt(periodDuration) - 1
+      );
+
+      const nextMenstruationStartDate = new Date(startMenstruationDate);
+      nextMenstruationStartDate.setDate(
+        nextMenstruationStartDate.getDate() + parseInt(cycleDuration)
+      );
+
+      const nextMenstruationEndDate = new Date(nextMenstruationStartDate);
+      nextMenstruationEndDate.setDate(
+        nextMenstruationEndDate.getDate() + parseInt(periodDuration) - 1
+      );
+
+      const fecundityPeriodStart = new Date(startMenstruationDate);
+      fecundityPeriodStart.setDate(fecundityPeriodStart.getDate() - 14);
+      const fecundityPeriodEnd = new Date(fecundityPeriodStart);
+      fecundityPeriodEnd.setDate(fecundityPeriodEnd.getDate() + 4);
+
+      const ovulationDate = new Date(fecundityPeriodStart);
+      ovulationDate.setDate(ovulationDate.getDate() + 14);
+
+
+      const remainingMonths = getRemainingMonths(startMenstruationDate, lastDeletedCycleDate);
+
+      for (const month of remainingMonths) {
+        const monthStartDate = new Date(month.getFullYear(), month.getMonth(), 1);
+        const nextMonthStartDate = new Date(monthStartDate);
+        nextMonthStartDate.setMonth(nextMonthStartDate.getMonth() + 1);
+
+        const monthEndDate = new Date(nextMonthStartDate);
+        monthEndDate.setDate(monthEndDate.getDate() - 1);
+
+        const fecundityPeriodStart = new Date(startMenstruationDate);
+        fecundityPeriodStart.setDate(fecundityPeriodStart.getDate() - 14);
+        const fecundityPeriodEnd = new Date(fecundityPeriodStart);
+        fecundityPeriodEnd.setDate(fecundityPeriodEnd.getDate() + 4);
+
+        const ovulationDate = new Date(fecundityPeriodStart);
+        ovulationDate.setDate(ovulationDate.getDate() + 14);
+
+        await addCycleMenstruel(
+          fecundityPeriodEnd.toISOString().split("T")[0],
+          fecundityPeriodStart.toISOString().split("T")[0],
+          `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`, 
+          startMenstruationDate.toISOString().split("T")[0],
+          endMenstruationDate.toISOString().split("T")[0],
+          nextMenstruationStartDate.toISOString().split("T")[0],
+          nextMenstruationEndDate.toISOString().split("T")[0],
+          ovulationDate.toISOString().split("T")[0]
+        );
+
+       
+        startMenstruationDate.setMonth(startMenstruationDate.getMonth() + 1);
+      }
+
+      Alert.alert(
+        "Succès",
+        `Information du cycle mise à jour pour la date: ${selectedDate}\nDurée du cycle: ${cycleDuration}\nDurée des règles: ${periodDuration}`
+      );
+    } catch (error) {
+      Alert.alert(
+        "Erreur",
+        "Une erreur est survenue lors de la mise à jour des informations du cycle."
+      );
+      console.error(error);
+    }
+
+    // navigation.goBack();
   };
 
   return (
     <View style={styles.container}>
-      <HeaderWithGoBack
-        title="Mettre à jour l'information du cycle"
-        navigation={navigation}
-      />
+      <HeaderWithGoBack title="Modification" navigation={navigation} />
       <ScrollView
         style={{ padding: 20, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.description}>
           Choisissez une date du mois précédent pour mettre à jour l'information
-          du cycle.
+          du cycle. Ce date sera le début des règles du dernier cycle
         </Text>
         <Calendar
           onDayPress={handleDayPress}
@@ -117,25 +194,49 @@ const UpdateCycleInfo = () => {
             arrowColor: COLORS.accent500,
           }}
         />
-
-        <TextInput
-          className="bg-gray-50 border border-gray-200 rounded-md p-2 "
-          keyboardType="numeric"
-          defaultValue="2"
-          placeholder="Entrez un vouveau durée des  regles"
-          maxLength={1}
-        />
-        <TextInput
-          className="bg-gray-50 border border-gray-200 rounded-md p-2 mt-3"
-          keyboardType="numeric"
-          defaultValue="20"
-          placeholder="Entrez un vouveau durée des  cycles"
-          maxLength={2}
-        />
+        <View style={styles.inputContainer}>
+          <Text>Nouveau règle</Text>
+          <TextInput
+            style={[styles.input, !isDateSelected && styles.inputDisabled]}
+            keyboardType="numeric"
+            value={periodDuration}
+            onChangeText={(text) => {
+              const value = text.replace(/[^0-9]/g, "");
+              const numValue = parseInt(value, 10);
+              if (numValue >= 1 && numValue <= 9) {
+                setPeriodDuration(value);
+              } else if (value === "") {
+                setPeriodDuration("");
+              }
+            }}
+            placeholder="Entrez une nouvelle durée des règles"
+            maxLength={1}
+            editable={isDateSelected}
+          />
+        </View>
+        <View style={styles.inputContainer}>
+          <Text>Nouveau cycle</Text>
+          <TextInput
+            style={[styles.input, !isDateSelected && styles.inputDisabled]}
+            keyboardType="numeric"
+            value={cycleDuration}
+            onChangeText={setCycleDuration}
+            placeholder="Entrez une nouvelle durée du cycle"
+            maxLength={2}
+            editable={isDateSelected}
+          />
+        </View>
 
         <TouchableOpacity
-          style={styles.updateButton}
+          style={[
+            styles.button,
+            {
+              backgroundColor:
+                theme === "pink" ? "rgba(226,68,92, 1)" : COLORS.accent800,
+            },
+          ]}
           onPress={handleUpdateCycleInfo}
+          disabled={!isDateSelected}
         >
           <Text style={styles.updateButtonText}>Mettre à jour</Text>
         </TouchableOpacity>
@@ -155,26 +256,27 @@ const styles = StyleSheet.create({
     color: COLORS.dark,
     textAlign: "center",
     marginBottom: 20,
+    lineHeight: 30,
   },
-  label: {
-    fontSize: 14,
-    color: COLORS.dark,
-    marginVertical: 10,
-    marginLeft: 10,
+  inputContainer: {
+    marginBottom: 20,
   },
-  flatList: {
-    width: SIZES.width,
+  input: {
+    backgroundColor: "white",
+    borderColor: "gray",
+    borderWidth: 1,
+    borderRadius: 8,
     padding: 10,
-    paddingRight: 20,
-    height: 70,
+    marginTop: 10,
   },
-  updateButton: {
-    backgroundColor: COLORS.accent500,
+  inputDisabled: {
+    backgroundColor: "#e0e0e0",
+  },
+  button: {
     padding: 15,
     borderRadius: 10,
     alignItems: "center",
     marginTop: 20,
-    marginBottom: 120,
   },
   updateButtonText: {
     color: "#fff",

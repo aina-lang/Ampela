@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useContext } from "react";
+import React, { useState } from "react";
 import {
   View,
   ScrollView,
@@ -7,39 +7,22 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
-  FlatList,
   Modal,
   Button,
 } from "react-native";
 import HeaderWithGoBack from "@/components/header-with-go-back";
-import { COLORS, SIZES, images, icons } from "@/constants";
+import { COLORS, SIZES, images } from "@/constants";
 import { useNavigation } from "expo-router";
-import { preferenceState, userState } from "@/legendstate/AmpelaStates";
+import {
+  preferenceState,
+  updateUser,
+  userState,
+} from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 import { AntDesign, FontAwesome } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import BackgroundService from "react-native-background-actions";
-import * as TaskManager from "expo-task-manager";
-import * as BackgroundFetch from "expo-background-fetch";
-
-TaskManager.defineTask("BACKGROUND_FETCH_TASK", async () => {
-  try {
-    console.log("data");
-    return BackgroundFetch.Result.NewData;
-  } catch (error) {
-    return BackgroundFetch.Result.Failed;
-  }
-});
-
-const registerBackgroundFetch = async () => {
-  await BackgroundFetch.registerTaskAsync("BACKGROUND_FETCH_TASK", {
-    minimumInterval: 60, // Fetch interval in seconds
-    stopOnTerminate: false,
-    startOnBoot: true,
-  });
-};
-
-registerBackgroundFetch();
+import * as MediaLibrary from "expo-media-library";
+import { updateUserSqlite } from "@/services/database";
 
 const AccountScreen = () => {
   const { theme } = useSelector(() => preferenceState.get());
@@ -54,36 +37,12 @@ const AccountScreen = () => {
   );
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentField, setCurrentField] = useState(null);
-  const [profileImage, setProfileImage] = useState(user.profileImage);
+  const [profileImage1, setProfileImage] = useState(user.profileImage);
   const navigation = useNavigation();
-
-  const sleep = (time) => new Promise(() => setTimeout(() => resolve(), time));
-  const veryIntensiveTask = async (taskDataArguments) => {
-    const { delay } = taskDataArguments;
-    await new Promise(async (resolve) => {
-      for (let i = 0; BackgroundService.isRunning(); i++) {
-        console.log(i);
-        await sleep(delay);
-      }
-    });
-  };
-
-  const options = {
-    taskName: "Ampela",
-    taskTitle: "Date d'ovulation",
-    taskDesc: "Votre prochaine dat ed'ovulation sera le 20 octobre 2002",
-
-    color: "#ff00ff",
-    parameters: {
-      delay: 1000,
-    },
-  };
 
   const handleEditPress = async (field) => {
     setCurrentField(field);
     setIsModalVisible(true);
-
-    //  await BackgroundService.start(veryIntensiveTask,options);
   };
 
   const handleSave = () => {
@@ -100,16 +59,36 @@ const AccountScreen = () => {
   };
 
   const handleProfileImageChange = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
 
-    if (!result.canceled) {
-      userState.set((prev) => ({ ...prev, profileImage:result.assets[0].uri}));
-      setProfileImage(result.assets[0].uri);
+      if (!result.canceled) {
+        const profileImage = result.assets[0].uri;
+        await MediaLibrary.saveToLibraryAsync(profileImage);
+        updateUser({
+          ...user,
+          profileImage,
+        });
+        await updateUserSqlite(
+          user.id,
+          user.username,
+          user.password,
+          user.profession,
+          user.lastMenstruationDate,
+          user.durationMenstruation,
+          user.cycleDuration,
+          user.email,
+          profileImage
+        );
+        setProfileImage(profileImage);
+      }
+    } catch (error) {
+      console.error("Error picking image: ", error);
     }
   };
 
@@ -138,7 +117,7 @@ const AccountScreen = () => {
             onPress={handleProfileImageChange}
           >
             <Image
-              source={profileImage ? { uri: profileImage } : images.doctor01}
+              source={profileImage1 ? { uri: profileImage1 } : images.doctor01}
               style={{ height: 150, width: 150, borderRadius: 150 }}
             />
 
@@ -160,11 +139,11 @@ const AccountScreen = () => {
           <View className="p-2 flex-row space-x-3 mt-3">
             <Text className="font-bold text-[18px]">{user.username}</Text>
             <TouchableOpacity onPress={() => handleEditPress("username")}>
-              <AntDesign name="edit" size={24} />
+              <AntDesign name="edit" size={24} color={COLORS.accent600}/>
             </TouchableOpacity>
           </View>
         </View>
-        <View className="mt-10 py-5 ">
+        <View className=" py-5 ">
           <View className="p-2 flex-row justify-between">
             <View className="flex-row items-center space-x-2">
               <FontAwesome name="calendar" color={"green"} size={30} />
@@ -192,17 +171,31 @@ const AccountScreen = () => {
               </Text>
             </View>
           </View>
+        </View>
+        <View>
           <TouchableOpacity
-            style={{ backgroundColor: COLORS.accent500 }}
-            onPress={()=>{
-              navigation.navigate("settings/updatecycleinfo")
+      
+            onPress={() => {
+              navigation.navigate("settings/updatecycleinfo");
             }}
-            className="p-3 rounded-md mx-2 mt-5 shadow-md shadow-black flex-row justify-center space-x-2 items-center"
+            className=" rounded-lg mx-2 mt-5 flex-row justify-between space-x-2 items-center"
           >
-            <Text className="text-white">
+            <Text className="text-black">
               Modifier les informations du cycles
             </Text>
-            {/* <AntDesign name="right" size={20} color="white" className="ml-3" /> */}
+            <AntDesign name="right" size={18} color="black" className="ml-3" />
+          </TouchableOpacity>
+          <TouchableOpacity
+          
+            onPress={() => {
+              navigation.navigate("settings/changepassword");
+            }}
+            className=" rounded-lg mx-2 mt-10  flex-row justify-between space-x-2 items-center"
+          >
+            <Text className="text-black">
+              Changer mon mot de passe
+            </Text>
+            <AntDesign name="right" size={18} color="black" className="ml-3" />
           </TouchableOpacity>
         </View>
       </ScrollView>

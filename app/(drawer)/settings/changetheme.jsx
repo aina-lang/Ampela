@@ -1,16 +1,13 @@
-import { useState, useContext } from "react";
 import {
   View,
   Text,
   Image,
   StyleSheet,
-  Pressable,
   TouchableOpacity,
 } from "react-native";
 import HeaderWithGoBack from "@/components/header-with-go-back";
 import { SIZES, COLORS, images } from "@/constants";
 import { useNavigation } from "expo-router";
-import { ThemeContext } from "@/hooks/theme-context";
 import { preferenceState, updatePreference } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 

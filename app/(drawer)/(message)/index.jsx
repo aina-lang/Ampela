@@ -45,10 +45,10 @@ const MessagesScreen = () => {
   const { openModal } = useModal();
 
   useEffect(() => {
-    // if (!auth.currentUser) {
+    if (!auth.currentUser) {
       openModal(<AuthContent />);
-    // }
-  }, []);
+    }
+  }, [auth.currentUser]);
 
   const handleMessageItemPress = (target) => {
     if (user) {

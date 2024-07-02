@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { SIZES, COLORS } from "@/constants";
 import HeaderWithGoBack from "@/components/header-with-go-back";

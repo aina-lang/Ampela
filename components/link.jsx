@@ -1,10 +1,8 @@
-import { useCallback, useContext } from 'react';
+import { useCallback } from 'react';
 import { Text, Linking, Alert, StyleSheet } from 'react-native';
 import { COLORS } from '@/constants';
-import { ThemeContext } from '../hooks/theme-context';
 
 const Link = ({url, children}) => {
-    // const {theme} = useContext(ThemeContext);
     const handlePress = useCallback(async () => {
         const supported = await Linking.canOpenURL(url);
   

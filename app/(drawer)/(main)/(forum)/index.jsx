@@ -17,7 +17,7 @@ import { Link, useNavigation } from "expo-router";
 import SearchForum from "@/components/SearchForum";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import AuthContent from "@/components/AuthContent";
-import { useBottomSheet, useModal } from "@/hooks/ModalProvider";
+import {  useModal } from "@/hooks/ModalProvider";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { useNetInfo } from "@react-native-community/netinfo";
 

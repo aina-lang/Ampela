@@ -7,7 +7,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "@legendapp/state/react";
 import { preferenceState } from "@/legendstate/AmpelaStates";
 
-
 const _layout = () => {
   const navigation = useNavigation();
   const { theme } = useSelector(() => preferenceState.get());
@@ -18,18 +17,21 @@ const _layout = () => {
           <View
             className=" w-full flex-row items-center pt-8  rounded-b-lg justify-between  shadow-md shadow-black"
             style={{
-              backgroundColor:  theme === "orange" ? COLORS.accent800 : COLORS.accent500,
+              backgroundColor:
+                theme === "orange" ? COLORS.accent800 : COLORS.accent500,
               height: SIZES.height * 0.16,
               paddingHorizontal: 16,
             }}
           >
-            <View className="flex flex-row  items-center justify-center "  onPress={() => navigation.goBack()}>
-              <TouchableOpacity className="p-2 pl-0 mr-3">
+            <View className="flex flex-row  items-center justify-center ">
+              <TouchableOpacity
+                className="p-2 pl-0 mr-3"
+                onPress={() => navigation.goBack()}
+              >
                 <Ionicons
                   name="arrow-back"
-                  color={theme === "pink" ? "white" : COLORS.accent800}
+                  color={theme === "pink" ? "white" : "white"}
                   size={24}
-                 
                 />
               </TouchableOpacity>
               <Text
@@ -64,11 +66,7 @@ const _layout = () => {
       }}
       initialRouteName="index"
     >
-      
-      <Stack.Screen
-        name="addpost"
-        options={{  tabBarVisibility: "none" }}
-      />
+      <Stack.Screen name="addpost" options={{ tabBarVisibility: "none" }} />
     </Stack>
   );
 };

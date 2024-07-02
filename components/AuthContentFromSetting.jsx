@@ -15,15 +15,28 @@ import {
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { addDoc, collection, doc, getDoc } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  where,
+} from "firebase/firestore";
 import { useSelector } from "@legendapp/state/react";
-import { userState } from "@/legendstate/AmpelaStates";
-import { useModal } from "@/hooks/ModalProvider";
-import { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import { updateUser, userState } from "@/legendstate/AmpelaStates";
+
+import {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
+import { updateUserSqlite } from "@/services/database";
+import { query } from "firebase/database";
 
 const { width } = Dimensions.get("window");
 
-const AuthContent = () => {
+const AuthContent = ({ closeModal }) => {
   const user = useSelector(() => userState.get());
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -38,9 +51,9 @@ const AuthContent = () => {
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [loginErrorPresent, setLoginErrorPresent] = useState(false);
   const [signupErrorPresent, setSignupErrorPresent] = useState(false);
-  const { closeModal } = useModal();
-  const [loading, setLoading] = useState(false);
   const scale = useSharedValue(0);
+  const [loading, setLoading] = useState(false);
+
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [
@@ -149,6 +162,7 @@ const AuthContent = () => {
     } catch (error) {
       console.error("Erreur lors de l'inscription:", error.message);
     } finally {
+      closeModal();
       setLoading(false);
     }
   };
@@ -162,19 +176,37 @@ const AuthContent = () => {
         loginPassword
       );
 
-      const userDocRef = doc(database, "users", userCredential.user.uid);
-      const userDoc = await getDoc(userDocRef);
+      const usersCollectionRef = collection(database, "users");
+      const q = query(
+        usersCollectionRef,
+        where("userId", "==", userCredential.user.uid)
+      );
+      const querySnapshot = await getDocs(q);
 
-      if (userDoc.exists()) {
+      if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        console.log("User data:", userDoc.data());
         const userData = userDoc.data();
-        console.log("User data:", userData);
+        updateUser({
+          id: userCredential.user.uid,
+          username: userData.username,
+          email: userData.email,
+          profileImage: userData.profileImage,
+        });
+
+        // Sauvegarder les données dans SQLite
+        updateUserSqlite({
+          id: userCredential.user.uid,
+          username: userData.username,
+          email: userData.email,
+          profileImage: userData.profileImage,
+        });
       } else {
         console.error("No such user document!");
       }
     } catch (error) {
       console.error("Erreur lors de la connexion:", error.message);
     } finally {
-      closeModal();
       setLoading(false);
     }
   };

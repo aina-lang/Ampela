@@ -1,3 +1,4 @@
+
 import { observable } from "@legendapp/state";
 import {
   configureObservablePersistence,
@@ -11,7 +12,6 @@ import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
 
 const app = initializeApp(firebaseConfig);
-
 const database = getDatabase(app);
 
 configureObservablePersistence({
@@ -24,6 +24,7 @@ configureObservablePersistence({
   pluginRemote: ObservablePersistFirebase,
 });
 
+// Define observables
 const cycleMenstruelState = observable({
   id: null,
   lastMenstruationDate: null,
@@ -32,49 +33,10 @@ const cycleMenstruelState = observable({
   cyclesData: [],
 });
 
-persistObservable(cycleMenstruelState, {
-  local: "cycleMenstruel",
-  pluginRemote: ObservablePersistFirebase,
-  remote: {
-    onSetError: (err: unknown) => console.error(err),
-    firebase: {
-      refPath: () => `cycleMenstruel`,
-      mode: "realtime",
-    },
-  },
-});
-
-export const updateCycleMenstruelData = (data: any) => {
-  cycleMenstruelState.set((prevState) => ({
-    ...prevState,
-    cyclesData: data,
-  }));
-};
-
 const preferenceState = observable({
   theme: "",
   language: "",
 });
-
-persistObservable(preferenceState, {
-  local: "preference",
-  pluginRemote: ObservablePersistFirebase,
-  
-  remote: {
-    onSetError: (err: unknown) => console.error(err),
-    firebase: {
-      refPath: () => `preference`,
-      mode: "realtime",
-    },
-  },
-});
-
-export const updatePreference = (data: { theme: string; language: string }) => {
-  preferenceState.set((prevState) => ({
-    ...prevState,
-    ...data,
-  }));
-};
 
 const userState = observable({
   id: null,
@@ -88,11 +50,36 @@ const userState = observable({
   profileImage: null,
 });
 
+
+persistObservable(cycleMenstruelState, {
+  local: "cycleMenstruel",
+  pluginRemote: ObservablePersistFirebase,
+  remote: {
+    onSetError: (err) => console.error(err),
+    firebase: {
+      refPath: () => `cycleMenstruel`,
+      mode: "realtime",
+    },
+  },
+});
+
+persistObservable(preferenceState, {
+  local: "preference",
+  pluginRemote: ObservablePersistFirebase,
+  remote: {
+    onSetError: (err) => console.error(err),
+    firebase: {
+      refPath: () => `preference`,
+      mode: "realtime",
+    },
+  },
+});
+
 persistObservable(userState, {
   local: "user",
   pluginRemote: ObservablePersistFirebase,
   remote: {
-    onSetError: (err: unknown) => console.error(err),
+    onSetError: (err) => console.error(err),
     firebase: {
       refPath: () => `user`,
       mode: "realtime",
@@ -100,17 +87,22 @@ persistObservable(userState, {
   },
 });
 
-export const updateUser = (data: {
-  id: null;
-  username: string;
-  password: string;
-  profession: string;
-  lastMenstruationDate: null;
-  durationMenstruation: null;
-  cycleDuration: null;
-  email: string;
-  profileImage: null;
-}) => {
+// Update functions
+export const updateCycleMenstruelData = (data) => {
+  cycleMenstruelState.set((prevState) => ({
+    ...prevState,
+    cyclesData: data,
+  }));
+};
+
+export const updatePreference = (data) => {
+  preferenceState.set((prevState) => ({
+    ...prevState,
+    ...data,
+  }));
+};
+
+export const updateUser = (data) => {
   userState.set((prevState) => ({
     ...prevState,
     ...data,

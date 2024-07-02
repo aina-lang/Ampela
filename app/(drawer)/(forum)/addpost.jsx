@@ -16,6 +16,7 @@ import { useNavigation } from "expo-router";
 import { collection, addDoc, updateDoc } from "firebase/firestore";
 import { auth, database } from "@/services/firebaseConfig";
 import { AuthContext } from "@/hooks/AuthContext";
+import { COLORS } from "@/constants";
 
 const AddPost = () => {
   const [title, setTitle] = useState("");
@@ -92,10 +93,10 @@ const AddPost = () => {
         multiline
         editable={!loading}
       />
-      <Button title="Add Photos" onPress={selectPhotos} disabled={loading} />
+      {/* <Button title="Add Photos" onPress={selectPhotos} disabled={loading} /> */}
       {photos && <Image source={{ uri: photos }} style={styles.photo} />}
       <TouchableOpacity
-        style={styles.submitButton}
+        style={[styles.submitButton, { backgroundColor: COLORS.accent500 }]}
         onPress={submitPost}
         disabled={loading}
       >
@@ -133,7 +134,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   submitButton: {
-    backgroundColor: "#007bff",
     padding: 16,
     borderRadius: 4,
     alignItems: "center",

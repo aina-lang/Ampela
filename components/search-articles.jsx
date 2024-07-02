@@ -9,7 +9,7 @@ import {
 import { SIZES, icons } from "@/constants";
 import i18n from "@/constants/i18n";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const SearchArticles = () => {
   const [text, setText] = useState("");
@@ -21,6 +21,7 @@ const SearchArticles = () => {
       setText("");
     }
   };
+
   return (
     <View style={styles.container} className="shadow-sm shadow-black ">
       <TextInput

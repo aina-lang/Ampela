@@ -5,7 +5,6 @@ import HeaderWithGoBack from "@/components/header-with-go-back";
 import Link from "@/components/link";
 import { useNavigation } from "expo-router";
 import i18n from "@/constants/i18n";
-import { ThemeContext } from "@/hooks/theme-context";
 import { useSelector } from "@legendapp/state/react";
 import { preferenceState } from "@/legendstate/AmpelaStates";
 

@@ -172,7 +172,12 @@ const ChangePassword = () => {
         <TouchableOpacity
           disabled={currentPassword == "" || newPassword == ""}
           style={{
-            backgroundColor: COLORS.accent500,
+            backgroundColor:
+              theme === "pink"
+                ? currentPassword == "" || newPassword == ""
+                  ? "rgba(226,68,92, .8)"
+                  : "gray"
+                : COLORS.accent800,
             width: Math.floor(Dimensions.get("window").width) - 40,
           }}
           onPress={handleChangePassword}
@@ -199,6 +204,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.dark,
     textAlign: "center",
+    lineHeight: 25,
   },
   input: {
     padding: 10,

@@ -13,16 +13,16 @@ import { useSelector } from "@legendapp/state/react";
 import { updateUser, userState } from "@/legendstate/AmpelaStates";
 
 const LastMenstrualCycleStartAge = () => {
-  const [selected, setSelected] = useState(
-    `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(
-      2,
-      "0"
-    )}-${String(new Date().getDate()).padStart(2, "0")}`
-  );
+  const today = new Date();
+  const todayString = today.toISOString().split("T")[0];
+  const firstDayOfMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-01`;
+  
+  const [selected, setSelected] = useState(todayString);
   const [isNextBtnDisabled, setIsNextBtnDisabled] = useState(true);
 
   const navigation = useNavigation();
   const user = useSelector(() => userState.get());
+
   useEffect(() => {
     if (selected) {
       setIsNextBtnDisabled(false);
@@ -30,26 +30,38 @@ const LastMenstrualCycleStartAge = () => {
   }, [selected]);
 
   useEffect(() => {
+    const dateToUpdate = selected === "" ? firstDayOfMonth : selected;
     const userData = {
-      lastMenstruationDate: selected,
+      lastMenstruationDate: dateToUpdate,
     };
     updateUser(userData);
-    // console.log(selected);
   }, [selected]);
+
   const handleNextBtnPress = () => {
     console.log(user);
     navigation.navigate("questionsSeries");
+  };
+
+  const handleDateChange = (day) => {
+    const selectedDate = day.dateString;
+    if (new Date(selectedDate) <= today) {
+      setSelected(selectedDate);
+    } else {
+      console.warn("La date sélectionnée doit être aujourd'hui ou dans le passé.");
+    }
+  };
+
+  const handleForgetDate = () => {
+    setSelected(""); 
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <Text
         style={styles.title}
-        className="bg-[#FF7575] text-white rounded-br-[150] p-4 pt-20 shadow-lg shadow-black"
+        className="bg-[#FF7575] text-white rounded-br-[150px] p-4 pt-20 shadow-lg shadow-black"
       >
-        {/* {t("questionDateVosDernieresRegles")} */}
-        {user.username + "  , "}
-        date de vos dernier regle
+        {user.username + "  , "} date de vos dernières règles
       </Text>
       <View style={styles.calendar}>
         <Calendar
@@ -58,6 +70,7 @@ const LastMenstrualCycleStartAge = () => {
             borderRadius: 8,
             backgroundColor: "rgba(255, 255, 255, .5)",
           }}
+          maxDate={todayString}
           theme={{
             textSectionTitleColor: COLORS.neutral400,
             todayTextColor: COLORS.primary,
@@ -72,10 +85,7 @@ const LastMenstrualCycleStartAge = () => {
             textMonthFontSize: SIZES.large,
             textDayHeaderFontSize: SIZES.medium,
           }}
-          onDayPress={(day) => {
-            setSelected(day.dateString);
-            console.log(selected);
-          }}
+          onDayPress={handleDateChange}
           markedDates={{
             [selected]: {
               selected: true,
@@ -86,29 +96,29 @@ const LastMenstrualCycleStartAge = () => {
           }}
         />
         <TouchableOpacity
-          className=" items-center rounded-md px-5"
-          onPress={() => setSelected("")}
+          className="items-center rounded-md px-5"
+          onPress={handleForgetDate}
           style={{
             borderWidth: selected === "" ? 1 : 0,
             borderColor: COLORS.accent600,
             padding: 10,
           }}
         >
-          <Text className="text-[#E2445C]">Je m'en souviens pas</Text>
+          <Text className="text-[#E2445C]">Je ne me souviens plus</Text>
         </TouchableOpacity>
       </View>
       <View
         style={styles.btnBox}
-        className="flex items-center  justify-between flex-row p-5"
+        className="flex items-center justify-between flex-row p-5"
       >
         <TouchableOpacity
-          className="p-3  items-center rounded-md px-5"
+          className="p-3 items-center rounded-md px-5"
           onPress={() => navigation.goBack()}
         >
-          <Text className="text-[#8a8888]">Précedent</Text>
+          <Text className="text-[#8a8888]">Précédent</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          className="p-3  items-center rounded-md px-5 shadow-lg"
+          className="p-3 items-center rounded-md px-5 shadow-lg"
           onPress={handleNextBtnPress}
           disabled={isNextBtnDisabled}
           style={{

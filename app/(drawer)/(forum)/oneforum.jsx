@@ -11,7 +11,6 @@ const getPostDetails = async (postId) => {
 };
 
 const getCommentsForPost = async (postId) => {
-  // Code pour obtenir les commentaires associés à ce post
   return [
     { id: 1, author: "Auteur 1", content: "Commentaire 1" },
     { id: 2, author: "Auteur 2", content: "Commentaire 2" },
@@ -57,8 +56,6 @@ const OneForum = () => {
           <Text>{comment.content}</Text>
         </View>
       ))}
-
-      {/* Ajoutez un bouton pour ajouter un commentaire */}
       <Button
         title="Ajouter un commentaire"
         onPress={() => navigation.navigate("AddComment", { postId })}

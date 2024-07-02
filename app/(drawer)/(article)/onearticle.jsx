@@ -39,7 +39,7 @@ const onearticle = () => {
     return {
       transform: [
         {
-          // translateX:,
+         
           translateY: interpolate(
             scrollOffset.value,
             [-SIZES.height * 0.3, 0, SIZES.height * 0.3],

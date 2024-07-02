@@ -40,7 +40,7 @@ const confidentiality = () => {
   }, [checkbox1, checkbox2]);
 
   const handleNextBtnPress = useCallback(() => {
-    navigation.navigate("username");
+    navigation.navigate("login");
   });
 
   const prevHandled = () => {
@@ -83,7 +83,7 @@ const confidentiality = () => {
     <SafeAreaView style={styles.container}>
       <Text
         style={styles.confidentialityTitle}
-        className="bg-[#FF7575] text-white rounded-br-[150] pt-20 shadow-lg shadow-black"
+        className="bg-[#FF7575] text-white rounded-br-[150px] pt-20 shadow-lg shadow-black"
       >
         {i18n.t("confidentialite")}
       </Text>

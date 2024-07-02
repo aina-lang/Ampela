@@ -63,7 +63,7 @@ const ForumItem = ({ post, refToCommentItem }) => {
       unsubscribeLikes();
       unsubscribeComments();
     };
-  }, [post?.postId]);
+  }, [post?.postId,getAuth().currentUser]);
 
   const truncateText = (text, maxLength) => {
     if (text.length > maxLength) {
@@ -85,7 +85,7 @@ const ForumItem = ({ post, refToCommentItem }) => {
       }
     };
     checkLikedPost();
-  }, [post?.postId]);
+  }, [post?.postId,getAuth().currentUser]);
 
   const checkUserLikedPost = async (userId, postId) => {
     const likesCollection = collection(database, "likes");

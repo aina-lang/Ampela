@@ -2,10 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { SIZES, COLORS, images } from "@/constants";
 import HeaderWithGoBack from "@/components/header-with-go-back";
 import { useNavigation } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import i18n, { loadLocale } from "@/constants/i18n";
-import { ThemeContext } from "@/hooks/theme-context";
-import { useContext } from "react";
+import i18n from "@/constants/i18n";
 import { preferenceState, updatePreference } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 
@@ -42,8 +39,12 @@ const ChangeLanguageScreen = () => {
             style={{
               backgroundColor:
                 language === "fr"
-                  ? "rgba(226,68,92, .8)"
-                  : "rgba(226,68,92, .4)",
+                  ? theme === "pink"
+                    ? "rgba(226,68,92, .8)"
+                    : COLORS.accent800
+                  : theme === "pink"
+                  ? "rgba(226,68,92, .4)"
+                  : COLORS.neutral250,
               borderRadius: 5,
               flexDirection: "row",
               alignItems: "center",
@@ -66,8 +67,12 @@ const ChangeLanguageScreen = () => {
             style={{
               backgroundColor:
                 language === "mg"
-                  ? "rgba(226,68,92, .8)"
-                  : "rgba(226,68,92, .4)",
+                  ? theme === "pink"
+                    ? "rgba(226,68,92, .8)"
+                    : COLORS.accent800
+                  : theme === "pink"
+                  ? "rgba(226,68,92, .4)"
+                  : COLORS.neutral250,
               borderRadius: 5,
               flexDirection: "row",
               alignItems: "center",

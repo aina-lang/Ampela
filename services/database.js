@@ -3,8 +3,8 @@ import * as FileSystem from "expo-file-system";
 
 export const db = SQLite.openDatabaseSync("ampela.db");
 
-// db.closeAsync();
-// SQLite.deleteDatabaseAsync("ampela.db")
+// db.closeSync();
+// SQLite.deleteDatabaseSync("ampela.db")
 export const addUser = async (
   username,
   password,
@@ -30,6 +30,49 @@ export const addUser = async (
       photoUri,
     ]);
     console.log("User added:", result);
+    return result;
+  } finally {
+    await statement.finalizeAsync();
+  }
+};
+
+export const updateUserSqlite = async (
+  id,
+  username,
+  password,
+  profession,
+  lastMenstruationDate,
+  durationMenstruation,
+  cycleDuration,
+  email,
+  profileImage
+) => {
+  const statement = await db.prepareAsync(
+    `UPDATE users 
+     SET username = ?, 
+         password = ?, 
+         profession = ?, 
+         lastMenstruationDate = ?, 
+         durationMenstruation = ?, 
+         cycleDuration = ?, 
+         email = ?, 
+         profileImage = ? 
+     WHERE id = ?`
+  );
+
+  try {
+    const result = await statement.executeAsync([
+      username,
+      password,
+      profession,
+      lastMenstruationDate,
+      durationMenstruation,
+      cycleDuration,
+      email,
+      profileImage,
+      id
+    ]);
+    console.log("User updated:", result);
     return result;
   } finally {
     await statement.finalizeAsync();
@@ -156,4 +199,16 @@ export const getAllCycle = async () => {
   for (const row of allRows) {
   }
   return allRows;
+};
+
+
+export const deleteCycleById = async (id) => {
+  try {
+    const result = await db.runAsync("DELETE FROM cycles_menstruels WHERE id = ?", [id]);
+    console.log("Cycle deleted:", result);
+    return result;
+  } catch (error) {
+    console.error("Error deleting cycle:", error);
+    throw error;
+  }
 };

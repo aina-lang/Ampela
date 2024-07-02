@@ -1,71 +1,78 @@
+
 import React, { useEffect, useState } from "react";
-import * as SplashScreen from "expo-splash-screen";
+import { Text, View } from "react-native";
+import { Redirect, useNavigationContainerRef } from "expo-router";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useFonts } from "expo-font";
-import { Redirect } from "expo-router";
-import { initializeDatabase, isFirstLaunch } from "@/services/database";
-import { observer } from "@legendapp/state/react";
+import { isFirstLaunch, initializeDatabase } from "@/services/database";
 import { updatePreference } from "@/legendstate/AmpelaStates";
-import { ActivityIndicator, View } from "react-native";
 
-SplashScreen.preventAutoHideAsync();
+export { ErrorBoundary } from "expo-router";
 
-const index = () => {
-  const [loaded, setLoaded] = useState(false);
+async function fetchData(setIsFirstTime, setInitialRouteName, setLoaded) {
+  try {
+    const firstLaunch = await isFirstLaunch();
+    const isFirstTimeLaunch = firstLaunch?.status ?? 1;
+    setIsFirstTime(isFirstTimeLaunch);
+
+    if (isFirstTimeLaunch) {
+      await initializeDatabase();
+      const preferenceData = { theme: "pink", language: "fr" };
+      await updatePreference(preferenceData);
+    }
+
+    setInitialRouteName(isFirstTimeLaunch ? "(discovery)" : "(drawer)");
+  } catch (error) {
+    console.error("Error:", error);
+  } finally {
+    setLoaded(true);
+  }
+}
+
+export default function Index() {
+  const navigation = useNavigationContainerRef();
+  const [ready, setReady] = useState(false);
   const [isFirstTime, setIsFirstTime] = useState(null);
-
-  const [fontsLoaded] = useFonts({
+  const [initialRouteName, setInitialRouteName] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+  const [fontsLoaded, error] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     Regular: require("../assets/fonts/WorkSans-Regular.ttf"),
     Bold: require("../assets/fonts/WorkSans-Bold.ttf"),
     Medium: require("../assets/fonts/WorkSans-Medium.ttf"),
     SBold: require("../assets/fonts/WorkSans-SemiBold.ttf"),
+    ...FontAwesome.font,
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const firstLaunch = await isFirstLaunch();
-        const isFirstTimeLaunch = firstLaunch?.status ?? 1;
-        setIsFirstTime(isFirstTimeLaunch);
-        // await loadLocale();
-        if (isFirstTimeLaunch) {
-          await initializeDatabase();
-          const preferenceData = {
-            theme: "pink",
-            language: "fr",
-          };
-          updatePreference(preferenceData);
-        }
-      } catch (error) {
-        console.error("Error:", error);
-      } finally {
-        setLoaded(true);
-      }
-    };
-
-    fetchData();
-  }, [isFirstTime]);
+    fetchData(setIsFirstTime, setInitialRouteName, setLoaded);
+  }, []);
 
   useEffect(() => {
-    if (fontsLoaded && loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, loaded]);
+    if (error) throw error;
+  }, [error]);
 
-  const initialRouteName =
-    isFirstTime === null || isFirstTime === 1
-      ? "(discovery)/"
-      : "(discovery)/";
+  useEffect(() => {
+    if (navigation?.isReady) {
+      setReady(true);
+    }
+  }, [navigation?.isReady]);
 
   if (!fontsLoaded || !loaded) {
     return (
-      <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size={30} />
+      <View>
+        <Text>CHARGEMENT ... </Text>
       </View>
     );
   }
 
-  return <Redirect href={initialRouteName} />;
-};
+  if (ready && initialRouteName) {
+    return <Redirect href={initialRouteName} />;
+  }
 
-export default observer(index);
+  return (
+    <View>
+      <Text>CHARGEMENT ... </Text>
+    </View>
+  );
+}

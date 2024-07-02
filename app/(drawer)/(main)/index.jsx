@@ -16,12 +16,13 @@ import ReminderItem from "@/components/calendar/reminder-item";
 
 import moment from "moment";
 
-import { useSelector } from "@legendapp/state/react";
+import { observer, useSelector } from "@legendapp/state/react";
 import {
   cycleMenstruelState,
   preferenceState,
   userState,
 } from "@/legendstate/AmpelaStates";
+import i18n from "@/constants/i18n";
 
 const index = () => {
   const user = useSelector(() => userState.get());
@@ -29,7 +30,7 @@ const index = () => {
   const [howmanytimeReminder2, setHowmanytimeReminder2] = useState("quotidien");
   const [howmanytimeReminder3, setHowmanytimeReminder3] = useState("quotidien");
   const [scrollDisabled, setScrollDisabled] = useState(true);
-  const { theme } = useSelector(() => preferenceState.get());
+  const { theme, language } = useSelector(() => preferenceState.get());
   const [time1, setTime1] = useState({
     hour: 0,
     minutes: 0,
@@ -42,6 +43,13 @@ const index = () => {
     hour: 0,
     minutes: 0,
   });
+
+  i18n.defaultLocale = "fr";
+  if (language) {
+    i18n.locale = language;
+  } else {
+    i18n.locale = i18n.defaultLocale;
+  }
 
   LocaleConfig.locales["fr"] = {
     monthNames: [
@@ -127,7 +135,7 @@ const index = () => {
     today: "Androany",
   };
 
-  LocaleConfig.defaultLocale = "fr";
+  LocaleConfig.defaultLocale = language;
 
   const handleReminderBtnOnePress = () => {
     setReminderInfo({ as: "Début des règles" });
@@ -364,4 +372,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default index;
+export default observer(index);

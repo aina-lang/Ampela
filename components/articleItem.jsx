@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useContext } from "react";
+import React, { useRef, useEffect } from "react";
 import {
   Text,
   View,
@@ -10,14 +10,12 @@ import {
 } from "react-native";
 import { COLORS } from "@/constants";
 import i18n from "@/constants/i18n";
-import { ThemeContext } from "@/hooks/theme-context";
-import { useNavigation, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { preferenceState } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 
 const ArticleItem = ({
   title,
-  category,
   content,
   list,
   imgInside,
@@ -25,7 +23,6 @@ const ArticleItem = ({
   imgInsideArrMg,
   content2,
   list2,
-  onPress,
   img,
 }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -88,14 +85,6 @@ const ArticleItem = ({
           ]}
           className="w-7"
         >
-          {/* <Text
-            style={{
-              fontFamily: "Regular",
-              color: theme === "pink" ? COLORS.neutral100 : COLORS.primary,
-            }}
-          >
-            {category}
-          </Text> */}
         </View>
         <View style={styles.img}>
           <Image

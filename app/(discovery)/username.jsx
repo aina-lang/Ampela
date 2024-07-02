@@ -45,9 +45,7 @@ const UsernameAndPasswordScreen = () => {
     if (profileImage != null) {
       await MediaLibrary.saveToLibraryAsync(profileImage);
     }
-
     updateUser(userData);
-    // console.log("User Data:", { ...user, ...userData });
     navigation.navigate("lastMenstrualCycleStart");
   };
 
@@ -78,7 +76,7 @@ const UsernameAndPasswordScreen = () => {
     <SafeAreaView style={styles.container}>
       <Text
         style={styles.title}
-        className="bg-[#FF7575] text-white rounded-br-[150] pt-20 px-2 shadow-lg shadow-black"
+        className="bg-[#FF7575] text-white rounded-br-[150px] pt-20 px-2 shadow-lg shadow-black"
       >
         Quel est votre nom d'utilisateur
       </Text>

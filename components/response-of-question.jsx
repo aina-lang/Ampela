@@ -13,7 +13,7 @@ export const ResponseOfQuestion0 = ({ text, active, onPress }) => {
         },
       ]}
       onPress={onPress}
-      className=" shadow-md shadow-black"
+      className=" shadow-sm shadow-black"
     >
       <Text style={[styles.text, { color: active ? COLORS.neutral100 : null }]}>
         {text}
@@ -33,7 +33,7 @@ export const ResponseOfQuestion1 = ({ text, active, onPress }) => {
         },
       ]}
       onPress={onPress}
-      className=" shadow-md shadow-black"
+      className=" shadow-sm shadow-black"
     >
       <Text style={[styles.text, { color: active ? COLORS.neutral100 : null }]}>
         {text}
