@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/logo/logo-1.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.maminiaina_mercia.Ampela",
@@ -36,13 +36,13 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/logo/logo-1.png"
     },
     "plugins": [
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/favicon.png",
+          "icon": "./assets/images/logo/logo-1.png",
           "color": "#ffffff",
           "sounds": ["./assets/sound/notification.mp3"]
         }

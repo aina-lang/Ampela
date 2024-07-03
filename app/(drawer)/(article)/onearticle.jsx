@@ -196,7 +196,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cover: {
-    height: SIZES.height * 0.3,
+    height: SIZES.height * 0.45,
+    justifyContent:"flex-end",
+    paddingBottom:20
   },
   flex: {
     flexDirection: "row",

@@ -60,6 +60,15 @@ const AccountScreen = () => {
 
   const handleProfileImageChange = async () => {
     try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission refusée",
+          "Désolé, nous avons besoin des permissions pour accéder aux images!"
+        );
+        return;
+      }
+  
       let result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -267,7 +276,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 10,
-    paddingTop: 120,
+    paddingTop: 140,
   },
   profil: {
     alignItems: "center",

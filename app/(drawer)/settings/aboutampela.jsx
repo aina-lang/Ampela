@@ -44,11 +44,11 @@ const InfoScreen = () => {
     >
       <HeaderWithGoBack title={i18n.t("infoAmpela")} navigation={navigation} />
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={{ marginTop: 20 }}>
-          <Text style={styles.text}>{i18n.t("introInfo")}</Text>
-        </View>
-
         <View style={styles.contentContainer}>
+          <View style={{ marginTop: 10,marginBottom:20 }}>
+            <Text style={styles.text}>{i18n.t("introInfo")}</Text>
+          </View>
+
           {contentData.map((content) => {
             return (
               <View key={content.subtitle}>
@@ -77,20 +77,22 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
     flex: 1,
-    paddingTop: 120,
   },
   contentContainer: {
-    gap: 10,
-    marginTop: 15,
+   
+    paddingTop: 120,
   },
   text: {
     fontFamily: "Regular",
     fontSize: SIZES.medium,
     lineHeight: 22,
+    marginBottom:10
   },
   subtitle: {
     fontFamily: "SBold",
     fontSize: SIZES.large,
+    marginVertical:10,
+    
   },
 });
 

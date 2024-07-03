@@ -1,11 +1,12 @@
 import { View, Text, TouchableOpacity } from "react-native";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Animated from "react-native-reanimated";
 import { COLORS, SIZES, images } from "@/constants";
 import { AntDesign } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { Image } from "expo-image";
+import { updatePreference } from "@/legendstate/AmpelaStates";
 const OnBoarding = [
   {
     title: "  Bienvenue sur Ampela",
@@ -53,6 +54,11 @@ const index = () => {
       }
     });
   };
+
+  useEffect(() => {
+    const preferenceData = { theme: "pink", language: "fr" };
+    updatePreference(preferenceData);
+  }, []);
 
   const prevHandled = () => {
     setCurrentBoard((prevBoard) => {

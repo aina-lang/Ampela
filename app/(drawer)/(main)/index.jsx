@@ -23,6 +23,7 @@ import {
   userState,
 } from "@/legendstate/AmpelaStates";
 import i18n from "@/constants/i18n";
+import { useNavigation } from "expo-router";
 
 const index = () => {
   const user = useSelector(() => userState.get());
@@ -43,6 +44,8 @@ const index = () => {
     hour: 0,
     minutes: 0,
   });
+
+  const navigation = useNavigation();
 
   i18n.defaultLocale = "fr";
   if (language) {
@@ -185,6 +188,7 @@ const index = () => {
 
   const generateMarkedDates = () => {
     cycles.forEach((cycle) => {
+      console.log(cycle, "\n");
       // FECONDITY
       let start = moment(cycle.fecundityPeriodStart);
       let end = moment(cycle.fecundityPeriodEnd);
@@ -350,7 +354,7 @@ const styles = StyleSheet.create({
     marginTop: 60,
   },
   calendar: {
-    marginTop: 130,
+    marginTop: 40,
     marginBottom: 20,
   },
   indications: {

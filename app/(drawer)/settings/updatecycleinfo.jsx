@@ -12,12 +12,15 @@ import { Calendar } from "react-native-calendars";
 import { COLORS } from "@/constants";
 import HeaderWithGoBack from "@/components/header-with-go-back";
 import { useNavigation } from "expo-router";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState, userState, cycleMenstruelState } from "@/legendstate/AmpelaStates";
 import {
   deleteCycleById,
   addCycleMenstruel,
   getAllCycle,
+  updateUserSqlite,
 } from "@/services/database";
+import { generateCycleMenstrualData } from "@/utils/menstruationUtils";
+
 
 const UpdateCycleInfo = () => {
   const navigation = useNavigation();
@@ -25,6 +28,7 @@ const UpdateCycleInfo = () => {
   const [cycleDuration, setCycleDuration] = useState("");
   const [periodDuration, setPeriodDuration] = useState("");
   const { theme } = preferenceState.get();
+  const user = userState.get();
   const isDateSelected = !!selectedDate;
 
   const getFirstDayOfLastMonth = () => {
@@ -39,16 +43,6 @@ const UpdateCycleInfo = () => {
 
   const handleDayPress = (day) => {
     setSelectedDate(day.dateString);
-  };
-
-  const getRemainingMonths = (startDate, endDate) => {
-    const months = [];
-    let current = new Date(startDate);
-    while (current <= endDate) {
-      months.push(new Date(current));
-      current.setMonth(current.getMonth() + 1);
-    }
-    return months;
   };
 
   const handleUpdateCycleInfo = async () => {
@@ -78,78 +72,57 @@ const UpdateCycleInfo = () => {
     }
 
     try {
-
       const allCycles = await getAllCycle();
 
-
-      let lastDeletedCycleDate = new Date(selectedDate);
       for (const cycle of allCycles) {
         const cycleStartDate = new Date(cycle.startMenstruationDate);
-        if (cycleStartDate >= lastDeletedCycleDate) {
+        const selectedDateObj = new Date(selectedDate);
+        if (cycleStartDate >= selectedDateObj) {
           await deleteCycleById(cycle.id);
-          if (cycleStartDate > lastDeletedCycleDate) {
-            lastDeletedCycleDate = cycleStartDate;
-          }
         }
       }
 
-      const startMenstruationDate = new Date(selectedDate);
-      const endMenstruationDate = new Date(startMenstruationDate);
-      endMenstruationDate.setDate(
-        endMenstruationDate.getDate() + parseInt(periodDuration) - 1
+      const cyclesData = generateCycleMenstrualData(
+        selectedDate,
+        cycleDuration,
+        periodDuration
       );
 
-      const nextMenstruationStartDate = new Date(startMenstruationDate);
-      nextMenstruationStartDate.setDate(
-        nextMenstruationStartDate.getDate() + parseInt(cycleDuration)
-      );
-
-      const nextMenstruationEndDate = new Date(nextMenstruationStartDate);
-      nextMenstruationEndDate.setDate(
-        nextMenstruationEndDate.getDate() + parseInt(periodDuration) - 1
-      );
-
-      const fecundityPeriodStart = new Date(startMenstruationDate);
-      fecundityPeriodStart.setDate(fecundityPeriodStart.getDate() - 14);
-      const fecundityPeriodEnd = new Date(fecundityPeriodStart);
-      fecundityPeriodEnd.setDate(fecundityPeriodEnd.getDate() + 4);
-
-      const ovulationDate = new Date(fecundityPeriodStart);
-      ovulationDate.setDate(ovulationDate.getDate() + 14);
-
-
-      const remainingMonths = getRemainingMonths(startMenstruationDate, lastDeletedCycleDate);
-
-      for (const month of remainingMonths) {
-        const monthStartDate = new Date(month.getFullYear(), month.getMonth(), 1);
-        const nextMonthStartDate = new Date(monthStartDate);
-        nextMonthStartDate.setMonth(nextMonthStartDate.getMonth() + 1);
-
-        const monthEndDate = new Date(nextMonthStartDate);
-        monthEndDate.setDate(monthEndDate.getDate() - 1);
-
-        const fecundityPeriodStart = new Date(startMenstruationDate);
-        fecundityPeriodStart.setDate(fecundityPeriodStart.getDate() - 14);
-        const fecundityPeriodEnd = new Date(fecundityPeriodStart);
-        fecundityPeriodEnd.setDate(fecundityPeriodEnd.getDate() + 4);
-
-        const ovulationDate = new Date(fecundityPeriodStart);
-        ovulationDate.setDate(ovulationDate.getDate() + 14);
-
+      for (const cycle of cyclesData) {
         await addCycleMenstruel(
-          fecundityPeriodEnd.toISOString().split("T")[0],
-          fecundityPeriodStart.toISOString().split("T")[0],
-          `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`, 
-          startMenstruationDate.toISOString().split("T")[0],
-          endMenstruationDate.toISOString().split("T")[0],
-          nextMenstruationStartDate.toISOString().split("T")[0],
-          nextMenstruationEndDate.toISOString().split("T")[0],
-          ovulationDate.toISOString().split("T")[0]
+          cycle.endMenstruationDate,
+          cycle.startMenstruationDate,
+          cycle.month,
+          cycle.startMenstruationDate,
+          cycle.endMenstruationDate,
+          cycle.nextMenstruationDate,
+          cycle.nextMenstruationEndDate,
+          cycle.ovulationDate
         );
-
-       
-        startMenstruationDate.setMonth(startMenstruationDate.getMonth() + 1);
       }
+
+      const updatedUser = {
+        ...user,
+        lastMenstruationDate: selectedDate,
+        durationMenstruation: periodDuration,
+        cycleDuration: cycleDuration,
+      };
+      userState.set(updatedUser);
+
+      await updateUserSqlite(
+        user.id,
+        user.username,
+        user.password,
+        user.profession,
+        selectedDate,
+        periodDuration,
+        cycleDuration,
+        user.email,
+        user.profileImage
+      );
+
+      const updatedCycles = await getAllCycle();
+      cycleMenstruelState.set({ cyclesData: updatedCycles });
 
       Alert.alert(
         "Succès",
@@ -220,25 +193,30 @@ const UpdateCycleInfo = () => {
             style={[styles.input, !isDateSelected && styles.inputDisabled]}
             keyboardType="numeric"
             value={cycleDuration}
-            onChangeText={setCycleDuration}
+            onChangeText={(text) => {
+              const value = text.replace(/[^0-9]/g, "");
+              const numValue = parseInt(value, 10);
+              if (numValue >= 1 && numValue <= 40) {
+                setCycleDuration(value);
+              } else if (value === "") {
+                setCycleDuration("");
+              }
+            }}
             placeholder="Entrez une nouvelle durée du cycle"
             maxLength={2}
             editable={isDateSelected}
           />
         </View>
-
         <TouchableOpacity
           style={[
             styles.button,
-            {
-              backgroundColor:
-                theme === "pink" ? "rgba(226,68,92, 1)" : COLORS.accent800,
-            },
+            (!selectedDate || !cycleDuration || !periodDuration) &&
+              styles.buttonDisabled,
           ]}
           onPress={handleUpdateCycleInfo}
-          disabled={!isDateSelected}
+          disabled={!selectedDate || !cycleDuration || !periodDuration}
         >
-          <Text style={styles.updateButtonText}>Mettre à jour</Text>
+          <Text style={styles.buttonText}>Mettre à jour</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -248,40 +226,39 @@ const UpdateCycleInfo = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.neutral100,
-    paddingTop: 110,
+    backgroundColor: COLORS.light,
   },
   description: {
     fontSize: 16,
     color: COLORS.dark,
-    textAlign: "center",
     marginBottom: 20,
-    lineHeight: 30,
   },
   inputContainer: {
     marginBottom: 20,
   },
   input: {
-    backgroundColor: "white",
-    borderColor: "gray",
     borderWidth: 1,
+    borderColor: COLORS.grey,
     borderRadius: 8,
     padding: 10,
-    marginTop: 10,
+    fontSize: 16,
+    color: COLORS.dark,
   },
   inputDisabled: {
-    backgroundColor: "#e0e0e0",
+    backgroundColor: COLORS.lightGrey,
   },
   button: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
     padding: 15,
-    borderRadius: 10,
     alignItems: "center",
-    marginTop: 20,
   },
-  updateButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
+  buttonDisabled: {
+    backgroundColor: COLORS.lightGrey,
+  },
+  buttonText: {
+    fontSize: 18,
+    color: COLORS.light,
   },
 });
 

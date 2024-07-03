@@ -18,7 +18,7 @@ const FaqScreen = () => {
       <HeaderWithGoBack title="F.A.Q" navigation={navigation} />
       <ScrollView
         showsVerticalScrollIndicator={false}
-        style={{ paddingVertical: 20, paddingTop: 120, flex: 1 }}
+        style={{ paddingTop: 100, flex: 1 }}
       >
         {data.map((d) => (
           <FaqItem
@@ -28,6 +28,7 @@ const FaqScreen = () => {
             list={d.list ? d.list : ""}
           />
         ))}
+        <View className="h-[100]"/>
       </ScrollView>
     </View>
   );
@@ -39,6 +40,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.neutral100,
     justifyContent: "center",
+    paddingTop: 40,
+    
   },
   header: {
     marginTop: 40,

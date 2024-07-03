@@ -1,15 +1,25 @@
-
 import React, { useEffect, useState } from "react";
 import { Text, View } from "react-native";
-import { Redirect, useNavigationContainerRef } from "expo-router";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
+import {
+  Redirect,
+  SplashScreen,
+  router,
+  useNavigationContainerRef,
+} from "expo-router";
 import { useFonts } from "expo-font";
 import { isFirstLaunch, initializeDatabase } from "@/services/database";
-import { updatePreference } from "@/legendstate/AmpelaStates";
+import {
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import LoadingScreen from "@/components/Splash";
 
 export { ErrorBoundary } from "expo-router";
 
-async function fetchData(setIsFirstTime, setInitialRouteName, setLoaded) {
+async function fetchInitialData(
+  setIsFirstTime,
+  setInitialRouteName,
+  setLoaded
+) {
   try {
     const firstLaunch = await isFirstLaunch();
     const isFirstTimeLaunch = firstLaunch?.status ?? 1;
@@ -17,8 +27,6 @@ async function fetchData(setIsFirstTime, setInitialRouteName, setLoaded) {
 
     if (isFirstTimeLaunch) {
       await initializeDatabase();
-      const preferenceData = { theme: "pink", language: "fr" };
-      await updatePreference(preferenceData);
     }
 
     setInitialRouteName(isFirstTimeLaunch ? "(discovery)" : "(drawer)");
@@ -29,50 +37,35 @@ async function fetchData(setIsFirstTime, setInitialRouteName, setLoaded) {
   }
 }
 
-export default function Index() {
+SplashScreen.preventAutoHideAsync();
+
+export default function index() {
   const navigation = useNavigationContainerRef();
-  const [ready, setReady] = useState(false);
   const [isFirstTime, setIsFirstTime] = useState(null);
-  const [initialRouteName, setInitialRouteName] = useState(null);
+  const [initialRouteName, setInitialRouteName] = useState("(discovery)");
   const [loaded, setLoaded] = useState(false);
+  const insets = useSafeAreaInsets();
+
   const [fontsLoaded, error] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     Regular: require("../assets/fonts/WorkSans-Regular.ttf"),
     Bold: require("../assets/fonts/WorkSans-Bold.ttf"),
     Medium: require("../assets/fonts/WorkSans-Medium.ttf"),
     SBold: require("../assets/fonts/WorkSans-SemiBold.ttf"),
-    ...FontAwesome.font,
   });
 
-  useEffect(() => {
-    fetchData(setIsFirstTime, setInitialRouteName, setLoaded);
-  }, []);
+  fetchInitialData(setIsFirstTime, setInitialRouteName, setLoaded);
 
   useEffect(() => {
     if (error) throw error;
   }, [error]);
 
   useEffect(() => {
-    if (navigation?.isReady) {
-      setReady(true);
+    if (navigation?.isReady && initialRouteName && fontsLoaded && loaded) {
+      SplashScreen.hideAsync();
+      router.replace(initialRouteName);
     }
-  }, [navigation?.isReady]);
+  }, [navigation?.isReady, initialRouteName, fontsLoaded, loaded]);
 
-  if (!fontsLoaded || !loaded) {
-    return (
-      <View>
-        <Text>CHARGEMENT ... </Text>
-      </View>
-    );
-  }
-
-  if (ready && initialRouteName) {
-    return <Redirect href={initialRouteName} />;
-  }
-
-  return (
-    <View>
-      <Text>CHARGEMENT ... </Text>
-    </View>
-  );
+  return <LoadingScreen />;
 }

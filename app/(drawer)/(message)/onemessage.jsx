@@ -155,11 +155,11 @@ export default function OneMessageScreen() {
   return (
     <SafeAreaView className="flex-1">
       <View
-        className=" w-full flex-row items-center pt-8  rounded-b-lg justify-between  shadow-md shadow-black"
+        className="w-full flex-row items-center pt-20  pb-3 rounded-b-lg justify-between shadow-md shadow-black absolute "
         style={{
           backgroundColor:
             theme === "orange" ? COLORS.accent800 : COLORS.accent500,
-          height: SIZES.height * 0.16,
+          height: SIZES.height * 0.2,
           paddingHorizontal: 16,
         }}
       >
@@ -178,7 +178,6 @@ export default function OneMessageScreen() {
       </View>
 
       <GiftedChat
-      
         showUserAvatar
         messages={messages}
         onSend={(messages) => handleSend(messages)}

@@ -43,7 +43,7 @@ const ArticleCategory = ({ active, onPress, children }) => {
     <TouchableOpacity
       style={containerStyle}
       onPress={onPress}
-      className={`${active ? "shadow-md shadow-black " : ""}`}
+      className={`${active ? "shadow-sm shadow-black " : ""}`}
     >
       <Text style={textStyle}>{i18n.t(text)}</Text>
     </TouchableOpacity>

@@ -5,15 +5,19 @@ import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
 import { useRouter } from "expo-router";
 import { Drawer } from "expo-router/drawer";
-import { Image, Share, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  SafeAreaView,
+  Share,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { observer, useSelector } from "@legendapp/state/react";
 import { AuthContextProvider } from "@/hooks/AuthContext";
 import { preferenceState, userState } from "@/legendstate/AmpelaStates";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ModalProvider } from "@/hooks/ModalProvider";
 import { auth } from "@/services/firebaseConfig";
 import { Modal } from "react-native";
@@ -31,6 +35,7 @@ const DrawerComponent = observer(() => {
   const insets = useSafeAreaInsets();
   const [isModalVisible, setModalVisible] = useState(false);
   const [isAuthModalVisible, setAuthModalVisible] = useState(false);
+  const [activeItem, setActiveItem] = useState("settings/account");
   const scale = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -84,14 +89,20 @@ const DrawerComponent = observer(() => {
     }
   };
 
+  const handleItemPress = (item) => {
+    setActiveItem(item);
+    router.push(item);
+  };
+
   return (
-    <SafeAreaView className="flex-1" style={{ marginTop: -(insets.top + 40) }}>
+    <SafeAreaView className="flex-1">
       <GestureHandlerRootView>
         <ModalProvider>
           <AuthContextProvider>
             <Drawer
               screenOptions={{
                 headerShown: false,
+                drawerActiveBackgroundColor: "#E2445C",
               }}
               drawerContent={(props) => (
                 <DrawerContentScrollView
@@ -99,7 +110,7 @@ const DrawerComponent = observer(() => {
                   showsVerticalScrollIndicator={false}
                 >
                   <View
-                    className="w-full -top-8 justify-center items-center space-y-2"
+                    className="w-full -top-10 justify-center items-center space-y-2 pt-10"
                     style={{
                       backgroundColor:
                         theme === "pink"
@@ -109,7 +120,7 @@ const DrawerComponent = observer(() => {
                     }}
                   >
                     <TouchableOpacity
-                      onPress={() => router.push("settings/accountscreen")}
+                      onPress={() => handleItemPress("settings/accountscreen")}
                     >
                       <Image
                         source={
@@ -129,13 +140,31 @@ const DrawerComponent = observer(() => {
                     </Text>
                     <Text>{user.email || "Ampela user"}</Text>
                   </View>
-                  <Text className="pl-4">Mon compte</Text>
+                  <Text className="pl-4 mb-4">Mon compte</Text>
                   <View className="pl-4">
                     <DrawerItem
                       label="Apropos de moi"
-                      onPress={() => router.push("settings/account")}
+                      onPress={() => handleItemPress("settings/account")}
+                      labelStyle={{
+                        color:
+                          activeItem === "settings/account" ? "white" : "gray",
+                      }}
+                      style={{
+                        backgroundColor:
+                          activeItem === "settings/account"
+                            ? "#E2445C"
+                            : "transparent",
+                      }}
                       icon={({ color, size }) => (
-                        <AntDesign name="user" color={color} size={size} />
+                        <AntDesign
+                          name="user"
+                          color={
+                            activeItem === "settings/account"
+                              ? "white"
+                              : "gray"
+                          }
+                          size={size}
+                        />
                       )}
                     />
                     <DrawerItem
@@ -143,49 +172,114 @@ const DrawerComponent = observer(() => {
                         auth.currentUser ? "Se déconnecter" : "Se connecter"
                       }
                       onPress={handleAuth}
+                      labelStyle={{ color: "gray" }}
                       icon={({ color, size }) => (
                         <AntDesign name="logout" color={color} size={size} />
                       )}
                     />
                   </View>
-                  <Text className="pl-4">Général</Text>
+                  <Text className="pl-4  mb-4">Général</Text>
                   <View className="pl-4">
                     <DrawerItem
                       label="Langues"
-                      onPress={() => router.push("settings/changelanguage")}
+                      onPress={() => handleItemPress("settings/changelanguage")}
+                      labelStyle={{
+                        color:
+                          activeItem === "settings/changelanguage"
+                            ? "white"
+                            : "gray",
+                      }}
+                      style={{
+                        backgroundColor:
+                          activeItem === "settings/changelanguage"
+                            ? "#E2445C"
+                            : "transparent",
+                      }}
                       icon={({ color, size }) => (
-                        <Ionicons name="language" color={color} size={size} />
+                        <Ionicons
+                          name="language"
+                          color={
+                            activeItem === "settings/changelanguage"
+                              ? "white"
+                              : "gray"
+                          }
+                          size={size}
+                        />
                       )}
                     />
                     <DrawerItem
                       label="Thème"
-                      onPress={() => router.push("settings/changetheme")}
+                      onPress={() => handleItemPress("settings/changetheme")}
+                      labelStyle={{
+                        color:
+                          activeItem === "settings/changetheme"
+                            ? "white"
+                            : "gray",
+                      }}
+                      style={{
+                        backgroundColor:
+                          activeItem === "settings/changetheme"
+                            ? "#E2445C"
+                            : "transparent",
+                      }}
                       icon={({ color, size }) => (
                         <Ionicons
                           name="color-palette-outline"
-                          color={color}
+                          color={
+                            activeItem === "settings/changetheme"
+                              ? "white"
+                              : "gray"
+                          }
                           size={size}
                         />
                       )}
                     />
                     <DrawerItem
                       label="FAQ"
-                      onPress={() => router.push("settings/faq")}
+                      onPress={() => handleItemPress("settings/faq")}
+                      labelStyle={{
+                        color:
+                          activeItem === "settings/faq" ? "white" : "gray",
+                      }}
+                      style={{
+                        backgroundColor:
+                          activeItem === "settings/faq"
+                            ? "#E2445C"
+                            : "transparent",
+                      }}
                       icon={({ color, size }) => (
                         <Ionicons
                           name="help-circle-outline"
-                          color={color}
+                          color={
+                            activeItem === "settings/faq" ? "white" : "gray"
+                          }
                           size={size}
                         />
                       )}
                     />
                     <DrawerItem
                       label={i18n.t("infoAmpela")}
-                      onPress={() => router.push("settings/aboutampela")}
+                      onPress={() => handleItemPress("settings/aboutampela")}
+                      labelStyle={{
+                        color:
+                          activeItem === "settings/aboutampela"
+                            ? "white"
+                            : "gray",
+                      }}
+                      style={{
+                        backgroundColor:
+                          activeItem === "settings/aboutampela"
+                            ? "#E2445C"
+                            : "transparent",
+                      }}
                       icon={({ color, size }) => (
                         <Ionicons
                           name="information-circle-outline"
-                          color={color}
+                          color={
+                            activeItem === "settings/aboutampela"
+                              ? "white"
+                              : "gray"
+                          }
                           size={size}
                         />
                       )}
@@ -193,6 +287,7 @@ const DrawerComponent = observer(() => {
                     <DrawerItem
                       label="Partager"
                       onPress={onShare}
+                      labelStyle={{ color: "gray" }}
                       icon={({ color, size }) => (
                         <Ionicons
                           name="share-social-outline"
@@ -202,15 +297,31 @@ const DrawerComponent = observer(() => {
                       )}
                     />
                   </View>
-                  <Text className="pl-4">Feed-back</Text>
+                  <Text className="pl-4  mb-4 mt-3">Feed-back</Text>
                   <View className="pl-4">
                     <DrawerItem
                       label="Envoyer des feedbacks"
-                      onPress={() => router.push("settings/feedback")}
+                      onPress={() => handleItemPress("settings/feedback")}
+                      labelStyle={{
+                        color:
+                          activeItem === "settings/feedback"
+                            ? "white"
+                            : "gray",
+                      }}
+                      style={{
+                        backgroundColor:
+                          activeItem === "settings/feedback"
+                            ? "#E2445C"
+                            : "transparent",
+                      }}
                       icon={({ color, size }) => (
                         <Ionicons
                           name="chatbox-ellipses-outline"
-                          color={color}
+                          color={
+                            activeItem === "settings/feedback"
+                              ? "white"
+                              : "gray"
+                          }
                           size={size}
                         />
                       )}
