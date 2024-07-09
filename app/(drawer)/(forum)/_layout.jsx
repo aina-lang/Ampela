@@ -34,13 +34,13 @@ const _layout = () => {
                   size={24}
                 />
               </TouchableOpacity>
+            </View>
+            <View className="flex-row">
               <Text
                 style={{ fontSize: 20, fontWeight: "bold", color: "white" }}
               >
                 Posez des questions
               </Text>
-            </View>
-            <View className="flex-row">
               {/* <TouchableOpacity
                 className="p-2 pl-0 "
                 onPress={() => navigation.navigate("(message)")}

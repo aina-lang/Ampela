@@ -17,8 +17,6 @@ import { collection, addDoc, updateDoc } from "firebase/firestore";
 import { auth, database } from "@/services/firebaseConfig";
 import { AuthContext } from "@/hooks/AuthContext";
 import { COLORS } from "@/constants";
-import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
 
 const AddPost = () => {
   const [title, setTitle] = useState("");
@@ -27,7 +25,7 @@ const AddPost = () => {
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
   const { userProfile } = useContext(AuthContext);
-  const { theme } = useSelector(() => preferenceState.get());
+
   console.log(userProfile);
   const selectPhotos = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -78,14 +76,12 @@ const AddPost = () => {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.label} className="mt-5">
-        Titre
-      </Text>
+      <Text style={styles.label}>Title</Text>
       <TextInput
         style={styles.input}
         value={title}
         onChangeText={setTitle}
-        placeholder=" cycle menstruel..."
+        placeholder="Enter title"
         editable={!loading}
       />
       <Text style={styles.label}>Description</Text>
@@ -93,20 +89,14 @@ const AddPost = () => {
         style={styles.input}
         value={description}
         onChangeText={setDescription}
-        placeholder="Quel est la durée mormanl d'un cycle menstruel ..?"
+        placeholder="Enter description"
         multiline
         editable={!loading}
       />
       {/* <Button title="Add Photos" onPress={selectPhotos} disabled={loading} /> */}
       {photos && <Image source={{ uri: photos }} style={styles.photo} />}
       <TouchableOpacity
-        style={[
-          styles.submitButton,
-          {
-            backgroundColor:
-              theme === "pink" ? COLORS.accent500 : COLORS.accent800,
-          },
-        ]}
+        style={[styles.submitButton, { backgroundColor: COLORS.accent500 }]}
         onPress={submitPost}
         disabled={loading}
       >
@@ -124,7 +114,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    // paddingBottom:20
   },
   label: {
     fontSize: 18,
@@ -134,7 +123,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 10,
+    borderRadius: 4,
     padding: 8,
     marginBottom: 16,
   },
@@ -146,10 +135,9 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     padding: 16,
-    borderRadius: 10,
+    borderRadius: 4,
     alignItems: "center",
     marginTop: 16,
-    marginBottom: 80,
   },
   submitButtonText: {
     color: "#fff",

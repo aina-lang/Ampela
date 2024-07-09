@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { SIZES, COLORS, images } from "@/constants";
 import HeaderWithGoBack from "@/components/header-with-go-back";
 import { useNavigation } from "expo-router";
@@ -6,6 +6,7 @@ import i18n from "@/constants/i18n";
 import { preferenceState, updatePreference } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 import { useCallback } from "react";
+import { Image } from "expo-image";
 
 const selectlanguage = () => {
   const navigation = useNavigation();
@@ -31,11 +32,14 @@ const selectlanguage = () => {
       <View style={[styles.container, {}]}>
         <Text
           style={styles.confidentialityTitle}
-          className="bg-[#FF7575] text-white rounded-br-[150px] pt-20 shadow-lg shadow-black"
+          className="bg-[#FF7575] text-white  rounded-br-[120px] pt-20"
         >
           Choisissez votre langue
         </Text>
-
+        {/* <Image
+          source={images.wavebg}
+          style={{ width: SIZES.width, height: SIZES.height * 0.3, }}
+        /> */}
         <View className=" p-10 flex-1  pt-20 space-y-8">
           <TouchableOpacity
             style={{
@@ -88,9 +92,8 @@ const selectlanguage = () => {
           <TouchableOpacity
             className="p-3  items-center rounded-md px-5 shadow-md shadow-black"
             onPress={handleNextBtnPress}
-            
             style={{
-              backgroundColor:  "#FF7575",
+              backgroundColor: "#FF7575",
             }}
           >
             <Text className="text-white">Suivant</Text>
@@ -134,6 +137,7 @@ const styles = StyleSheet.create({
     fontFamily: "Bold",
     textAlign: "center",
     height: SIZES.height * 0.3,
+    // width: SIZES.width + 156,
   },
   confidentialityItem: {
     flexDirection: "row",

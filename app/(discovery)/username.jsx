@@ -76,13 +76,12 @@ const UsernameAndPasswordScreen = () => {
     <SafeAreaView style={styles.container}>
       <Text
         style={styles.title}
-        className="bg-[#FF7575] text-white rounded-br-[150px] pt-20 px-2 shadow-lg shadow-black"
+        className="bg-[#FF7575] text-white  rounded-br-[120px] pt-20"
       >
-        Quel est votre nom d'utilisateur
+        Votre nom et ajoutez une photo de profile
       </Text>
       <View className=" " style={{ height: SIZES.height * 0.6 }}>
         <View style={styles.inputBoxDeeper}>
-          <Text>Pseudo pour utiliser l'application</Text>
           <View style={styles.inputContainer}>
             <TextInput
               cursorColor={COLORS.accent400}

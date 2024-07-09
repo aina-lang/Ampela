@@ -1,37 +1,45 @@
-import { useState } from "react";
-import {
-  View,
-  ScrollView,
-  Text,
-  StyleSheet,
-  Button,
-  SafeAreaView,
-} from "react-native";
-
+import { useEffect, useState } from "react";
+import { View, ScrollView, Text, StyleSheet, SafeAreaView, BackHandler } from "react-native";
 import { COLORS, SIZES } from "@/constants";
 import BackgroundContainer from "@/components/background-container";
 import IndicationCalendar from "@/components/calendar/indication-calendar";
 import { Calendar, LocaleConfig } from "react-native-calendars";
 import ReminderItem from "@/components/calendar/reminder-item";
-
 import moment from "moment";
-
 import { observer, useSelector } from "@legendapp/state/react";
 import {
   cycleMenstruelState,
   preferenceState,
-  userState,
 } from "@/legendstate/AmpelaStates";
 import i18n from "@/constants/i18n";
 import { useNavigation } from "expo-router";
 
-const index = () => {
-  const user = useSelector(() => userState.get());
+const Index = () => {
   const [howmanytimeReminder1, setHowmanytimeReminder1] = useState("quotidien");
   const [howmanytimeReminder2, setHowmanytimeReminder2] = useState("quotidien");
   const [howmanytimeReminder3, setHowmanytimeReminder3] = useState("quotidien");
   const [scrollDisabled, setScrollDisabled] = useState(true);
   const { theme, language } = useSelector(() => preferenceState.get());
+
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    const onBackPress = () => {
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      onBackPress
+    );
+
+    navigation.addListener('beforeRemove', (e) => {
+      e.preventDefault(); 
+    });
+
+    return () => backHandler.remove();
+  }, [navigation]);
+
   const [time1, setTime1] = useState({
     hour: 0,
     minutes: 0,
@@ -45,14 +53,8 @@ const index = () => {
     minutes: 0,
   });
 
-  const navigation = useNavigation();
-
   i18n.defaultLocale = "fr";
-  if (language) {
-    i18n.locale = language;
-  } else {
-    i18n.locale = i18n.defaultLocale;
-  }
+  i18n.locale = language || i18n.defaultLocale;
 
   LocaleConfig.locales["fr"] = {
     monthNames: [
@@ -151,7 +153,7 @@ const index = () => {
   };
 
   const handleReminderBtnThreePress = () => {
-    setReminderInfo({ as: "Prise de pillule" });
+    setReminderInfo({ as: "Prise de pilule" });
     setReminderModalIsVisible(true);
   };
 
@@ -159,22 +161,19 @@ const index = () => {
     setScrollDisabled(true);
     switch (type) {
       case "Début des règles":
-        setTime1({ ...time1, hour: hour, minutes: minutes });
+        setTime1({ ...time1, hour, minutes });
         setHowmanytimeReminder1(active);
         dispatch(scheduleMenstruationNotifications());
-        setTranslateYOne(1500);
         break;
       case "Jour d'ovulation":
-        setTime2({ ...time2, hour: hour, minutes: minutes });
+        setTime2({ ...time2, hour, minutes });
         setHowmanytimeReminder2(active);
         dispatch(scheduleOvulationNotifications());
-        setTranslateYTwo(1500);
         break;
-      case "Prise de pillule":
-        setTime3({ ...time3, hour: hour, minutes: minutes });
+      case "Prise de pilule":
+        setTime3({ ...time3, hour, minutes });
         setHowmanytimeReminder3(active);
         dispatch(schedulePillNotifications());
-        setTranslateYThree(1500);
         break;
       default:
         return null;
@@ -182,13 +181,11 @@ const index = () => {
   };
 
   const { cyclesData } = useSelector(() => cycleMenstruelState.get());
-  cycles = cyclesData;
-
+  const cycles = cyclesData;
   const markedDates = {};
 
   const generateMarkedDates = () => {
     cycles.forEach((cycle) => {
-      console.log(cycle, "\n");
       // FECONDITY
       let start = moment(cycle.fecundityPeriodStart);
       let end = moment(cycle.fecundityPeriodEnd);
@@ -224,7 +221,7 @@ const index = () => {
       };
 
       // MENSTRUATION
-      for (let i = 0; i < user.durationMenstruation; i++) {
+      for (let i = 0; i < cycle.durationMenstruation; i++) {
         markedDates[
           moment(cycle.startMenstruationDate)
             .add(i, "days")
@@ -247,14 +244,13 @@ const index = () => {
   generateMarkedDates();
 
   return (
-    <SafeAreaView className="flex-1 ">
+    <SafeAreaView className="flex-1">
       <ScrollView
         scrollEnabled={scrollDisabled}
         style={styles.container}
         showsVerticalScrollIndicator={false}
-        className=""
       >
-        <BackgroundContainer>
+        <BackgroundContainer paddingBottom={10}>
           <View style={styles.calendar}>
             <Calendar
               disableAllTouchEventsForDisabledDays={true}
@@ -263,7 +259,7 @@ const index = () => {
                 borderRadius: 8,
               }}
               theme={{
-                textSectio0nTitleColor: COLORS.neutral400,
+                textSectionTitleColor: COLORS.neutral400,
                 todayTextColor: COLORS.primary,
                 dayTextColor: "#2d4150",
                 textDisabledColor: COLORS.neutral400,
@@ -291,7 +287,7 @@ const index = () => {
               styles.reminder,
               {
                 backgroundColor:
-                  "pink" === "pink"
+                  theme === "pink"
                     ? "rgba(255, 255, 255, .5)"
                     : "rgba(238, 220, 174, .5)",
               },
@@ -299,11 +295,7 @@ const index = () => {
             className="p-2"
           >
             <Text style={styles.reminderTitle}>Rappels</Text>
-            <View
-              style={{
-                gap: 10,
-              }}
-            >
+            <View style={{ gap: 10 }}>
               <ReminderItem
                 as="Début des règles"
                 onPress={handleReminderBtnOnePress}
@@ -317,7 +309,7 @@ const index = () => {
                 howmanytimeReminder={howmanytimeReminder2}
               />
               <ReminderItem
-                as="Prise de pillule"
+                as="Prise de pilule"
                 onPress={handleReminderBtnThreePress}
                 time={time3}
                 howmanytimeReminder={howmanytimeReminder3}
@@ -334,6 +326,14 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     alignItems: "center",
+  },
+  button: {
+    width: 50,
+    height: 50,
+    backgroundColor: COLORS.accent500,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 50,
   },
   container: {
     height: "100%",
@@ -376,4 +376,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default observer(index);
+export default observer(Index);

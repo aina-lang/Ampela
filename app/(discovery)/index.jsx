@@ -177,7 +177,7 @@ const index = () => {
       >
         {currentBoard !== 0 && (
           <TouchableOpacity onPress={prevHandled} className="p-3 rounded-md ">
-            <Text>Retour</Text>
+            <Text className="text-[#8a8888]">Retour</Text>
           </TouchableOpacity>
         )}
 
@@ -213,7 +213,10 @@ const index = () => {
       </View>
       <View className="absolute top-10 right-5">
         <TouchableOpacity onPress={skipHandler}>
-          <Text className="text-[16px]"> Ignorer</Text>
+          <Text className="text-[16px]" style={{ color: "#424242" }}>
+            {" "}
+            Ignorer
+          </Text>
           <AntDesign name="" />
         </TouchableOpacity>
       </View>

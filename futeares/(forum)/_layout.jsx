@@ -45,18 +45,16 @@ const _layout = () => {
               >
                 <Ionicons name="chatbubble" color={"white"} size={24} />
               </TouchableOpacity>
-              {/* 
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              */}
+              <TouchableOpacity
+                className="p-2 pl-0 "
+                onPress={() => navigation.navigate("(message)")}
+              >
+                <Ionicons
+                  name="notifications-circle"
+                  color={"white"}
+                  size={24}
+                />
+              </TouchableOpacity>
             </View>
           </View>
         ),

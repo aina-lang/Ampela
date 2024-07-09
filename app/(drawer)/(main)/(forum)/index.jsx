@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -17,31 +17,105 @@ import { Link, useNavigation } from "expo-router";
 import SearchForum from "@/components/SearchForum";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import AuthContent from "@/components/AuthContent";
-import {  useModal } from "@/hooks/ModalProvider";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { useModal } from "@/hooks/ModalProvider";
+import {
+  collection,
+  query,
+  orderBy,
+  limit,
+  startAfter,
+  getDocs,
+  where,
+} from "firebase/firestore";
 import { useNetInfo } from "@react-native-community/netinfo";
+
+const PAGE_SIZE = 10; // Number of posts to load at a time
 
 const Index = () => {
   const navigation = useNavigation();
   const [posts, setPosts] = useState([]);
+  const [filteredPosts, setFilteredPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [lastVisible, setLastVisible] = useState(null);
+  const [searchText, setSearchText] = useState("");
   const { openModal } = useModal();
   const { isConnected, isInternetReachable } = useNetInfo();
 
-  useEffect(() => {
-    if (isConnected && isInternetReachable) {
-      const unsubscribe = onSnapshot(
-        query(collection(database, "posts"), orderBy("createdAt", "desc")),
-        (snapshot) => {
-          const newPosts = snapshot.docs.map((doc) => doc.data());
-          setPosts(newPosts);
-          setIsLoading(false);
-        }
-      );
-      return () => unsubscribe();
-    } else {
+  // Function to fetch posts
+  const fetchPosts = async (loadMore = false) => {
+    if (!isConnected || !isInternetReachable) {
       setIsLoading(false);
+      return;
     }
+
+    try {
+      let postsQuery = query(
+        collection(database, "posts"),
+        orderBy("createdAt", "desc"),
+        limit(PAGE_SIZE)
+      );
+
+      if (loadMore && lastVisible) {
+        postsQuery = query(postsQuery, startAfter(lastVisible));
+      }
+
+      const snapshot = await getDocs(postsQuery);
+
+      if (!snapshot.empty) {
+        const newPosts = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setPosts((prevPosts) =>
+          loadMore ? [...prevPosts, ...newPosts] : newPosts
+        );
+        setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
+      }
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    } finally {
+      if (!loadMore) setIsLoading(false);
+      else setIsFetchingMore(false);
+    }
+  };
+
+  const searchPosts = useCallback(
+    async (searchText) => {
+      if (!isConnected || !isInternetReachable) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        let postsQuery = query(
+          collection(database, "posts"),
+          where("title", ">=", searchText.toLowerCase()),
+          where("title", "<=", searchText.toLowerCase() + "\uf8ff"),
+          orderBy("createdAt", "desc"),
+          limit(PAGE_SIZE)
+        );
+
+        const snapshot = await getDocs(postsQuery);
+
+        if (!snapshot.empty) {
+          const newPosts = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setFilteredPosts(newPosts);
+        }
+      } catch (error) {
+        console.error("Error searching posts:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [isConnected, isInternetReachable]
+  );
+
+  useEffect(() => {
+    fetchPosts();
   }, [isConnected, isInternetReachable]);
 
   useEffect(() => {
@@ -49,6 +123,19 @@ const Index = () => {
       openModal(<AuthContent />);
     }
   }, []);
+
+  // Handle search text change
+  const handleSearch = (text) => {
+    setSearchText(text);
+    searchPosts(text);
+  };
+
+  const handleLoadMore = () => {
+    if (!isFetchingMore) {
+      setIsFetchingMore(true);
+      fetchPosts(true);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -59,7 +146,6 @@ const Index = () => {
         <BackgroundContainer paddingBottom={0} paddingHorizontal={2}>
           <View
             style={{
-              // paddingTop: 12,
               paddingBottom: 40,
               paddingHorizontal: 16,
               height: SIZES.height * 0.15,
@@ -76,7 +162,6 @@ const Index = () => {
                 </Link>
               )}
             </View>
-            <SearchForum />
           </View>
           <View style={{ height: 8 }} />
           {!isConnected || !isInternetReachable ? (
@@ -94,15 +179,27 @@ const Index = () => {
               <ActivityIndicator size="large" color={COLORS.primary} />
             </View>
           ) : (
-            <FlatList
-              data={posts}
-              renderItem={({ item }) => (
-                <ForumItem post={item} navigation={navigation} />
-              )}
-              keyExtractor={(item, index) => index.toString()}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ padding: 12, paddingBottom: 80 }}
-            />
+            <>
+              <SearchForum onSearch={handleSearch} />
+              <FlatList
+                data={searchText ? filteredPosts : posts}
+                renderItem={({ item, index }) => (
+                  <ForumItem post={item} navigation={navigation} key={index} />
+                )}
+                keyExtractor={(item, index) => index}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ padding: 12, paddingBottom: 80 }}
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={
+                  isFetchingMore && (
+                    <View style={{ paddingVertical: 20 }}>
+                      <ActivityIndicator size="large" color={COLORS.primary} />
+                    </View>
+                  )
+                }
+              />
+            </>
           )}
         </BackgroundContainer>
       </SafeAreaView>

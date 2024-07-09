@@ -7,6 +7,7 @@ import {
   Dimensions,
   TouchableOpacity,
   FlatList,
+  Modal,
 } from "react-native";
 import { COLORS } from "@/constants";
 import { auth, database, storage } from "@/services/firebaseConfig";
@@ -17,9 +18,14 @@ import {
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { addDoc, collection, doc, getDoc } from "firebase/firestore";
 import { useSelector } from "@legendapp/state/react";
-import { userState } from "@/legendstate/AmpelaStates";
+import { preferenceState, userState } from "@/legendstate/AmpelaStates";
 import { useModal } from "@/hooks/ModalProvider";
-import { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  BounceIn,
+} from "react-native-reanimated";
 
 const { width } = Dimensions.get("window");
 
@@ -40,7 +46,9 @@ const AuthContent = () => {
   const [signupErrorPresent, setSignupErrorPresent] = useState(false);
   const { closeModal } = useModal();
   const [loading, setLoading] = useState(false);
+  const [isModalVisible, setModalVisible] = useState(false);
   const scale = useSharedValue(0);
+  const { theme } = useSelector(() => preferenceState.get());
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [
@@ -48,6 +56,8 @@ const AuthContent = () => {
       ],
     };
   });
+  const flatListRef = useRef(null);
+
   const handleLoginEmailChange = (text) => {
     setLoginEmail(text);
     if (!text) {
@@ -172,11 +182,40 @@ const AuthContent = () => {
         console.error("No such user document!");
       }
     } catch (error) {
-      console.error("Erreur lors de la connexion:", error.message);
-    } finally {
-      closeModal();
-      setLoading(false);
+      let errorMessage;
+      console.log(error.code);
+      switch (error.code) {
+        case "auth/user-not-found":
+          errorMessage = "Adresse e-mail non trouvée";
+          break;
+        case "auth/invalid-credential":
+          errorMessage = "Adresse e-mail non trouvée";
+          break;
+        case "auth/wrong-password":
+          errorMessage = "Mot de passe incorrect";
+          break;
+        case "auth/invalid-email":
+          errorMessage = "Adresse e-mail invalide";
+          break;
+        case "auth/user-disabled":
+          errorMessage = "Ce compte a été désactivé";
+          break;
+        case "auth/network-request-failed":
+          errorMessage = "Problème de connexion réseau";
+          break;
+        case "auth/too-many-requests":
+          errorMessage = "Réessayer plus tard";
+          break;
+        default:
+          errorMessage = "Erreur inconnue, veuillez réessayer";
+      }
+      setLoginError(errorMessage);
+      setModalVisible(true);
     }
+    //  finally {
+    //   closeModal();
+    //   setLoading(false);
+    // }
   };
 
   const validateEmail = (email) => {
@@ -189,30 +228,19 @@ const AuthContent = () => {
     return passwordRegex.test(password);
   };
 
-  const flatListRef = useRef(null);
-
   const handleScrollToIndex = (index) => {
     flatListRef.current.scrollToIndex({ index });
   };
 
   useEffect(() => {
-    if (!loginEmail || !loginPassword) {
-      setLoginErrorPresent(true);
-    } else {
-      setLoginErrorPresent(false);
-    }
-
-    if (
+    setLoginErrorPresent(!loginEmail || !loginPassword);
+    setSignupErrorPresent(
       !signupEmail ||
-      !signupPassword ||
-      !confirmPassword ||
-      signupPasswordError ||
-      confirmPasswordError
-    ) {
-      setSignupErrorPresent(true);
-    } else {
-      setSignupErrorPresent(false);
-    }
+        !signupPassword ||
+        !confirmPassword ||
+        signupPasswordError ||
+        confirmPasswordError
+    );
   }, [
     loginEmail,
     loginPassword,
@@ -239,7 +267,7 @@ const AuthContent = () => {
             />
           </View>
           {loginEmailError && (
-            <Text style={{ color: "red" }}>{loginEmailError}</Text>
+            <Text style={styles.errorText}>{loginEmailError}</Text>
           )}
           <View style={styles.inputContainer}>
             <TextInput
@@ -251,7 +279,7 @@ const AuthContent = () => {
             />
           </View>
           {loginPasswordError && (
-            <Text style={{ color: "red" }}>{loginPasswordError}</Text>
+            <Text style={styles.errorText}>{loginPasswordError}</Text>
           )}
           <TouchableOpacity
             style={[
@@ -268,18 +296,21 @@ const AuthContent = () => {
               {loading ? "Chargement..." : "Se connecter"}
             </Text>
           </TouchableOpacity>
-          {loginError && <Text style={{ color: "red" }}>{loginError}</Text>}
-          <Text className="text-center py-2">Ou</Text>
+          {loginError && <Text style={styles.errorText}>{loginError}</Text>}
+          <Text style={styles.orText}>Ou</Text>
           <TouchableOpacity
-            style={{
-              padding: 15,
-              borderRadius: 15,
-              backgroundColor: "white",
-            }}
-            className="shadow-sm shadow-black mb-5"
+            style={[
+              styles.switchButton,
+              {
+                borderColor:
+                  theme === "pink" ? COLORS.accent500 : COLORS.accent800,
+              },
+            ]}
             onPress={() => handleScrollToIndex(1)}
           >
-            <Text className="text-center" style={{ color: COLORS.accent500 }}>
+            <Text
+              style={[styles.switchButtonText, { color: COLORS.accent500 }]}
+            >
               S'inscrire
             </Text>
           </TouchableOpacity>
@@ -301,7 +332,7 @@ const AuthContent = () => {
             />
           </View>
           {signupEmailError && (
-            <Text style={{ color: "red" }}>{signupEmailError}</Text>
+            <Text style={styles.errorText}>{signupEmailError}</Text>
           )}
           <View style={styles.inputContainer}>
             <TextInput
@@ -313,7 +344,7 @@ const AuthContent = () => {
             />
           </View>
           {signupPasswordError && (
-            <Text style={{ color: "red" }}>{signupPasswordError}</Text>
+            <Text style={styles.errorText}>{signupPasswordError}</Text>
           )}
           <View style={styles.inputContainer}>
             <TextInput
@@ -325,7 +356,7 @@ const AuthContent = () => {
             />
           </View>
           {confirmPasswordError && (
-            <Text style={{ color: "red" }}>{confirmPasswordError}</Text>
+            <Text style={styles.errorText}>{confirmPasswordError}</Text>
           )}
           <TouchableOpacity
             style={[
@@ -342,17 +373,25 @@ const AuthContent = () => {
               {loading ? "Chargement..." : "S'inscrire"}
             </Text>
           </TouchableOpacity>
-          <Text className="text-center py-2">Ou</Text>
+          <Text style={styles.orText}>Ou</Text>
           <TouchableOpacity
-            style={{
-              padding: 15,
-              borderRadius: 15,
-              backgroundColor: "white",
-            }}
-            className="shadow-sm shadow-black mb-5"
+            style={[
+              styles.switchButton,
+              {
+                borderColor:
+                  theme === "pink" ? COLORS.accent500 : COLORS.accent800,
+              },
+            ]}
             onPress={() => handleScrollToIndex(0)}
           >
-            <Text className="text-center" style={{ color: COLORS.accent500 }}>
+            <Text
+              style={[
+                styles.switchButtonText,
+                {
+                  color: theme === "pink" ? COLORS.accent500 : COLORS.accent800,
+                },
+              ]}
+            >
               Se connecter
             </Text>
           </TouchableOpacity>
@@ -363,10 +402,7 @@ const AuthContent = () => {
 
   return (
     <>
-      <TouchableOpacity
-        className="absolute z-50 top-5 right-5"
-        onPress={closeModal}
-      >
+      <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
         <Text>Non merci</Text>
       </TouchableOpacity>
       <FlatList
@@ -390,6 +426,24 @@ const AuthContent = () => {
         )}
         contentContainerStyle={{ backgroundColor: "white" }}
       />
+      <Modal
+        visible={isModalVisible}
+        onRequestClose={() => setModalVisible(false)}
+        transparent
+      >
+        <View style={styles.modalBackdrop}>
+          <Animated.View entering={BounceIn} style={styles.modalContent}>
+            <Text style={styles.modalText}>Erreur lors de la connexion:</Text>
+            <Text style={styles.modalText}>{loginError}</Text>
+            <TouchableOpacity
+              onPress={() => setModalVisible(false)}
+              style={styles.modalButton}
+            >
+              <Text style={styles.modalButtonText}>Fermer</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </Modal>
     </>
   );
 };
@@ -406,7 +460,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 20,
   },
-
   infoText: {
     marginBottom: 20,
     textAlign: "center",
@@ -421,7 +474,7 @@ const styles = StyleSheet.create({
     borderColor: "#c0bdbd",
     borderRadius: 15,
     marginVertical: 10,
-    width: Math.floor(Dimensions.get("window").width) - 40,
+    width: width - 40,
     backgroundColor: "rgb(243 244 246)",
   },
   button: {
@@ -433,6 +486,59 @@ const styles = StyleSheet.create({
     color: "white",
     textAlign: "center",
     fontSize: 16,
+  },
+  errorText: {
+    color: "red",
+    textAlign: "center",
+  },
+  orText: {
+    textAlign: "center",
+    paddingVertical: 10,
+  },
+  switchButton: {
+    padding: 15,
+    borderRadius: 15,
+    borderWidth: 1,
+    marginTop: 20,
+    backgroundColor: "white",
+  },
+  switchButtonText: {
+    textAlign: "center",
+  },
+  closeButton: {
+    position: "absolute",
+    zIndex: 50,
+    top: 5,
+    right: 5,
+    padding: 10,
+  },
+  modalBackdrop: {
+    backgroundColor: "black",
+    opacity: 0.4,
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 15,
+    alignItems: "center",
+  },
+  modalText: {
+    fontSize: 18,
+    marginBottom: 10,
+  },
+  modalButton: {
+    marginTop: 20,
+    padding: 10,
+    borderRadius: 5,
+    backgroundColor: "#FF7575",
+  },
+  modalButtonText: {
+    color: "white",
+    textAlign: "center",
   },
 });
 

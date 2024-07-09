@@ -4,7 +4,7 @@ import * as FileSystem from "expo-file-system";
 export const db = SQLite.openDatabaseSync("ampela.db");
 
 // db.closeSync();
-// SQLite.deleteDatabaseSync("ampela.db")
+// SQLite.deleteDatabaseSync("ampela.db");
 export const addUser = async (
   username,
   password,
@@ -70,7 +70,7 @@ export const updateUserSqlite = async (
       cycleDuration,
       email,
       profileImage,
-      id
+      id,
     ]);
     console.log("User updated:", result);
     return result;
@@ -114,7 +114,9 @@ export const initializeDatabase = async () => {
         startMenstruationDate DATE NOT NULL,
         endMenstruationDate DATE NOT NULL,
         nextMenstruationStartDate DATE NOT NULL,
-        nextMenstruationEndDate DATE NOT NULL
+        nextMenstruationEndDate DATE NOT NULL,
+        durationMenstruation INTEGER NOT NULL,
+        cycleDuration INTEGER NOT NULL
       );
 
       CREATE TABLE IF NOT EXISTS first_time (
@@ -161,7 +163,6 @@ export const setFirstLaunchFalse = async () => {
     throw error;
   }
 };
-
 export const addCycleMenstruel = async (
   fecundityPeriodEnd,
   fecundityPeriodStart,
@@ -170,11 +171,14 @@ export const addCycleMenstruel = async (
   endMenstruationDate,
   nextMenstruationStartDate,
   nextMenstruationEndDate,
-  ovulationDate
+  ovulationDate,
+  durationMenstruation, // Added parameter
+  cycleDuration // Added parameter
 ) => {
   try {
+    // Ensure your database schema is updated to include these new columns
     const result = await db.runAsync(
-      "INSERT INTO cycles_menstruels ( month, ovulationDate, fecundityPeriodStart,startMenstruationDate,endMenstruationDate, fecundityPeriodEnd, nextMenstruationStartDate, nextMenstruationEndDate) VALUES ( ?, ?,?, ?, ?, ?, ?, ?)",
+      "INSERT INTO cycles_menstruels (month, ovulationDate, fecundityPeriodStart, startMenstruationDate, endMenstruationDate, fecundityPeriodEnd, nextMenstruationStartDate, nextMenstruationEndDate, durationMenstruation, cycleDuration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         month,
         ovulationDate,
@@ -184,6 +188,8 @@ export const addCycleMenstruel = async (
         fecundityPeriodEnd,
         nextMenstruationStartDate,
         nextMenstruationEndDate,
+        durationMenstruation, // Added value
+        cycleDuration, // Added value
       ]
     );
     console.log("Cycle menstruel ajouté :", result);
@@ -201,14 +207,28 @@ export const getAllCycle = async () => {
   return allRows;
 };
 
-
 export const deleteCycleById = async (id) => {
   try {
-    const result = await db.runAsync("DELETE FROM cycles_menstruels WHERE id = ?", [id]);
+    const result = await db.runAsync(
+      "DELETE FROM cycles_menstruels WHERE id = ?",
+      [id]
+    );
     console.log("Cycle deleted:", result);
     return result;
   } catch (error) {
     console.error("Error deleting cycle:", error);
+    throw error;
+  }
+};
+
+
+export const getCycleByMonth = async (month) => {
+  try {
+    const result = await db.getFirstAsync("SELECT * FROM cycles_menstruels WHERE month = ?", [month]);
+    console.log("Cycle fetched:", result);
+    return result;
+  } catch (error) {
+    console.error("Error fetching cycle by month:", error);
     throw error;
   }
 };

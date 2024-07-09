@@ -22,7 +22,7 @@ import {
   getDoc,
   updateDoc,
 } from "firebase/firestore";
-import { database } from "@/services/firebaseConfig";
+import { auth, database } from "@/services/firebaseConfig";
 import i18n from "@/constants/i18n";
 import { AntDesign } from "@expo/vector-icons";
 import { Link, useNavigation, useRouter } from "expo-router";
@@ -36,6 +36,7 @@ const ForumItem = ({ post, refToCommentItem }) => {
   const navigation = useNavigation();
   const router = useRouter();
 
+  console.log(auth);
   useEffect(() => {
     if (!post?.postId) return;
 
@@ -63,7 +64,7 @@ const ForumItem = ({ post, refToCommentItem }) => {
       unsubscribeLikes();
       unsubscribeComments();
     };
-  }, [post?.postId,getAuth().currentUser]);
+  }, [post?.postId, getAuth().currentUser]);
 
   const truncateText = (text, maxLength) => {
     if (text.length > maxLength) {
@@ -85,7 +86,7 @@ const ForumItem = ({ post, refToCommentItem }) => {
       }
     };
     checkLikedPost();
-  }, [post?.postId,getAuth().currentUser]);
+  }, [post?.postId, getAuth().currentUser]);
 
   const checkUserLikedPost = async (userId, postId) => {
     const likesCollection = collection(database, "likes");
@@ -189,11 +190,15 @@ const ForumItem = ({ post, refToCommentItem }) => {
   return (
     <TouchableOpacity
       onPress={() => {
-        router.push({ pathname: "(drawer)/(forum)/addpost", params: { post } });
+        router.push({
+          pathname: "(drawer)/(forum)/oneforum",
+          params: { post },
+        });
       }}
       style={styles.container}
+      className=""
     >
-      <View style={styles.header}>
+      <View style={[styles.header, {}]}>
         <Image
           source={images.doctor03}
           style={{
@@ -238,18 +243,20 @@ const ForumItem = ({ post, refToCommentItem }) => {
         </TouchableOpacity>
       </View>
 
-      <View className="bg-gray-100 rounded-md" style={styles.commentBox}>
-        <TextInput
-          multiline
-          placeholder={i18n.t("ecrireUnCommentaire")}
-          style={styles.commentInput}
-          value={commentValue}
-          onChangeText={setCommentValue}
-        />
-        <TouchableOpacity onPress={handleCommentSent}>
-          <Image source={icons.send} style={styles.sendIcon} />
-        </TouchableOpacity>
-      </View>
+      {getAuth().currentUser && (
+        <View className="bg-gray-100 rounded-md" style={styles.commentBox}>
+          <TextInput
+            multiline
+            placeholder={i18n.t("ecrireUnCommentaire")}
+            style={styles.commentInput}
+            value={commentValue}
+            onChangeText={setCommentValue}
+          />
+          <TouchableOpacity onPress={handleCommentSent}>
+            <Image source={icons.send} style={styles.sendIcon} />
+          </TouchableOpacity>
+        </View>
+      )}
     </TouchableOpacity>
   );
 };
@@ -257,9 +264,9 @@ const ForumItem = ({ post, refToCommentItem }) => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.neutral100,
-    borderRadius: 15,
+    borderRadius: 8,
     paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingHorizontal: 5,
     width: "98%",
     marginHorizontal: "auto",
     marginBottom: 30,
@@ -286,6 +293,7 @@ const styles = StyleSheet.create({
   },
   content: {
     marginVertical: 20,
+    paddingHorizontal: 10,
   },
   title: {
     fontFamily: "SBold",
@@ -298,6 +306,7 @@ const styles = StyleSheet.create({
   reactions: {
     flexDirection: "row",
     gap: 20,
+    paddingHorizontal: 5,
   },
   like: {
     flexDirection: "row",

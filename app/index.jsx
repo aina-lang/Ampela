@@ -8,9 +8,7 @@ import {
 } from "expo-router";
 import { useFonts } from "expo-font";
 import { isFirstLaunch, initializeDatabase } from "@/services/database";
-import {
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import LoadingScreen from "@/components/Splash";
 
 export { ErrorBoundary } from "expo-router";
@@ -29,7 +27,9 @@ async function fetchInitialData(
       await initializeDatabase();
     }
 
-    setInitialRouteName(isFirstTimeLaunch ? "(discovery)" : "(drawer)");
+    setInitialRouteName(
+      isFirstTimeLaunch ? "(discovery)" : "(drawer)/(main)/(forum)/"
+    );
   } catch (error) {
     console.error("Error:", error);
   } finally {

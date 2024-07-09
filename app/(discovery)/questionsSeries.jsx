@@ -111,33 +111,43 @@ const QuestionsSeries = () => {
         cycle.endMenstruationDate,
         cycle.nextMenstruationDate,
         cycle.nextMenstruationEndDate,
-        cycle.ovulationDate
+        cycle.ovulationDate,
+        durationMenstruation, // Inclure la durée des menstruations
+        cycleDuration // Inclure la durée du cycle
       );
     }
+
+    // Mise à jour de l'utilisateur avec les nouvelles valeurs
+    await updateUser({
+      ...user,
+      lastMenstruationDate: user.lastMenstruationDate,
+      durationMenstruation: durationMenstruation,
+      cycleDuration: cycleDuration,
+    });
 
     setIsLoading(false);
     navigation.navigate("(drawer)");
   };
 
   useEffect(() => {
-    const userData = {
-      durationMenstruation: getNumberFromString(response0),
-    };
-    updateUser(userData);
+    if (response0) {
+      const durationMenstruation = getNumberFromString(response0);
+      updateUser({ durationMenstruation });
+    }
   }, [response0]);
 
   useEffect(() => {
-    const userData = {
-      cycleDuration: getNumberFromString(response1),
-    };
-    updateUser(userData);
+    if (response1) {
+      const cycleDuration = getNumberFromString(response1);
+      updateUser({ cycleDuration });
+    }
   }, [response1]);
 
   return (
     <SafeAreaView style={styles.container}>
       <Text
         style={styles.title}
-        className="bg-[#FF7575] text-white rounded-br-[150px] pt-20 px-2 shadow-lg shadow-black"
+            className="bg-[#FF7575] text-white  rounded-br-[120px] pt-20"
       >
         Indiquez vos durées menstruelles et de cycle
       </Text>

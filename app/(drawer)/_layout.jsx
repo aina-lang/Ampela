@@ -12,39 +12,36 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Modal,
 } from "react-native";
 import { observer, useSelector } from "@legendapp/state/react";
 import { AuthContextProvider } from "@/hooks/AuthContext";
 import { preferenceState, userState } from "@/legendstate/AmpelaStates";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ModalProvider } from "@/hooks/ModalProvider";
 import { auth } from "@/services/firebaseConfig";
-import { Modal } from "react-native";
 import Animated, {
   useSharedValue,
   withSpring,
   useAnimatedStyle,
 } from "react-native-reanimated";
 import AuthContent from "@/components/AuthContentFromSetting";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const DrawerComponent = observer(() => {
   const router = useRouter();
   const { theme } = useSelector(() => preferenceState.get());
   const user = useSelector(() => userState.get());
-  const insets = useSafeAreaInsets();
   const [isModalVisible, setModalVisible] = useState(false);
   const [isAuthModalVisible, setAuthModalVisible] = useState(false);
-  const [activeItem, setActiveItem] = useState("settings/account");
+  const [activeItem, setActiveItem] = useState(null);
   const scale = useSharedValue(0);
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { scale: withSpring(scale.value, { damping: 10, stiffness: 200 }) },
-      ],
-    };
-  });
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: withSpring(scale.value, { damping: 10, stiffness: 200 }) },
+    ],
+  }));
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -56,13 +53,8 @@ const DrawerComponent = observer(() => {
     scale.value = isAuthModalVisible ? 0 : 1;
   };
 
-  const handleAuth = () => {
-    if (auth.currentUser) {
-      toggleModal();
-    } else {
-      toggleAuthModal();
-    }
-  };
+  const handleAuth = () =>
+    auth.currentUser ? toggleModal() : toggleAuthModal();
 
   const confirmLogout = () => {
     auth
@@ -72,9 +64,7 @@ const DrawerComponent = observer(() => {
         toggleAuthModal();
         console.log("User signed out!");
       })
-      .catch((error) => {
-        console.error("Sign out error", error);
-      });
+      .catch((error) => console.error("Sign out error", error));
   };
 
   const urlAmpela = "https://ampela.mg";
@@ -94,15 +84,17 @@ const DrawerComponent = observer(() => {
     router.push(item);
   };
 
+  const insets = useSafeAreaInsets();
   return (
-    <SafeAreaView className="flex-1">
+    <SafeAreaView style={{flex:1 }}>
       <GestureHandlerRootView>
         <ModalProvider>
           <AuthContextProvider>
             <Drawer
               screenOptions={{
                 headerShown: false,
-                drawerActiveBackgroundColor: "#E2445C",
+                drawerActiveBackgroundColor:
+                  theme === "orange" ? COLORS.accent800 : COLORS.accent500,
               }}
               drawerContent={(props) => (
                 <DrawerContentScrollView
@@ -110,17 +102,21 @@ const DrawerComponent = observer(() => {
                   showsVerticalScrollIndicator={false}
                 >
                   <View
-                    className="w-full -top-10 justify-center items-center space-y-2 pt-10"
                     style={{
+                      width: "100%",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      paddingVertical: 30,
                       backgroundColor:
                         theme === "pink"
                           ? COLORS.neutral200
                           : COLORS.neutral280,
                       height: SIZES.height * 0.45,
+                      marginTop: -40,
                     }}
                   >
                     <TouchableOpacity
-                      onPress={() => handleItemPress("settings/accountscreen")}
+                      onPress={() => handleItemPress("settings/account")}
                     >
                       <Image
                         source={
@@ -128,20 +124,19 @@ const DrawerComponent = observer(() => {
                             ? { uri: user.profileImage }
                             : images.doctor01
                         }
-                        height={150}
-                        width={150}
+                        style={{ height: 150, width: 150, borderRadius: 75 }}
                         resizeMode="cover"
-                        className="rounded-full mb-3"
                       />
                     </TouchableOpacity>
-
-                    <Text className="text-[16px] font-bold">
+                    <Text style={{ fontSize: 16, fontWeight: "bold",marginTop:5 }}>
                       {user.username || "Utilisateur"}
                     </Text>
                     <Text>{user.email || "Ampela user"}</Text>
                   </View>
-                  <Text className="pl-4 mb-4">Mon compte</Text>
-                  <View className="pl-4">
+                  <Text style={{ paddingLeft: 16, marginBottom: 4 ,marginTop:20}}>
+                    Mon compte
+                  </Text>
+                  <View style={{ paddingLeft: 16 }}>
                     <DrawerItem
                       label="Apropos de moi"
                       onPress={() => handleItemPress("settings/account")}
@@ -152,16 +147,16 @@ const DrawerComponent = observer(() => {
                       style={{
                         backgroundColor:
                           activeItem === "settings/account"
-                            ? "#E2445C"
+                            ? theme === "orange"
+                              ? COLORS.accent800
+                              : COLORS.accent500
                             : "transparent",
                       }}
                       icon={({ color, size }) => (
                         <AntDesign
                           name="user"
                           color={
-                            activeItem === "settings/account"
-                              ? "white"
-                              : "gray"
+                            activeItem === "settings/account" ? "white" : "gray"
                           }
                           size={size}
                         />
@@ -178,8 +173,10 @@ const DrawerComponent = observer(() => {
                       )}
                     />
                   </View>
-                  <Text className="pl-4  mb-4">Général</Text>
-                  <View className="pl-4">
+                  <Text style={{ paddingLeft: 16, marginBottom: 4 }}>
+                    Général
+                  </Text>
+                  <View style={{ paddingLeft: 16 }}>
                     <DrawerItem
                       label="Langues"
                       onPress={() => handleItemPress("settings/changelanguage")}
@@ -192,7 +189,9 @@ const DrawerComponent = observer(() => {
                       style={{
                         backgroundColor:
                           activeItem === "settings/changelanguage"
-                            ? "#E2445C"
+                            ? theme === "orange"
+                              ? COLORS.accent800
+                              : COLORS.accent500
                             : "transparent",
                       }}
                       icon={({ color, size }) => (
@@ -219,7 +218,9 @@ const DrawerComponent = observer(() => {
                       style={{
                         backgroundColor:
                           activeItem === "settings/changetheme"
-                            ? "#E2445C"
+                            ? theme === "orange"
+                              ? COLORS.accent800
+                              : COLORS.accent500
                             : "transparent",
                       }}
                       icon={({ color, size }) => (
@@ -238,13 +239,14 @@ const DrawerComponent = observer(() => {
                       label="FAQ"
                       onPress={() => handleItemPress("settings/faq")}
                       labelStyle={{
-                        color:
-                          activeItem === "settings/faq" ? "white" : "gray",
+                        color: activeItem === "settings/faq" ? "white" : "gray",
                       }}
                       style={{
                         backgroundColor:
                           activeItem === "settings/faq"
-                            ? "#E2445C"
+                            ? theme === "orange"
+                              ? COLORS.accent800
+                              : COLORS.accent500
                             : "transparent",
                       }}
                       icon={({ color, size }) => (
@@ -269,7 +271,9 @@ const DrawerComponent = observer(() => {
                       style={{
                         backgroundColor:
                           activeItem === "settings/aboutampela"
-                            ? "#E2445C"
+                            ? theme === "orange"
+                              ? COLORS.accent800
+                              : COLORS.accent500
                             : "transparent",
                       }}
                       icon={({ color, size }) => (
@@ -297,21 +301,25 @@ const DrawerComponent = observer(() => {
                       )}
                     />
                   </View>
-                  <Text className="pl-4  mb-4 mt-3">Feed-back</Text>
-                  <View className="pl-4">
+                  <Text
+                    style={{ paddingLeft: 16, marginBottom: 4, marginTop: 12 }}
+                  >
+                    Feed-back
+                  </Text>
+                  <View style={{ paddingLeft: 16 }}>
                     <DrawerItem
                       label="Envoyer des feedbacks"
                       onPress={() => handleItemPress("settings/feedback")}
                       labelStyle={{
                         color:
-                          activeItem === "settings/feedback"
-                            ? "white"
-                            : "gray",
+                          activeItem === "settings/feedback" ? "white" : "gray",
                       }}
                       style={{
                         backgroundColor:
                           activeItem === "settings/feedback"
-                            ? "#E2445C"
+                            ? theme === "orange"
+                              ? COLORS.accent800
+                              : COLORS.accent500
                             : "transparent",
                       }}
                       icon={({ color, size }) => (
@@ -327,8 +335,7 @@ const DrawerComponent = observer(() => {
                       )}
                     />
                   </View>
-
-                  <View className="h-5" />
+                  <View style={{ height: 20 }} />
                 </DrawerContentScrollView>
               )}
             />
@@ -336,11 +343,11 @@ const DrawerComponent = observer(() => {
         </ModalProvider>
       </GestureHandlerRootView>
 
-      <Modal visible={isModalVisible} onBackdropPress={toggleModal} transparent>
+      <Modal visible={isModalVisible} onRequestClose={toggleModal} transparent>
         <View
           style={{
             backgroundColor: "rgba(0,0,0,0.5)",
-            height: SIZES.height,
+            flex: 1,
             alignItems: "center",
             justifyContent: "center",
             paddingHorizontal: 10,
@@ -367,24 +374,19 @@ const DrawerComponent = observer(() => {
 
       <Modal
         visible={isAuthModalVisible}
-        onBackdropPress={toggleAuthModal}
+        onRequestClose={toggleAuthModal}
         transparent
       >
         <View
           style={{
             backgroundColor: "rgba(0,0,0,0.5)",
-            height: SIZES.height,
+            flex: 1,
             alignItems: "center",
             justifyContent: "center",
-            // paddingHorizontal: 10,
           }}
         >
           <Animated.View style={[styles.modalContent, animatedStyle]}>
-            <AuthContent
-              closeModal={() => {
-                setAuthModalVisible(false);
-              }}
-            />
+            <AuthContent closeModal={() => setAuthModalVisible(false)} />
           </Animated.View>
         </View>
       </Modal>
@@ -395,7 +397,6 @@ const DrawerComponent = observer(() => {
 const styles = {
   modalContent: {
     backgroundColor: "white",
-
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 4,

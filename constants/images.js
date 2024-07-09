@@ -1,7 +1,7 @@
 import logo1 from "../assets/images/logo/logo-1.png";
 import logo2 from "../assets/images/logo/logo-2.png";
 
-import wavebg from "../assets/images/vagueBG.png";
+import wavebg from "../assets/images/vagueBG.svg";
 import bgRose from "../assets/images/bg-rose.png";
 import bgOrange from "../assets/images/bg-orange.png";
 

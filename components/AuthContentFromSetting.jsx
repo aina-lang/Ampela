@@ -24,7 +24,7 @@ import {
   where,
 } from "firebase/firestore";
 import { useSelector } from "@legendapp/state/react";
-import { updateUser, userState } from "@/legendstate/AmpelaStates";
+import { preferenceState, updateUser, userState } from "@/legendstate/AmpelaStates";
 
 import {
   useAnimatedStyle,
@@ -53,7 +53,7 @@ const AuthContent = ({ closeModal }) => {
   const [signupErrorPresent, setSignupErrorPresent] = useState(false);
   const scale = useSharedValue(0);
   const [loading, setLoading] = useState(false);
-
+  const { theme } = useSelector(() => preferenceState.get());
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [
@@ -307,8 +307,11 @@ const AuthContent = ({ closeModal }) => {
               padding: 15,
               borderRadius: 15,
               backgroundColor: "white",
+              borderWidth: 1,
+              borderColor:
+                theme === "pink" ? COLORS.accent500 : COLORS.accent800,
             }}
-            className="shadow-sm shadow-black mb-5"
+            className=" mb-5"
             onPress={() => handleScrollToIndex(1)}
           >
             <Text className="text-center" style={{ color: COLORS.accent500 }}>
@@ -379,9 +382,11 @@ const AuthContent = ({ closeModal }) => {
             style={{
               padding: 15,
               borderRadius: 15,
-              backgroundColor: "white",
+              borderWidth: 1,
+              borderColor:
+                theme === "pink" ? COLORS.accent500 : COLORS.accent800,
             }}
-            className="shadow-sm shadow-black mb-5"
+            className=" mb-5"
             onPress={() => handleScrollToIndex(0)}
           >
             <Text className="text-center" style={{ color: COLORS.accent500 }}>

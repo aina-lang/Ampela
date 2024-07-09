@@ -134,22 +134,3 @@ const styles = StyleSheet.create({
 });
 
 export default ThemeScreen;
-
-// import {useContext} from 'react';
-// import { Text, View, Button } from 'react-native';
-// import { ThemeContext } from '../components/theme-context';
-// import HeaderWithGoBack from '../components/header-with-go-back';
-// import { COLORS } from '@/constants';
-
-// const ThemeScreen = ({navigation}) => {
-//     const { theme, toggleTheme } = useContexThemeContext);
-//     return (
-//         <View style={{flex: 1, backgroundColor: theme === 'pink' ? COLORS.neutral200 : COLORS.neutral100, paddingHorizontal: 20}}>
-//             <HeaderWithGoBack title="Theme" navigation={navigation} onIconLeftPress={() => navigation.goBack()} />
-//             <Text>Current Theme: {theme}</Text>
-//             <Button title="Toggle Theme" onPress={toggleTheme} />
-//         </View>
-//     );
-// }
-
-// export default ThemeScreen;

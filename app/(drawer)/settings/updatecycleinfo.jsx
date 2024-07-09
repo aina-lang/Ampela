@@ -7,12 +7,18 @@ import {
   Alert,
   ScrollView,
   TextInput,
+  Modal,
+  ActivityIndicator,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
-import { COLORS } from "@/constants";
+import { COLORS, SIZES } from "@/constants";
 import HeaderWithGoBack from "@/components/header-with-go-back";
 import { useNavigation } from "expo-router";
-import { preferenceState, userState, cycleMenstruelState } from "@/legendstate/AmpelaStates";
+import {
+  preferenceState,
+  userState,
+  cycleMenstruelState,
+} from "@/legendstate/AmpelaStates";
 import {
   deleteCycleById,
   addCycleMenstruel,
@@ -21,12 +27,13 @@ import {
 } from "@/services/database";
 import { generateCycleMenstrualData } from "@/utils/menstruationUtils";
 
-
 const UpdateCycleInfo = () => {
   const navigation = useNavigation();
   const [selectedDate, setSelectedDate] = useState(null);
   const [cycleDuration, setCycleDuration] = useState("");
   const [periodDuration, setPeriodDuration] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const { theme } = preferenceState.get();
   const user = userState.get();
   const isDateSelected = !!selectedDate;
@@ -71,6 +78,8 @@ const UpdateCycleInfo = () => {
       return;
     }
 
+    setIsLoading(true);
+
     try {
       const allCycles = await getAllCycle();
 
@@ -82,22 +91,28 @@ const UpdateCycleInfo = () => {
         }
       }
 
-      const cyclesData = generateCycleMenstrualData(
+      const cycleDatas = generateCycleMenstrualData(
         selectedDate,
         cycleDuration,
         periodDuration
       );
 
-      for (const cycle of cyclesData) {
+      for (const cycle of cycleDatas) {
         await addCycleMenstruel(
-          cycle.endMenstruationDate,
-          cycle.startMenstruationDate,
+          cycle.fecundityPeriodEnd,
+          cycle.fecundityPeriodStart,
           cycle.month,
           cycle.startMenstruationDate,
           cycle.endMenstruationDate,
           cycle.nextMenstruationDate,
           cycle.nextMenstruationEndDate,
-          cycle.ovulationDate
+          cycle.ovulationDate,
+          periodDuration,
+          cycleDuration
+        );
+
+        setProgress(
+          ((cycleDatas.indexOf(cycle) + 1) / cycleDatas.length) * 100
         );
       }
 
@@ -134,25 +149,32 @@ const UpdateCycleInfo = () => {
         "Une erreur est survenue lors de la mise à jour des informations du cycle."
       );
       console.error(error);
+    } finally {
+      setIsLoading(false);
     }
-
-    // navigation.goBack();
   };
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor:
+            theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
+        },
+      ]}
+    >
       <HeaderWithGoBack title="Modification" navigation={navigation} />
       <ScrollView
         style={{ padding: 20, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.description}>
+        <Text style={styles.description} className="mb-3">
           Choisissez une date du mois précédent pour mettre à jour l'information
-          du cycle. Ce date sera le début des règles du dernier cycle
+          du cycle. Cette date sera le début des règles du dernier cycle.
         </Text>
         <Calendar
           onDayPress={handleDayPress}
-          minDate={getFirstDayOfLastMonth().toISOString().split("T")[0]}
           maxDate={getLastDayOfLastMonth().toISOString().split("T")[0]}
           markedDates={{
             [selectedDate]: {
@@ -161,14 +183,27 @@ const UpdateCycleInfo = () => {
               selectedColor: COLORS.accent500,
             },
           }}
+          style={{
+            height: 380,
+            borderRadius: 8,
+          }}
           theme={{
-            selectedDayBackgroundColor: COLORS.accent500,
+            textSectio0nTitleColor: COLORS.neutral400,
             todayTextColor: COLORS.accent500,
-            arrowColor: COLORS.accent500,
+            dayTextColor: "#2d4150",
+            textDisabledColor: COLORS.neutral400,
+            arrowColor: COLORS.primary,
+            monthTextColor: COLORS.primary,
+            textDayFontFamily: "Regular",
+            textMonthFontFamily: "SBold",
+            textDayHeaderFontFamily: "Regular",
+            textDayFontSize: SIZES.medium,
+            textMonthFontSize: SIZES.large,
+            textDayHeaderFontSize: SIZES.medium,
           }}
         />
-        <View style={styles.inputContainer}>
-          <Text>Nouveau règle</Text>
+        <View style={styles.inputContainer} className="mt-5">
+          <Text className="my-2">Nouvelle durée des règles</Text>
           <TextInput
             style={[styles.input, !isDateSelected && styles.inputDisabled]}
             keyboardType="numeric"
@@ -176,7 +211,7 @@ const UpdateCycleInfo = () => {
             onChangeText={(text) => {
               const value = text.replace(/[^0-9]/g, "");
               const numValue = parseInt(value, 10);
-              if (numValue >= 1 && numValue <= 9) {
+              if (numValue >= 1 && numValue <= 8) {
                 setPeriodDuration(value);
               } else if (value === "") {
                 setPeriodDuration("");
@@ -187,8 +222,8 @@ const UpdateCycleInfo = () => {
             editable={isDateSelected}
           />
         </View>
-        <View style={styles.inputContainer}>
-          <Text>Nouveau cycle</Text>
+        <View style={styles.inputContainer} className="mt-2">
+          <Text className="my-2">Nouvelle durée du cycle</Text>
           <TextInput
             style={[styles.input, !isDateSelected && styles.inputDisabled]}
             keyboardType="numeric"
@@ -218,7 +253,21 @@ const UpdateCycleInfo = () => {
         >
           <Text style={styles.buttonText}>Mettre à jour</Text>
         </TouchableOpacity>
+        <View className="h-[40]" />
       </ScrollView>
+      <Modal transparent={true} visible={isLoading} animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+            <Text style={styles.modalText}>
+              Chargement de vos données... {Math.round(progress)}%
+            </Text>
+            <View style={styles.progressBarContainer}>
+              <View style={[styles.progressBar, { width: `${progress}%` }]} />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -226,19 +275,19 @@ const UpdateCycleInfo = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.light,
   },
   description: {
     fontSize: 16,
     color: COLORS.dark,
     marginBottom: 20,
+    marginTop: 120,
   },
   inputContainer: {
     marginBottom: 20,
   },
   input: {
     borderWidth: 1,
-    borderColor: COLORS.grey,
+    borderColor: "#ffe",
     borderRadius: 8,
     padding: 10,
     fontSize: 16,
@@ -248,7 +297,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.lightGrey,
   },
   button: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.accent500,
     borderRadius: 8,
     padding: 15,
     alignItems: "center",
@@ -259,6 +308,37 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 18,
     color: COLORS.light,
+  },
+  modalContent: {
+    width: 250,
+    padding: 20,
+    backgroundColor: "white",
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  modalText: {
+    marginVertical: 10,
+    fontSize: 16,
+    color: COLORS.primary,
+  },
+  progressBarContainer: {
+    width: "100%",
+    height: 10,
+    backgroundColor: "#e7e5e5",
+    borderRadius: 5,
+    overflow: "hidden",
+    marginTop: 10,
+  },
+  progressBar: {
+    height: "100%",
+    backgroundColor: COLORS.accent600,
+    borderRadius: 5,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
 });
 

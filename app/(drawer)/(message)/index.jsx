@@ -143,41 +143,41 @@ const MessagesScreen = () => {
         },
       ]}
     >
-      {!isConnected || !isInternetReachable ? (
-        <View style={styles.offlineContainer}>
-          <MaterialCommunityIcons
-            name="wifi-off"
-            size={24}
-            color="red"
-            style={styles.icon}
+      <View style={{ marginVertical: 30, paddingTop: 90 }}>
+        <View style={[styles.inputBox]} className="shadow-sm shadow-black">
+          <TextInput
+            style={{
+              fontFamily: "Medium",
+              fontSize: SIZES.medium,
+              width: "90%",
+            }}
+            placeholder={i18n.t("rechercher")}
+            onChangeText={(text) => {
+              handleSearch(text);
+              const sanitizedText = text.replace(
+                /[-[\]{}()*+?.,\\^$|#\s]/g,
+                "\\$&"
+              );
+              const regex = new RegExp(sanitizedText, "i");
+              const usersFiltered = users.filter((i) => regex.test(i.pseudo));
+              setUsers(usersFiltered);
+            }}
           />
-          <Text style={styles.text}>Hors ligne</Text>
+          <AntDesign name="search1" size={20} />
         </View>
-      ) : (
-        <View style={{ marginVertical: 30 }}>
-          <View style={[styles.inputBox]} className="shadow-sm shadow-black">
-            <TextInput
-              style={{
-                fontFamily: "Medium",
-                fontSize: SIZES.medium,
-                width: "90%",
-              }}
-              placeholder={i18n.t("rechercher")}
-              onChangeText={(text) => {
-                handleSearch(text);
-                const sanitizedText = text.replace(
-                  /[-[\]{}()*+?.,\\^$|#\s]/g,
-                  "\\$&"
-                );
-                const regex = new RegExp(sanitizedText, "i");
-                const usersFiltered = users.filter((i) => regex.test(i.pseudo));
-                setUsers(usersFiltered);
-              }}
+      </View>
+      {!isConnected ||
+        (!isInternetReachable && (
+          <View style={styles.offlineContainer}>
+            <MaterialCommunityIcons
+              name="wifi-off"
+              size={24}
+              color="red"
+              style={styles.icon}
             />
-            <AntDesign name="search1" size={20} />
+            <Text style={styles.text}>Hors ligne</Text>
           </View>
-        </View>
-      )}
+        ))}
 
       {!loading && isConnected && isInternetReachable && (
         <FlatList
@@ -192,6 +192,16 @@ const MessagesScreen = () => {
               disabled={!user}
             />
           )}
+          onEndReachedThreshold={0.5} 
+          ListFooterComponent={
+            loading ? (
+              <ActivityIndicator
+                size="large"
+                color={COLORS.primary}
+                style={{ marginTop: 20 }}
+              />
+            ) : null
+          }
         />
       )}
 

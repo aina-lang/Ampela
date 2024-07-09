@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   ScrollView,
   FlatList,
+  BackHandler,
 } from "react-native";
 import CheckBox, { Checkbox } from "expo-checkbox";
 import { Link } from "expo-router";
@@ -30,15 +31,42 @@ const confidentiality = () => {
   const [checkbox1, setCheckbox1] = useState(false);
   const [checkbox2, setCheckbox2] = useState(false);
   const [isNextBtnDisabled, setIsNextBtnDisabled] = useState(true);
+  const [isScrollEnd, setIsScrollEnd] = useState(false);
+  const handleScroll = ({ nativeEvent }) => {
+    const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+    const isEndReached =
+      layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
+    if (isEndReached) {
+      setIsScrollEnd(true);
+    }
+  };
 
   useEffect(() => {
-    if ( checkbox2 === true) {
+    const onBackPress = () => {
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress
+    );
+
+    navigation.addListener("beforeRemove", (e) => {
+      e.preventDefault();
+    });
+
+    return () => backHandler.remove();
+  }, [navigation]);
+
+  useEffect(() => {
+    if (checkbox2 === true) {
       setIsNextBtnDisabled(false);
     } else {
       setIsNextBtnDisabled(true);
     }
   }, [checkbox1, checkbox2]);
 
+  const flatListRef = useRef(null);
   const handleNextBtnPress = useCallback(() => {
     navigation.navigate("login");
   });
@@ -59,12 +87,12 @@ const confidentiality = () => {
     {
       title: "utilisation",
       description:
-        "  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat",
+        "Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat",
     },
     {
       title: "utilisation",
       description:
-        "  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat",
+        "Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat",
     },
   ];
 
@@ -83,7 +111,7 @@ const confidentiality = () => {
     <SafeAreaView style={styles.container}>
       <Text
         style={styles.confidentialityTitle}
-        className="bg-[#FF7575] text-white rounded-br-[150px] pt-20 shadow-lg shadow-black"
+        className="bg-[#FF7575] text-white  rounded-br-[120px] pt-20"
       >
         {i18n.t("confidentialite")}
       </Text>
@@ -92,78 +120,33 @@ const confidentiality = () => {
         className=" flex items-center justify-center p-2"
       >
         <View>
-          {/* <View style={styles.confidentialityItem}>
-            <CheckBox
-              value={checkbox1}
-              onValueChange={setCheckbox1}
-              color={checkbox1 ? "#FF7575" : ""}
-            /> */}
-
-          {/* <Pressable onPress={() => setCheckbox1(!checkbox1)}>
-              <Text style={styles.confidentialityText}>
-                J'accepte{" "}
-                <Link
-                  href="https://policies.google.com/privacy?hl=fr-CA"
-                  className="text-[#FF7575]"
-                >
-                  la politique de confidentialité{" "}
-                </Link>
-                et{" "}
-                <Link
-                  href="https://policies.google.com/privacy?hl=fr-CA"
-                  className="text-[#FF7575] ml-2"
-                >
-                  les conditions d'utilisation{" "}
-                </Link>
-                .
-              </Text>
-            </Pressable> */}
-          {/* </View> */}
           <View style={styles.confidentialityItem}>
             <FlatList
               data={confidentialiteData}
               renderItem={renderItem}
-              contentContainerStyle={{
-                // backgroundColor: "green",
-                width: SIZES.width,
-              }}
+              keyExtractor={(item, index) => index.toString()}
+              contentContainerStyle={styles.flatListContent}
+              onScroll={handleScroll}
+              ref={flatListRef}
             />
             <View className="mt-3 flex-row space-x-3 ml-3">
               <Checkbox
-                value={checkbox2}
+                value={checkbox2 && isScrollEnd}
                 onValueChange={setCheckbox2}
-                color={checkbox2 ? "#FF7575" : ""}
+                disabled={!isScrollEnd}
+                color={checkbox2 && isScrollEnd ? "#FF7575" : ""}
               />
-              <Pressable onPress={() => setCheckbox2(!checkbox2)}>
-                <Text style={styles.confidentialityText}>
-                  {/* J'accepte le traitement de mes données personnelles de santé
-                dans le but de bénéficier des fontions de l'application{" "}
-                <Link
-                  href="https://jonathan-boyer.fr"
-                  className="text-[#FF7575]"
-                >
-                  Ampela
-                </Link>{" "}
-                . */}
-                  Accepter
-                </Text>
+              <Pressable
+                onPress={() => {
+                  if (isScrollEnd) {
+                    setCheckbox2(!checkbox2);
+                  }
+                }}
+              >
+                <Text style={styles.confidentialityText}>Accepter</Text>
               </Pressable>
             </View>
           </View>
-          {/* {!isAllChecked ? ( 
-            <Button
-              // bgColor={COLORS.neutral100}
-              // textColor={COLORS.accent600}
-              color={"white"}
-              t
-              onPress={handleAcceptAllBtnPress}
-              title="Tout accepter"
-            />
-            <TouchableOpacity className="p-3 bg-[#FF7575] items-center">
-              <Text>Tout accepter</Text>
-            </TouchableOpacity>
-          ) : null}
-          */}
         </View>
       </View>
       <View
@@ -171,7 +154,7 @@ const confidentiality = () => {
         className="flex items-center  justify-between flex-row  p-5"
       >
         <TouchableOpacity onPress={prevHandled} className="p-3 rounded-md ">
-          <Text>Retour</Text>
+          <Text className="text-[#8a8888]">Retour</Text>
         </TouchableOpacity>
         <TouchableOpacity
           className="p-3  items-center rounded-md px-5 shadow-md shadow-black"

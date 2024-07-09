@@ -59,7 +59,7 @@ const LastMenstrualCycleStartAge = () => {
     <SafeAreaView style={styles.container}>
       <Text
         style={styles.title}
-        className="bg-[#FF7575] text-white rounded-br-[150px] p-4 pt-20 shadow-lg shadow-black"
+            className="bg-[#FF7575] text-white  rounded-br-[120px] pt-20"
       >
         {user.username + "  , "} date de vos dernières règles
       </Text>

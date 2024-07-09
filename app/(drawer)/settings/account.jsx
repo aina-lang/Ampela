@@ -23,44 +23,42 @@ import { AntDesign, FontAwesome } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as MediaLibrary from "expo-media-library";
 import { updateUserSqlite } from "@/services/database";
+import { getAuth } from "firebase/auth";
+import { auth } from "@/services/firebaseConfig";
 
 const AccountScreen = () => {
   const { theme } = useSelector(() => preferenceState.get());
   const user = useSelector(() => userState.get());
   const [username, setUsername] = useState(user.username);
-  const [cycleDuration, setCycleDuration] = useState(user.cycleDuration);
-  const [durationMenstruation, setDurationMenstruation] = useState(
-    user.durationMenstruation
-  );
-  const [lastMenstruationDate, setLastMenstruationDate] = useState(
-    user.lastMenstruationDate
-  );
+
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [currentField, setCurrentField] = useState(null);
   const [profileImage1, setProfileImage] = useState(user.profileImage);
   const navigation = useNavigation();
 
-  const handleEditPress = async (field) => {
-    setCurrentField(field);
+  const handleEditPress = async () => {
     setIsModalVisible(true);
   };
 
-  const handleSave = () => {
-    if (currentField === "username") {
-      userState.set((prev) => ({ ...prev, username }));
-    } else if (currentField === "cycleDuration") {
-      userState.set((prev) => ({ ...prev, cycleDuration }));
-    } else if (currentField === "durationMenstruation") {
-      userState.set((prev) => ({ ...prev, durationMenstruation }));
-    } else if (currentField === "lastMenstruationDate") {
-      userState.set((prev) => ({ ...prev, lastMenstruationDate }));
-    }
+  const handleSave = async () => {
+    userState.set((prev) => ({ ...prev, username }));
+    await updateUserSqlite(
+      user.id,
+      username,
+      user.password,
+      user.profession,
+      user.lastMenstruationDate,
+      user.durationMenstruation,
+      user.cycleDuration,
+      user.email,
+      user.profileImage
+    );
     setIsModalVisible(false);
   };
 
   const handleProfileImageChange = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
         Alert.alert(
           "Permission refusée",
@@ -68,7 +66,7 @@ const AccountScreen = () => {
         );
         return;
       }
-  
+
       let result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -142,13 +140,13 @@ const AccountScreen = () => {
                 padding: 10,
                 width: 50,
               }}
-              color={COLORS.accent600}
+              color={theme=="pink"?COLORS.accent600:COLORS.accent800}
             />
           </TouchableOpacity>
-          <View className="p-2 flex-row space-x-3 mt-3">
+          <View className="p-2 flex-row space-x-3 mt-1">
             <Text className="font-bold text-[18px]">{user.username}</Text>
-            <TouchableOpacity onPress={() => handleEditPress("username")}>
-              <AntDesign name="edit" size={24} color={COLORS.accent600}/>
+            <TouchableOpacity onPress={() => handleEditPress()}>
+              <AntDesign name="edit" size={24} color={theme=="pink"?COLORS.accent600:COLORS.accent800} />
             </TouchableOpacity>
           </View>
         </View>
@@ -183,7 +181,6 @@ const AccountScreen = () => {
         </View>
         <View>
           <TouchableOpacity
-      
             onPress={() => {
               navigation.navigate("settings/updatecycleinfo");
             }}
@@ -194,18 +191,22 @@ const AccountScreen = () => {
             </Text>
             <AntDesign name="right" size={18} color="black" className="ml-3" />
           </TouchableOpacity>
-          <TouchableOpacity
-          
-            onPress={() => {
-              navigation.navigate("settings/changepassword");
-            }}
-            className=" rounded-lg mx-2 mt-10  flex-row justify-between space-x-2 items-center"
-          >
-            <Text className="text-black">
-              Changer mon mot de passe
-            </Text>
-            <AntDesign name="right" size={18} color="black" className="ml-3" />
-          </TouchableOpacity>
+          {auth.currentUser && (
+            <TouchableOpacity
+              onPress={() => {
+                navigation.navigate("settings/changepassword");
+              }}
+              className=" rounded-lg mx-2 mt-10  flex-row justify-between space-x-2 items-center"
+            >
+              <Text className="text-black">Changer mon mot de passe</Text>
+              <AntDesign
+                name="right"
+                size={18}
+                color="black"
+                className="ml-3"
+              />
+            </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
       <Modal
@@ -218,41 +219,12 @@ const AccountScreen = () => {
           <View style={styles.modalContent}>
             <TextInput
               style={styles.input}
-              value={
-                currentField === "username"
-                  ? username
-                  : currentField === "cycleDuration"
-                  ? String(cycleDuration)
-                  : currentField === "durationMenstruation"
-                  ? String(durationMenstruation)
-                  : lastMenstruationDate
-              }
+              value={username}
               onChangeText={(text) => {
-                if (currentField === "username") {
-                  setUsername(text);
-                } else if (currentField === "cycleDuration") {
-                  setCycleDuration(Number(text));
-                } else if (currentField === "durationMenstruation") {
-                  setDurationMenstruation(Number(text));
-                } else if (currentField === "lastMenstruationDate") {
-                  setLastMenstruationDate(text);
-                }
+                setUsername(text);
               }}
-              keyboardType={
-                currentField === "cycleDuration" ||
-                currentField === "durationMenstruation"
-                  ? "numeric"
-                  : "default"
-              }
-              placeholder={
-                currentField === "username"
-                  ? "Entrez votre pseudo"
-                  : currentField === "cycleDuration"
-                  ? "Entrez la durée du cycle"
-                  : currentField === "durationMenstruation"
-                  ? "Entrez la durée de la menstruation"
-                  : "Entrez la date du dernier cycle"
-              }
+              keyboardType={"default"}
+              placeholder={"Entrez votre pseudo"}
             />
             <View className="flex-row space-x-2 justify-between w-full  mt-3">
               <Button
