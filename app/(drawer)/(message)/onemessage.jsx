@@ -1,5 +1,6 @@
 import OptionMenu from "@/components/OptionMenu";
-import { COLORS, SIZES } from "@/constants";
+import { COLORS, SIZES, images } from "@/constants";
+import i18n from "@/constants/i18n";
 import { useAuth } from "@/hooks/AuthContext";
 import { preferenceState } from "@/legendstate/AmpelaStates";
 import { database } from "@/services/firebaseConfig";
@@ -7,6 +8,7 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { useSelector } from "@legendapp/state/react";
 import { useRoute } from "@react-navigation/native";
+
 import { router, useNavigation } from "expo-router";
 import {
   Timestamp,
@@ -17,6 +19,8 @@ import {
   orderBy,
   query,
   setDoc,
+  deleteDoc,
+  getDocs,
 } from "firebase/firestore";
 import React, { useState, useEffect, useContext, useCallback } from "react";
 import {
@@ -25,6 +29,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  Alert,
+  Modal,
+  Image,
 } from "react-native";
 import {
   Bubble,
@@ -32,6 +39,11 @@ import {
   InputToolbar,
   Send,
 } from "react-native-gifted-chat";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 
 export default function OneMessageScreen() {
   const [messages, setMessages] = useState([]);
@@ -40,20 +52,36 @@ export default function OneMessageScreen() {
   const route = useRoute();
   const { target } = route?.params;
   const { user, userProfile } = useAuth();
+  const [isModalVisible, setModalVisible] = useState(false);
+  const scale = useSharedValue(0);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: withSpring(scale.value, { damping: 10, stiffness: 200 }) },
+    ],
+  }));
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+    scale.value = isModalVisible ? 0 : 1;
+  };
+
   const menuItems = [
     {
-      title: "Settings",
-      action: () => console.log("Navigate to Settings"),
+      title: "Voir profil du docteur",
+      action: () =>
+        navigation.navigate("DoctorProfile", { doctorId: target?.id }),
     },
     {
-      title: "Other Option",
-      action: () => console.log("Handle Other Option"),
+      title: "Effacer tous les messages",
+      action: () => toggleModal(),
     },
     {
-      title: "Another Option",
-      action: () => console.log("Handle Another Option"),
+      title: "Revenir à l'accueil",
+      action: () => navigation.navigate("(drawer)/"),
     },
   ];
+
   useEffect(() => {
     createRoomIfNotExists();
     const roomId = getRoomId(user?.uid, target?.id);
@@ -109,18 +137,30 @@ export default function OneMessageScreen() {
 
       await addDoc(messagesRef, myMsg);
 
-      setMessages((previousMessages) =>
-        GiftedChat.append(...previousMessages, myMsg)
-      );
+      // setMessages((previousMessages) =>
+      //   GiftedChat.append(...previousMessages, myMsg)
+      // );
     } catch (error) {
       console.error(error);
     }
   }, []);
 
-  console.log(userProfile?.profileImage);
+  const confirmClear = async () => {
+    const roomId = getRoomId(user?.uid, target?.id);
+    const docRef = doc(database, "rooms", roomId);
+    const messagesRef = collection(docRef, "messages");
+    const q = query(messagesRef);
+
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((doc) => {
+      deleteDoc(doc.ref);
+    });
+
+    setMessages([]);
+    toggleModal();
+  };
+
   const renderBubble = (props) => {
-    // console.log("currentMessage:", props.currentMessage);
-    // console.log("currentMessage.user:", props.currentMessage.user);
     const { currentMessage } = props;
     return (
       <Bubble
@@ -148,10 +188,6 @@ export default function OneMessageScreen() {
             fontFamily: "Regular",
           },
         }}
-        // position={
-        //   props.user._id === currentUser.uid ? "right" : "left"
-        // }
-        // bottomContainerStyle={m}
       />
     );
   };
@@ -160,6 +196,23 @@ export default function OneMessageScreen() {
     return (
       <View style={styles.inputToolbarContainer} className="">
         <InputToolbar {...props} containerStyle={styles.inputToolbar} />
+      </View>
+    );
+  };
+
+  const DoctorInfo = () => {
+    return (
+      <View style={styles.doctorInfoContainer}>
+        <Image
+          source={
+            target?.profileImage
+              ? { uri: target?.profileImage }
+              : images.doctor01
+          }
+          style={styles.doctorImage}
+        />
+        <Text style={styles.doctorName}>{target?.username}</Text>
+        <Text style={styles.doctorSpeciality}>{target?.speciality}</Text>
       </View>
     );
   };
@@ -188,7 +241,6 @@ export default function OneMessageScreen() {
       </View>
 
       <GiftedChat
-        // showUserAvatar
         placeholder="ecrire un message"
         messages={messages}
         onSend={(messages) => handleSend(messages)}
@@ -196,6 +248,8 @@ export default function OneMessageScreen() {
           _id: user?.uid,
           avatar: userProfile?.profileImage,
         }}
+        infiniteScroll
+        renderChatEmpty={DoctorInfo}
         renderBubble={renderBubble}
         renderInputToolbar={(props) => customInputToolbar(props)}
         renderSend={(props) => {
@@ -212,6 +266,50 @@ export default function OneMessageScreen() {
           );
         }}
       />
+
+      <Modal visible={isModalVisible} onRequestClose={toggleModal} transparent>
+        <View
+          style={{
+            backgroundColor: "rgba(0,0,0,0.5)",
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            paddingHorizontal: 10,
+          }}
+        >
+          <Animated.View
+            style={[
+              styles.modalContent,
+              animatedStyle,
+              { padding: 10, paddingVertical: 20, width: 300 },
+            ]}
+          >
+            <Text style={styles.modalTitle}>Confirmer la suppression</Text>
+            <Text style={styles.modalMessage}>
+              Êtes-vous sûr de vouloir supprimer tous les messages ?
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                onPress={confirmClear}
+                style={[
+                  styles.button,
+                  {
+                    backgroundColor:
+                      theme === "pink" ? COLORS.accent500 : COLORS.accent800,
+                  },
+                ]}
+              >
+                <Text style={{ color: "white", fontWeight: "bold" }}>
+                  {i18n.t("oui")}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={toggleModal} style={styles.button}>
+                <Text style={styles.buttonText}>{i18n.t("non")}</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -244,19 +342,71 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   inputToolbar: {
-    // elevation: 2,
     backgroundColor: "white",
     borderTopWidth: 0,
     borderRadius: 98,
     paddingHorizontal: 10,
-    // borderWidth: 2,
-    // borderColor: "",
   },
   sendButton: {
     height: "100%",
     alignItems: "center",
-    // backgroundColor:"red",
-    elevation: 0,
     justifyContent: "center",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 4,
+    borderColor: "rgba(0, 0, 0, 0.1)",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  modalMessage: {
+    fontSize: 16,
+    marginVertical: 10,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    marginTop: 20,
+  },
+  button: {
+    marginHorizontal: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: "#d1d5db",
+    borderRadius: 4,
+    minWidth: 60,
+  },
+  buttonText: {
+    color: "#111827",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  doctorInfoContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    transform: [
+      {
+        rotate: "181deg", 
+      },
+    ],
+  },
+  doctorImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 150,
+  },
+  doctorName: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 10,
+  },
+  doctorSpeciality: {
+    fontSize: 16,
+    color: "gray",
+    marginTop: 5,
   },
 });

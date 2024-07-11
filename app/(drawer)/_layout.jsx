@@ -200,7 +200,7 @@ const DrawerComponent = observer(() => {
                         labelStyle={{ color: COLORS.text700 }}
                         icon={({ color, size }) => (
                           <AntDesign
-                            name="logout"
+                            name={auth.currentUser ? "logout" : "login"}
                             color={COLORS.text700}
                             size={size}
                           />

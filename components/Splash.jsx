@@ -1,3 +1,6 @@
+import { COLORS } from "@/constants";
+import { preferenceState } from "@/legendstate/AmpelaStates";
+import { useSelector } from "@legendapp/state/react";
 import React, { useEffect } from "react";
 import { Text, SafeAreaView, View } from "react-native";
 import Animated, {
@@ -11,15 +14,15 @@ import Animated, {
 const LoadingScreen = () => {
   const translateY = useSharedValue(-20);
   const opacity = useSharedValue(1);
-
+  const { theme } = useSelector(() => preferenceState.get());
   useEffect(() => {
     // Start fade down animation
     translateY.value = withTiming(0, { duration: 1000 }, () => {
       // After fade down, start blinking animation
       opacity.value = withRepeat(
         withSequence(
-          withTiming(0, { duration: 500 }),
-          withTiming(1, { duration: 500 })
+          withTiming(0, { duration: 1000 }),
+          withTiming(1, { duration: 1000 })
         ),
         -1, // Repeat indefinitely
         true // Reverse animation direction
@@ -40,7 +43,7 @@ const LoadingScreen = () => {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#FF7575",
+        backgroundColor: theme == "pink" ? COLORS.accent500 : COLORS.accent800,
       }}
     >
       <Animated.View style={animatedStyle}>

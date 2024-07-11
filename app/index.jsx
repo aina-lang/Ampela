@@ -10,6 +10,7 @@ import { useFonts } from "expo-font";
 import { isFirstLaunch, initializeDatabase } from "@/services/database";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import LoadingScreen from "@/components/Splash";
+import { updatePreference } from "@/legendstate/AmpelaStates";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -25,10 +26,12 @@ async function fetchInitialData(
 
     if (isFirstTimeLaunch) {
       await initializeDatabase();
+      const preferenceData = { theme: "pink", language: "fr" };
+      updatePreference(preferenceData);
     }
 
     setInitialRouteName(
-      isFirstTimeLaunch ? "(discovery)" : "(drawer)/(message)/profiletarget"
+      isFirstTimeLaunch ? "(discovery)" : "(drawer)/"
     );
   } catch (error) {
     console.error("Error:", error);

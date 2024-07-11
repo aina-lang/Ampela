@@ -19,6 +19,7 @@ import {
   reauthenticateWithCredential,
   EmailAuthProvider,
 } from "firebase/auth";
+// Tay
 import { AntDesign } from "@expo/vector-icons";
 
 const ChangePassword = () => {
@@ -119,8 +120,7 @@ const ChangePassword = () => {
       style={{
         flex: 1,
         justifyContent: "center",
-        backgroundColor:
-        COLORS.bg100
+        backgroundColor: COLORS.bg100,
       }}
     >
       <HeaderWithGoBack
@@ -228,12 +228,12 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   inputContainer: {
-    borderWidth: 1,
-    borderColor: "#c0bdbd",
-    borderRadius: 15,
+    // borderWidth: 1,
+    // borderColor: "#c0bdbd",
+    borderRadius: 8,
     marginVertical: 10,
     width: Math.floor(Dimensions.get("window").width) - 40,
-    backgroundColor: "rgb(243 244 246)",
+    backgroundColor: COLORS.bg200,
   },
   button: {
     marginTop: 20,

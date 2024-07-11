@@ -10,28 +10,27 @@ import { updatePreference } from "@/legendstate/AmpelaStates";
 import i18n from "@/constants/i18n";
 const OnBoarding = [
   {
-    title: "  Bienvenue sur Ampela",
+    title: "Bienvenue sur Ampela",
     description:
-      " Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut rem",
+      "Ampela vous accompagne dans la gestion de votre santé féminine. Suivez vos cycles menstruels, discutez avec des médecins, et accédez à une communauté bienveillante.",
     img: images.abscenceDeRegles,
   },
-
   {
-    title: "Enregistrer vos données",
+    title: "Enregistrez vos données",
     description:
-      " Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut rem",
+      "Gardez une trace de vos cycles, ovulations et rappels de médicaments pour une gestion optimale de votre santé.",
     img: images.culotteMenstruelle,
   },
   {
     title: "Chatter avec les docteurs",
     description:
-      " Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut rem",
+      "Discutez directement avec des professionnels de la santé pour obtenir des conseils personnalisés.",
     img: images.cycleMenstruel,
   },
   {
-    title: "Dscuter avec le monde",
+    title: "Discuter avec le monde",
     description:
-      " Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut rem",
+      "Rejoignez notre forum pour échanger avec d'autres femmes et partager vos expériences.",
     img: images.alimentationPendantLesRegles,
   },
 ];
@@ -100,7 +99,8 @@ const index = () => {
     return (
       <View
         style={{
-          bottom: SIZES.height > 700 ? "20%" : "13%",
+          // bottom: SIZES.height > 700 ? "20%" : "13%",
+          bottom: 70,
         }}
         className="absolute w-full flex items-center flex-row justify-center my-10"
       >
@@ -130,18 +130,18 @@ const index = () => {
         showsHorizontalScrollIndicator={false}
         onScroll={onScrollHandler}
         ref={scrollViewRef}
-        style={{ width: SIZES.width, height: SIZES.height }}
+        style={{ width: SIZES.width, height: SIZES.height - 400 }}
         className="h-full"
       >
         {OnBoarding.map((item, index) => (
           <View
             key={index}
-            style={{ width: SIZES.width, height: SIZES.height }}
+            style={{ width: SIZES.width, height: SIZES.height - 50 }}
             className={`bg-white `}
           >
             <View
               className={"p-4"}
-              style={{ height: SIZES.height * 0.6, width: SIZES.width }}
+              style={{ height: SIZES.height * 0.55, width: SIZES.width }}
             >
               <Image
                 source={item.img}
@@ -156,7 +156,10 @@ const index = () => {
               >
                 {item.title}
               </Text>
-              <Text className="text-[18px] text-center  text-gray-600">
+              <Text
+                className="text-[18px] text-center  text-gray-600"
+                style={{ lineHeight: 25 }}
+              >
                 {item.description}
               </Text>
             </View>
@@ -212,7 +215,7 @@ const index = () => {
           </TouchableOpacity>
         )}
       </View>
-      <View className="absolute top-10 right-5">
+      <View className="absolute top-10 right-5 ">
         <TouchableOpacity onPress={skipHandler}>
           <Text className="text-[16px]" style={{ color: "#424242" }}>
             {i18n.t("ignorer")}
