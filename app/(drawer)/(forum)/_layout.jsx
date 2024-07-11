@@ -15,7 +15,7 @@ const _layout = () => {
       screenOptions={{
         header: () => (
           <View
-            className=" w-full flex-row items-center pt-10  rounded-b-lg justify-between  shadow-md shadow-black"
+            className=" w-full flex-row items-center pt-10  rounded-b-lg justify-between  "
             style={{
               backgroundColor:
                 theme === "orange" ? COLORS.accent800 : COLORS.accent500,

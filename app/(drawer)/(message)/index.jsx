@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -6,78 +6,120 @@ import {
   FlatList,
   ActivityIndicator,
   Text,
+  RefreshControl,
 } from "react-native";
 import {
-  where,
-  query,
   getDocs,
   collection,
   orderBy,
   limit,
+  query as firestoreQuery,
 } from "firebase/firestore";
 import { COLORS, SIZES } from "@/constants";
 import MessageItem from "@/components/messageItem";
-import { auth, database } from "@/services/firebaseConfig";
 import { useNavigation } from "expo-router";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import i18n from "@/constants/i18n";
 import { useAuth } from "@/hooks/AuthContext";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import {
+  preferenceState,
+  userState,
+  doctorsState,
+} from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 import NetInfo, { useNetInfo } from "@react-native-community/netinfo";
-import AuthContent from "@/components/AuthContent";
-import { useBottomSheet, useModal } from "@/hooks/ModalProvider";
+import AuthContent from "@/components/AuthContentFromSetting";
+import { useModal } from "@/hooks/ModalProvider";
+import { auth, database } from "@/services/firebaseConfig";
 
-const MessagesScreen = () => {
+const jaccardDistance = (str1, str2) => {
+  const set1 = new Set(str1.split(""));
+  const set2 = new Set(str2.split(""));
+  const intersection = new Set([...set1].filter((x) => set2.has(x)));
+  const union = new Set([...set1, ...set2]);
+  return 1 - intersection.size / union.size;
+};
+
+const index = () => {
   const { theme } = useSelector(() => preferenceState.get());
   const navigation = useNavigation();
+  const { user } = useAuth();
+  const userData = useSelector(() => userState.get());
+  const doctors = useSelector(() => doctorsState.get());
   const [users, setUsers] = useState([]);
   const [searchText, setSearchText] = useState("");
-  const { user, userProfile } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const { isConnected, isInternetReachable } = useNetInfo();
+  const { openModal, closeModal } = useModal();
 
-  const handleSearch = (text) => {
-    setSearchText(text);
+  const fetchDoctorsData = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(database, "doctors"));
+      const doctors = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      doctorsState.set(doctors);
+      return doctors;
+    } catch (error) {
+      console.error("Error fetching doctors data: ", error);
+      return [];
+    }
   };
 
-  const { openModal } = useModal();
+  const fetchUsersWithLastMessages = async (doctors) => {
+    const userPromises = doctors.map(async (doctor) => {
+      const roomId = getRoomId(userData.id, doctor.id);
+      const messagesRef = collection(database, "rooms", roomId, "messages");
+      const lastMessageQuery = firestoreQuery(
+        messagesRef,
+        orderBy("createdAt", "desc"),
+        limit(1)
+      );
+      const lastMessageSnapshot = await getDocs(lastMessageQuery);
+      const lastMessage = lastMessageSnapshot.docs[0]?.data();
+      return { ...doctor, lastMessage: lastMessage?.createdAt || null };
+    });
+
+    const data = await Promise.all(userPromises);
+    data.sort(
+      (a, b) =>
+        (b.lastMessage ? b.lastMessage.seconds : 0) -
+        (a.lastMessage ? a.lastMessage.seconds : 0)
+    );
+    setUsers(data);
+  };
+
+  const fetchData = async () => {
+    setLoading(true);
+    const doctors = await fetchDoctorsData();
+    if (user) {
+      await fetchUsersWithLastMessages(doctors);
+    } else {
+      setUsers(doctors);
+    }
+    setLoading(false);
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  };
 
   useEffect(() => {
     if (!auth.currentUser) {
-      openModal(<AuthContent />);
+      openModal(<AuthContent closeModal={closeModal} />);
     }
   }, [auth.currentUser]);
 
-  const handleMessageItemPress = (target) => {
-    if (user) {
-      navigation.navigate("onemessage", { target });
-    }
-  };
-
   useEffect(() => {
-    if (user) {
-      getUsers();
+    if (isConnected && isInternetReachable) {
+      fetchData();
     }
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
-      getUsers();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isConnected) {
-      setLoading(false);
-      return;
-    }
-
-    if (isInternetReachable) {
-      getUsers();
-    }
-  }, [isConnected]);
+  }, [user, isConnected, isInternetReachable]);
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
@@ -89,48 +131,28 @@ const MessagesScreen = () => {
     return () => unsubscribe();
   }, []);
 
-  const getUsers = async () => {
-    setLoading(true);
-    let q;
-    if (user) {
-      q = query(
-        collection(database, "users"),
-        where("userId", "!=", user?.uid)
-      );
-    } else {
-      q = query(collection(database, "users"));
-    }
-    const querySnapshot = await getDocs(q);
-    let data = [];
-    const userPromises = querySnapshot.docs.map(async (doc) => {
-      const userData = doc.data();
-      if (user) {
-        const roomId = getRoomId(user.uid, userData.userId);
-        const messagesRef = collection(database, "rooms", roomId, "messages");
-        const lastMessageQuery = query(
-          messagesRef,
-          orderBy("createdAt", "desc"),
-          limit(1)
-        );
-        const lastMessageSnapshot = await getDocs(lastMessageQuery);
-        const lastMessage = lastMessageSnapshot.docs[0]?.data();
-        userData.lastMessage = lastMessage?.createdAt || null;
-      }
-      return userData;
-    });
-    data = await Promise.all(userPromises);
-    data.sort(
-      (a, b) =>
-        (b.lastMessage ? b.lastMessage.seconds : 0) -
-        (a.lastMessage ? a.lastMessage.seconds : 0)
-    );
-    setUsers(data);
-    setLoading(false);
-  };
-
   const getRoomId = (userId1, userId2) => {
     const sortedIds = [userId1, userId2].sort();
     return sortedIds.join("_");
+  };
+
+  const handleSearch = (text) => {
+    setSearchText(text);
+    if (text === "") {
+      fetchData();
+    } else {
+      const usersFiltered = users.filter(
+        (i) =>
+          jaccardDistance(i.username.toLowerCase(), text.toLowerCase()) <= 0.4
+      );
+      setUsers(usersFiltered);
+    }
+  };
+
+  const handleMessageItemPress = (target) => {
+    if (user) {
+      navigation.navigate("onemessage", { target });
+    }
   };
 
   return (
@@ -138,8 +160,7 @@ const MessagesScreen = () => {
       style={[
         styles.container,
         {
-          backgroundColor:
-            theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
+          backgroundColor: COLORS.bg100,
         },
       ]}
     >
@@ -152,16 +173,7 @@ const MessagesScreen = () => {
               width: "90%",
             }}
             placeholder={i18n.t("rechercher")}
-            onChangeText={(text) => {
-              handleSearch(text);
-              const sanitizedText = text.replace(
-                /[-[\]{}()*+?.,\\^$|#\s]/g,
-                "\\$&"
-              );
-              const regex = new RegExp(sanitizedText, "i");
-              const usersFiltered = users.filter((i) => regex.test(i.pseudo));
-              setUsers(usersFiltered);
-            }}
+            onChangeText={handleSearch}
           />
           <AntDesign name="search1" size={20} />
         </View>
@@ -192,15 +204,22 @@ const MessagesScreen = () => {
               disabled={!user}
             />
           )}
-          onEndReachedThreshold={0.5} 
+          onEndReachedThreshold={0.5}
           ListFooterComponent={
             loading ? (
               <ActivityIndicator
                 size="large"
-                color={COLORS.primary}
+                color={theme == "pink" ? COLORS.accent500 : COLORS.accent800}
                 style={{ marginTop: 20 }}
               />
+            ) : users.length === 0 ? (
+              <View>
+                <Text>Pas de données pour le moment</Text>
+              </View>
             ) : null
+          }
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         />
       )}
@@ -208,7 +227,7 @@ const MessagesScreen = () => {
       {loading && isConnected && isInternetReachable && (
         <ActivityIndicator
           size="large"
-          color={COLORS.primary}
+          color={theme == "pink" ? COLORS.accent500 : COLORS.accent800}
           style={{ marginTop: 20 }}
         />
       )}
@@ -252,4 +271,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MessagesScreen;
+export default index;

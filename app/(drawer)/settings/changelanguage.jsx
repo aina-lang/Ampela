@@ -27,12 +27,11 @@ const ChangeLanguageScreen = () => {
         style={[
           styles.container,
           {
-            backgroundColor:
-              theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
+            backgroundColor: COLORS.bg100,
           },
         ]}
       >
-        <HeaderWithGoBack title="Langues" navigation={navigation} />
+        <HeaderWithGoBack title={i18n.t("langues")} navigation={navigation} />
 
         <View style={{ gap: 20, marginTop: 20 }}>
           <TouchableOpacity

@@ -1,10 +1,16 @@
 import * as SQLite from "expo-sqlite";
 import * as FileSystem from "expo-file-system";
+import { clearAsyncStorage } from "@/legendstate/AmpelaStates";
+import { auth } from "./firebaseConfig";
 
 export const db = SQLite.openDatabaseSync("ampela.db");
 
-// db.closeSync();
-// SQLite.deleteDatabaseSync("ampela.db");
+//   db.closeSync();
+//   SQLite.deleteDatabaseSync("ampela.db");
+//   auth.signOut()
+//  clearAsyncStorage();
+
+
 export const addUser = async (
   username,
   password,
@@ -230,5 +236,34 @@ export const getCycleByMonth = async (month) => {
   } catch (error) {
     console.error("Error fetching cycle by month:", error);
     throw error;
+  }
+};
+
+
+export const deleteAllCycles = async () => {
+  try {
+    const result = await db.runAsync("DELETE FROM cycles_menstruels");
+    console.log("All cycles deleted:", result);
+    return result;
+  } catch (error) {
+    console.error("Error deleting all cycles:", error);
+    throw error;
+  }
+};
+
+export const addCyclesToSQLite = async (cycles) => {
+  for (const cycle of cycles) {
+    await addCycleMenstruel(
+      cycle.fecundityPeriodEnd,
+      cycle.fecundityPeriodStart,
+      cycle.month,
+      cycle.startMenstruationDate,
+      cycle.endMenstruationDate,
+      cycle.nextMenstruationStartDate,
+      cycle.nextMenstruationEndDate,
+      cycle.ovulationDate,
+      cycle.durationMenstruation,
+      cycle.cycleDuration
+    );
   }
 };

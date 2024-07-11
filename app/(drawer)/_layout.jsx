@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
   Modal,
+  StatusBar,
 } from "react-native";
 import { observer, useSelector } from "@legendapp/state/react";
 import { AuthContextProvider } from "@/hooks/AuthContext";
@@ -27,6 +28,7 @@ import Animated, {
 } from "react-native-reanimated";
 import AuthContent from "@/components/AuthContentFromSetting";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { PaperProvider } from "react-native-paper";
 
 const DrawerComponent = observer(() => {
   const router = useRouter();
@@ -86,261 +88,319 @@ const DrawerComponent = observer(() => {
 
   const insets = useSafeAreaInsets();
   return (
-    <SafeAreaView style={{flex:1 }}>
+    <SafeAreaView style={{ flex: 1 }}>
+      <StatusBar
+        barStyle={"light-content"}
+        backgroundColor={theme == "pink" ? COLORS.accent500 : COLORS.accent800}
+      />
       <GestureHandlerRootView>
-        <ModalProvider>
-          <AuthContextProvider>
-            <Drawer
-              screenOptions={{
-                headerShown: false,
-                drawerActiveBackgroundColor:
-                  theme === "orange" ? COLORS.accent800 : COLORS.accent500,
-              }}
-              drawerContent={(props) => (
-                <DrawerContentScrollView
-                  {...props}
-                  showsVerticalScrollIndicator={false}
-                >
-                  <View
-                    style={{
-                      width: "100%",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      paddingVertical: 30,
-                      backgroundColor:
-                        theme === "pink"
-                          ? COLORS.neutral200
-                          : COLORS.neutral280,
-                      height: SIZES.height * 0.45,
-                      marginTop: -40,
-                    }}
+        <PaperProvider>
+          <ModalProvider>
+            <AuthContextProvider>
+              <Drawer
+                screenOptions={{
+                  headerShown: false,
+                  drawerActiveBackgroundColor:
+                    theme === "orange" ? COLORS.accent800 : COLORS.accent500,
+                }}
+                drawerContent={(props) => (
+                  <DrawerContentScrollView
+                    {...props}
+                    showsVerticalScrollIndicator={false}
                   >
-                    <TouchableOpacity
-                      onPress={() => handleItemPress("settings/account")}
+                    <View
+                      style={{
+                        width: "100%",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        paddingVertical: 40,
+                        backgroundColor:
+                          theme === "pink"
+                            ? COLORS.neutral200
+                            : COLORS.neutral280,
+                        height: SIZES.height * 0.45,
+                        marginTop: -40,
+                      }}
                     >
-                      <Image
-                        source={
-                          user.profileImage
-                            ? { uri: user.profileImage }
-                            : images.doctor01
-                        }
-                        style={{ height: 150, width: 150, borderRadius: 75 }}
-                        resizeMode="cover"
-                      />
-                    </TouchableOpacity>
-                    <Text style={{ fontSize: 16, fontWeight: "bold",marginTop:5 }}>
-                      {user.username || "Utilisateur"}
-                    </Text>
-                    <Text>{user.email || "Ampela user"}</Text>
-                  </View>
-                  <Text style={{ paddingLeft: 16, marginBottom: 4 ,marginTop:20}}>
-                    Mon compte
-                  </Text>
-                  <View style={{ paddingLeft: 16 }}>
-                    <DrawerItem
-                      label="Apropos de moi"
-                      onPress={() => handleItemPress("settings/account")}
-                      labelStyle={{
-                        color:
-                          activeItem === "settings/account" ? "white" : "gray",
-                      }}
-                      style={{
-                        backgroundColor:
-                          activeItem === "settings/account"
-                            ? theme === "orange"
-                              ? COLORS.accent800
-                              : COLORS.accent500
-                            : "transparent",
-                      }}
-                      icon={({ color, size }) => (
-                        <AntDesign
-                          name="user"
-                          color={
-                            activeItem === "settings/account" ? "white" : "gray"
+                      <TouchableOpacity
+                        onPress={() => handleItemPress("settings/account")}
+                        style={{ marginTop: 25 }}
+                      >
+                        <Image
+                          source={
+                            user.profileImage
+                              ? { uri: user.profileImage }
+                              : images.avatar
                           }
-                          size={size}
+                          style={{ height: 150, width: 150, borderRadius: 75 }}
+                          resizeMode="cover"
                         />
-                      )}
-                    />
-                    <DrawerItem
-                      label={
-                        auth.currentUser ? "Se déconnecter" : "Se connecter"
-                      }
-                      onPress={handleAuth}
-                      labelStyle={{ color: "gray" }}
-                      icon={({ color, size }) => (
-                        <AntDesign name="logout" color={color} size={size} />
-                      )}
-                    />
-                  </View>
-                  <Text style={{ paddingLeft: 16, marginBottom: 4 }}>
-                    Général
-                  </Text>
-                  <View style={{ paddingLeft: 16 }}>
-                    <DrawerItem
-                      label="Langues"
-                      onPress={() => handleItemPress("settings/changelanguage")}
-                      labelStyle={{
-                        color:
-                          activeItem === "settings/changelanguage"
-                            ? "white"
-                            : "gray",
-                      }}
+                      </TouchableOpacity>
+                      <Text
+                        style={{
+                          fontSize: 16,
+                          fontWeight: "bold",
+                          marginTop: 5,
+                        }}
+                        // className="bg-gray-500"
+                      >
+                        {user.username || "Utilisateur"}
+                      </Text>
+                      <Text>{user.email || "Ampela user"}</Text>
+                    </View>
+                    <Text
                       style={{
-                        backgroundColor:
-                          activeItem === "settings/changelanguage"
-                            ? theme === "orange"
-                              ? COLORS.accent800
-                              : COLORS.accent500
-                            : "transparent",
+                        paddingLeft: 16,
+                        marginBottom: 4,
+                        marginTop: 20,
+                        fontSize: 15,
+                        fontWeight: "bold",
+                        color: COLORS.text700,
                       }}
-                      icon={({ color, size }) => (
-                        <Ionicons
-                          name="language"
-                          color={
+                    >
+                      {i18n.t("compte")}
+                    </Text>
+                    <View style={{ paddingLeft: 16 }}>
+                      <DrawerItem
+                        label={i18n.t("aproposdemoi")}
+                        onPress={() => handleItemPress("settings/account")}
+                        labelStyle={{
+                          color:
+                            activeItem === "settings/account"
+                              ? "white"
+                              : COLORS.text700,
+                        }}
+                        style={{
+                          backgroundColor:
+                            activeItem === "settings/account"
+                              ? theme === "orange"
+                                ? COLORS.accent800
+                                : COLORS.accent500
+                              : "transparent",
+                        }}
+                        icon={({ color, size }) => (
+                          <AntDesign
+                            name="user"
+                            color={
+                              activeItem === "settings/account"
+                                ? "white"
+                                : COLORS.text700
+                            }
+                            size={size}
+                          />
+                        )}
+                      />
+                      <DrawerItem
+                        label={
+                          auth.currentUser
+                            ? i18n.t("deconnexion")
+                            : i18n.t("connecter")
+                        }
+                        onPress={handleAuth}
+                        labelStyle={{ color: COLORS.text700 }}
+                        icon={({ color, size }) => (
+                          <AntDesign
+                            name="logout"
+                            color={COLORS.text700}
+                            size={size}
+                          />
+                        )}
+                      />
+                    </View>
+                    <Text
+                      style={{
+                        paddingLeft: 16,
+                        marginBottom: 4,
+                        marginTop: 10,
+                        fontSize: 15,
+                        fontWeight: "bold",
+                        color: COLORS.text700,
+                      }}
+                    >
+                      {i18n.t("general")}
+                    </Text>
+                    <View style={{ paddingLeft: 16 }} className="">
+                      <DrawerItem
+                        label={i18n.t("langues")}
+                        onPress={() =>
+                          handleItemPress("settings/changelanguage")
+                        }
+                        labelStyle={{
+                          color:
                             activeItem === "settings/changelanguage"
                               ? "white"
-                              : "gray"
-                          }
-                          size={size}
-                        />
-                      )}
-                    />
-                    <DrawerItem
-                      label="Thème"
-                      onPress={() => handleItemPress("settings/changetheme")}
-                      labelStyle={{
-                        color:
-                          activeItem === "settings/changetheme"
-                            ? "white"
-                            : "gray",
-                      }}
-                      style={{
-                        backgroundColor:
-                          activeItem === "settings/changetheme"
-                            ? theme === "orange"
-                              ? COLORS.accent800
-                              : COLORS.accent500
-                            : "transparent",
-                      }}
-                      icon={({ color, size }) => (
-                        <Ionicons
-                          name="color-palette-outline"
-                          color={
+                              : COLORS.text700,
+                        }}
+                        style={{
+                          backgroundColor:
+                            activeItem === "settings/changelanguage"
+                              ? theme === "orange"
+                                ? COLORS.accent800
+                                : COLORS.accent500
+                              : "transparent",
+                        }}
+                        icon={({ color, size }) => (
+                          <Ionicons
+                            name="language"
+                            color={
+                              activeItem === "settings/changelanguage"
+                                ? "white"
+                                : COLORS.text700
+                            }
+                            size={size}
+                          />
+                        )}
+                      />
+                      <DrawerItem
+                        label={i18n.t("theme")}
+                        onPress={() => handleItemPress("settings/changetheme")}
+                        labelStyle={{
+                          color:
                             activeItem === "settings/changetheme"
                               ? "white"
-                              : "gray"
-                          }
-                          size={size}
-                        />
-                      )}
-                    />
-                    <DrawerItem
-                      label="FAQ"
-                      onPress={() => handleItemPress("settings/faq")}
-                      labelStyle={{
-                        color: activeItem === "settings/faq" ? "white" : "gray",
-                      }}
-                      style={{
-                        backgroundColor:
-                          activeItem === "settings/faq"
-                            ? theme === "orange"
-                              ? COLORS.accent800
-                              : COLORS.accent500
-                            : "transparent",
-                      }}
-                      icon={({ color, size }) => (
-                        <Ionicons
-                          name="help-circle-outline"
-                          color={
-                            activeItem === "settings/faq" ? "white" : "gray"
-                          }
-                          size={size}
-                        />
-                      )}
-                    />
-                    <DrawerItem
-                      label={i18n.t("infoAmpela")}
-                      onPress={() => handleItemPress("settings/aboutampela")}
-                      labelStyle={{
-                        color:
-                          activeItem === "settings/aboutampela"
-                            ? "white"
-                            : "gray",
-                      }}
-                      style={{
-                        backgroundColor:
-                          activeItem === "settings/aboutampela"
-                            ? theme === "orange"
-                              ? COLORS.accent800
-                              : COLORS.accent500
-                            : "transparent",
-                      }}
-                      icon={({ color, size }) => (
-                        <Ionicons
-                          name="information-circle-outline"
-                          color={
+                              : COLORS.text700,
+                        }}
+                        style={{
+                          backgroundColor:
+                            activeItem === "settings/changetheme"
+                              ? theme === "orange"
+                                ? COLORS.accent800
+                                : COLORS.accent500
+                              : "transparent",
+                        }}
+                        icon={({ color, size }) => (
+                          <Ionicons
+                            name="color-palette-outline"
+                            color={
+                              activeItem === "settings/changetheme"
+                                ? "white"
+                                : COLORS.text700
+                            }
+                            size={size}
+                          />
+                        )}
+                      />
+                      <DrawerItem
+                        label={i18n.t("faq")}
+                        onPress={() => handleItemPress("settings/faq")}
+                        labelStyle={{
+                          color:
+                            activeItem === "settings/faq"
+                              ? "white"
+                              : COLORS.text700,
+                        }}
+                        style={{
+                          backgroundColor:
+                            activeItem === "settings/faq"
+                              ? theme === "orange"
+                                ? COLORS.accent800
+                                : COLORS.accent500
+                              : "transparent",
+                        }}
+                        icon={({ color, size }) => (
+                          <Ionicons
+                            name="help-circle-outline"
+                            color={
+                              activeItem === "settings/faq"
+                                ? "white"
+                                : COLORS.text700
+                            }
+                            size={size}
+                          />
+                        )}
+                      />
+                      <DrawerItem
+                        label={i18n.t("infoAmpela")}
+                        onPress={() => handleItemPress("settings/aboutampela")}
+                        labelStyle={{
+                          color:
                             activeItem === "settings/aboutampela"
                               ? "white"
-                              : "gray"
-                          }
-                          size={size}
-                        />
-                      )}
-                    />
-                    <DrawerItem
-                      label="Partager"
-                      onPress={onShare}
-                      labelStyle={{ color: "gray" }}
-                      icon={({ color, size }) => (
-                        <Ionicons
-                          name="share-social-outline"
-                          color={color}
-                          size={size}
-                        />
-                      )}
-                    />
-                  </View>
-                  <Text
-                    style={{ paddingLeft: 16, marginBottom: 4, marginTop: 12 }}
-                  >
-                    Feed-back
-                  </Text>
-                  <View style={{ paddingLeft: 16 }}>
-                    <DrawerItem
-                      label="Envoyer des feedbacks"
-                      onPress={() => handleItemPress("settings/feedback")}
-                      labelStyle={{
-                        color:
-                          activeItem === "settings/feedback" ? "white" : "gray",
-                      }}
+                              : COLORS.text700,
+                        }}
+                        style={{
+                          backgroundColor:
+                            activeItem === "settings/aboutampela"
+                              ? theme === "orange"
+                                ? COLORS.accent800
+                                : COLORS.accent500
+                              : "transparent",
+                        }}
+                        icon={({ color, size }) => (
+                          <Ionicons
+                            name="information-circle-outline"
+                            color={
+                              activeItem === "settings/aboutampela"
+                                ? "white"
+                                : COLORS.text700
+                            }
+                            size={size}
+                          />
+                        )}
+                      />
+                      <DrawerItem
+                        label={i18n.t("partager")}
+                        onPress={onShare}
+                        labelStyle={{ color: COLORS.text700 }}
+                        icon={({ color, size }) => (
+                          <Ionicons
+                            name="share-social-outline"
+                            color={COLORS.text700}
+                            size={size}
+                          />
+                        )}
+                      />
+                    </View>
+                    <Text
                       style={{
-                        backgroundColor:
-                          activeItem === "settings/feedback"
-                            ? theme === "orange"
-                              ? COLORS.accent800
-                              : COLORS.accent500
-                            : "transparent",
+                        paddingLeft: 16,
+                        marginBottom: 4,
+                        marginTop: 12,
+                        fontSize: 15,
+                        fontWeight: "bold",
+                        color: COLORS.text700,
                       }}
-                      icon={({ color, size }) => (
-                        <Ionicons
-                          name="chatbox-ellipses-outline"
-                          color={
+                    >
+                      {i18n.t("feedback")}
+                    </Text>
+                    <View style={{ paddingLeft: 16 }}>
+                      <DrawerItem
+                        label={i18n.t("envoyerfeedback")}
+                        onPress={() => handleItemPress("settings/feedback")}
+                        labelStyle={{
+                          color:
                             activeItem === "settings/feedback"
                               ? "white"
-                              : "gray"
-                          }
-                          size={size}
-                        />
-                      )}
-                    />
-                  </View>
-                  <View style={{ height: 20 }} />
-                </DrawerContentScrollView>
-              )}
-            />
-          </AuthContextProvider>
-        </ModalProvider>
+                              : COLORS.text700,
+                        }}
+                        style={{
+                          backgroundColor:
+                            activeItem === "settings/feedback"
+                              ? theme === "orange"
+                                ? COLORS.accent800
+                                : COLORS.accent500
+                              : "transparent",
+                        }}
+                        icon={({ color, size }) => (
+                          <Ionicons
+                            name="chatbox-ellipses-outline"
+                            color={
+                              activeItem === "settings/feedback"
+                                ? "white"
+                                : COLORS.text700
+                            }
+                            size={size}
+                          />
+                        )}
+                      />
+                    </View>
+                    <View style={{ height: 20 }} />
+                  </DrawerContentScrollView>
+                )}
+              />
+            </AuthContextProvider>
+          </ModalProvider>
+        </PaperProvider>
       </GestureHandlerRootView>
 
       <Modal visible={isModalVisible} onRequestClose={toggleModal} transparent>
@@ -354,18 +414,33 @@ const DrawerComponent = observer(() => {
           }}
         >
           <Animated.View
-            style={[styles.modalContent, animatedStyle, { padding: 20 }]}
+            style={[
+              styles.modalContent,
+              animatedStyle,
+              { padding: 10, paddingVertical: 20, width: 300 },
+            ]}
           >
             <Text style={styles.modalTitle}>Confirmer la déconnexion</Text>
             <Text style={styles.modalMessage}>
               Êtes-vous sûr de vouloir vous déconnecter?
             </Text>
             <View style={styles.modalButtons}>
-              <TouchableOpacity onPress={toggleModal} style={styles.button}>
-                <Text style={styles.buttonText}>Annuler</Text>
+              <TouchableOpacity
+                onPress={confirmLogout}
+                style={[
+                  styles.button,
+                  {
+                    backgroundColor:
+                      theme === "pink" ? COLORS.accent500 : COLORS.accent800,
+                  },
+                ]}
+              >
+                <Text style={{ color: "white", fontWeight: "bold" }}>
+                  {i18n.t("oui")}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={confirmLogout} style={styles.button}>
-                <Text style={styles.buttonText}>Déconnecter</Text>
+              <TouchableOpacity onPress={toggleModal} style={styles.button}>
+                <Text style={styles.buttonText}>{i18n.t("non")}</Text>
               </TouchableOpacity>
             </View>
           </Animated.View>
@@ -418,12 +493,14 @@ const styles = {
     marginHorizontal: 10,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: COLORS.primary,
+    backgroundColor: "#d1d5db",
     borderRadius: 4,
+    minWidth: 60,
   },
   buttonText: {
-    color: "white",
+    color: "#111827",
     fontWeight: "bold",
+    textAlign: "center",
   },
 };
 

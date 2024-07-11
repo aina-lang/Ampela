@@ -15,13 +15,13 @@ const _layout = () => {
       screenOptions={{
         header: () => (
           <View
-          className="w-full flex-row items-center pt-10  pb-3 rounded-b-lg justify-between shadow-md shadow-black absolute "
-          style={{
-            backgroundColor:
-              theme === "orange" ? COLORS.accent800 : COLORS.accent500,
-            height: SIZES.height * 0.14,
-            paddingHorizontal: 16,
-          }}
+            className="w-full flex-row items-center pt-10  pb-3 rounded-b-lg justify-between  absolute "
+            style={{
+              backgroundColor:
+                theme === "orange" ? COLORS.accent800 : COLORS.accent500,
+              height: SIZES.height * 0.14,
+              paddingHorizontal: 16,
+            }}
           >
             <View className="flex flex-row items-center justify-center">
               <TouchableOpacity
@@ -45,18 +45,16 @@ const _layout = () => {
               >
                 <Ionicons name="chatbubble" color={"white"} size={24} />
               </TouchableOpacity>
-              {/* 
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              */}
+              <TouchableOpacity
+                className="p-2 pl-0 "
+                onPress={() => navigation.navigate("(message)")}
+              >
+                <Ionicons
+                  name="notifications-circle"
+                  color={"white"}
+                  size={24}
+                />
+              </TouchableOpacity>
             </View>
           </View>
         ),

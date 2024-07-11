@@ -75,7 +75,7 @@ const MessageItem = ({ onPress, target }) => {
         >
           <Image source={{ uri: target?.profileImage }} style={styles.image} />
 
-          <View
+          {/* <View
             style={{
               position: "absolute",
               width: 10,
@@ -85,7 +85,7 @@ const MessageItem = ({ onPress, target }) => {
               top: 1,
               left: 5,
             }}
-          />
+          /> */}
         </View>
         <View style={styles.textContainer}>
           <Text style={styles.name}>{target?.username}</Text>

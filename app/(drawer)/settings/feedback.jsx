@@ -1,4 +1,5 @@
 import HeaderWithGoBack from "@/components/header-with-go-back";
+import i18n from "@/constants/i18n";
 import { useNavigation } from "expo-router";
 import React from "react";
 import {
@@ -21,7 +22,7 @@ const feedback = () => {
     <>
       <HeaderWithGoBack navigation={navigation} />
       <View style={styles.container}>
-        <Text style={styles.header}>Contactez les développeurs</Text>
+        <Text style={styles.header}>{i18n.t("textfeedback")}</Text>
 
         <TouchableOpacity
           style={styles.contactItem}

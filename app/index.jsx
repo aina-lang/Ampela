@@ -28,7 +28,7 @@ async function fetchInitialData(
     }
 
     setInitialRouteName(
-      isFirstTimeLaunch ? "(discovery)" : "(drawer)/(main)/(forum)/"
+      isFirstTimeLaunch ? "(discovery)" : "(drawer)/(message)/profiletarget"
     );
   } catch (error) {
     console.error("Error:", error);

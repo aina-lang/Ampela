@@ -28,14 +28,15 @@ const TabLayout = () => {
   const navigation = useNavigation();
   const { theme } = useSelector(() => preferenceState.get());
 
+  console.log("USER ", user);
   useEffect(() => {
     async function fetchData() {
       try {
         const userFromSqlite = await getUser();
         await setFirstLaunchFalse();
-        updateUser(userFromSqlite);
 
         const cyclesFromSqlite = await getAllCycle();
+        // console.log(cyclesFromSqlite);
         updateCycleMenstruelData(cyclesFromSqlite);
       } catch (error) {
         console.error("Error:", error);
@@ -47,12 +48,20 @@ const TabLayout = () => {
 
   const UserAvatar = ({ username }) => {
     const displayText =
-      username.length > 10 ? username.charAt(0).toUpperCase() : username;
+      username?.length > 10 ? username.charAt(0).toUpperCase() : username;
 
     return (
       <View style={[styles.container]}>
-        {username.length > 10 ? (
-          <View style={styles.avatar}>
+        {username?.length > 10 ? (
+          <View
+            style={[
+              styles.avatar,
+              {
+                backgroundColor:
+                  theme === "pink" ? COLORS.neutral200 : COLORS.neutral280,
+              },
+            ]}
+          >
             <Text style={styles.avatarText}>{displayText}</Text>
           </View>
         ) : (
@@ -68,7 +77,7 @@ const TabLayout = () => {
         screenOptions={{
           header: () => (
             <View
-              className="w-full flex-row items-center pt-10  pb-3 rounded-b-lg justify-between shadow-md shadow-black "
+              className="w-full flex-row items-center pt-10  pb-3 rounded-b-lg justify-between"
               style={{
                 backgroundColor:
                   theme === "orange" ? COLORS.accent800 : COLORS.accent500,
@@ -94,7 +103,7 @@ const TabLayout = () => {
                 >
                   <Ionicons name="chatbubble" color={"white"} size={24} />
                 </TouchableOpacity>
-                {/* <TouchableOpacity
+                <TouchableOpacity
                   className="p-2 pl-0"
                   onPress={() => navigation.navigate("(message)")}
                 >
@@ -103,7 +112,7 @@ const TabLayout = () => {
                     color={"white"}
                     size={24}
                   />
-                </TouchableOpacity> */}
+                </TouchableOpacity>
               </View>
             </View>
           ),
@@ -121,18 +130,18 @@ const TabLayout = () => {
           }}
         />
         <Tabs.Screen
-        name="(forum)"
-        options={{
-          title: "Forum",
-          tabBarIcon: "globe-outline",
-          headerShown: false,
-        }}
-      />
-        <Tabs.Screen
           name="(article)"
           options={{
             title: "Article",
             tabBarIcon: "book",
+            headerShown: false,
+          }}
+        />
+        <Tabs.Screen
+          name="(forum)"
+          options={{
+            title: "Forum",
+            tabBarIcon: "globe-outline",
             headerShown: false,
           }}
         />
@@ -151,7 +160,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 20,
-    backgroundColor: COLORS.neutral200,
+
     alignItems: "center",
     justifyContent: "center",
   },

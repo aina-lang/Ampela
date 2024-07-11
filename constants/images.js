@@ -1,5 +1,7 @@
 import logo1 from "../assets/images/logo/logo-1.png";
 import logo2 from "../assets/images/logo/logo-2.png";
+import logo_u1 from "../assets/images/logo/Logo_u1.png";
+import logo2_u2 from "../assets/images/logo/Logo_u2.png";
 
 import wavebg from "../assets/images/vagueBG.svg";
 import bgRose from "../assets/images/bg-rose.png";
@@ -12,7 +14,7 @@ import user04 from "../assets/images/profile-user/profile-user04.png";
 import user05 from "../assets/images/profile-user/profile-user05.png";
 import user06 from "../assets/images/profile-user/profile-user06.png";
 
-import doctor01 from "../assets/images/doctor/doctor01.png";
+import doctor01 from "../assets/images/doctor/doctor01.jpg";
 import doctor02 from "../assets/images/doctor/doctor02.png";
 import doctor03 from "../assets/images/doctor/doctor03.png";
 import doctor04 from "../assets/images/doctor/doctor04.png";
@@ -64,14 +66,15 @@ import ceQueSontLesMenstruations from "../assets/images/articles/ce-que-sont-les
 import imgVs1 from "../assets/images/articles/imgVs1.png";
 import imgVs2 from "../assets/images/articles/imgVs2.png";
 
-import madaImg from "../assets/images/Mg.png"
-import franceImg from "../assets/images/Fr.png"
-import pinkTheme from "../assets/images/pink-theme.png"
-import orangeTheme from "../assets/images/orange-theme.png"
+import madaImg from "../assets/images/Mg.png";
+import franceImg from "../assets/images/Fr.png";
+import pinkTheme from "../assets/images/pink-theme.png";
+import orangeTheme from "../assets/images/orange-theme.png";
 import imgVs1Mg from "../assets/images/articles/imgVs1_mg.png";
 import imgVs2Mg from "../assets/images/articles/imgVs2_mg.png";
-
+import avatar from "../assets/images/avatar.jpg";
 export default {
+  avatar,
   pinkTheme,
   orangeTheme,
   madaImg,
@@ -85,7 +88,7 @@ export default {
   lesBonnesPratiqueDurantLaMenstruation,
   soulagerLesDouleursMenstruels,
   alimentationPendantLesRegles,
-   pertesAnormales,
+  pertesAnormales,
   phasesDuCycleMenstruel,
   protectionEnTissu,
   typesDePlanningFamilial,
@@ -98,7 +101,7 @@ export default {
   mycoseVaginal,
   methodeBarriere,
   methodeChirurgicale,
-  methodeHormonale, 
+  methodeHormonale,
   methodeNaturelle,
   methodeMecanique,
   culotteMenstruelle,
@@ -112,6 +115,8 @@ export default {
   menopause,
   logo1,
   logo2,
+  logo_u1,
+  logo2_u2,
   wavebg,
   bgRose,
   bgOrange,
@@ -135,5 +140,6 @@ export default {
   kysteOvarien,
   tampon,
   syndromePremenstruel,
-  spotting, abscenceDeRegles,
+  spotting,
+  abscenceDeRegles,
 };

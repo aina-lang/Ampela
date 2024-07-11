@@ -15,7 +15,7 @@ const _layout = () => {
         headerShown: true,
         header: () => (
           <View
-          className="w-full flex-row items-center pt-10  pb-3 rounded-b-lg justify-between shadow-md shadow-black "
+          className="w-full flex-row items-center pt-10  pb-3 rounded-b-lg justify-between "
           style={{
             backgroundColor:
               theme === "orange" ? COLORS.accent800 : COLORS.accent500,
@@ -45,7 +45,7 @@ const _layout = () => {
               >
                 <Ionicons name="chatbubble" color={"white"} size={24} />
               </TouchableOpacity>
-              {/* <TouchableOpacity
+              <TouchableOpacity
                 className="p-2 pl-0 "
                 onPress={() => navigation.navigate("(message)")}
               >
@@ -54,7 +54,7 @@ const _layout = () => {
                   color={"white"}
                   size={24}
                 />
-              </TouchableOpacity> */}
+              </TouchableOpacity>
             </View>
           </View>
         ),

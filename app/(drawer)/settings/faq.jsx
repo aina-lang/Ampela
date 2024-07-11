@@ -6,15 +6,26 @@ import FaqItem from "@/components/settings/faq-item";
 import faqdata from "@/constants/faqdata";
 import { useNavigation } from "expo-router";
 import i18n from "@/constants/i18n";
+import { useSelector } from "@legendapp/state/react";
+import { preferenceState } from "@/legendstate/AmpelaStates";
 
 const FaqScreen = () => {
   const [data, setData] = useState([]);
   const navigation = useNavigation();
+  const { theme, language } = useSelector(() => preferenceState.get());
   useEffect(() => {
     setData(faqdata);
   }, []);
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor:
+          COLORS.bg100
+        },
+      ]}
+    >
       <HeaderWithGoBack title="F.A.Q" navigation={navigation} />
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -28,7 +39,7 @@ const FaqScreen = () => {
             list={d.list ? d.list : ""}
           />
         ))}
-        <View className="h-[100]"/>
+        <View className="h-[100]" />
       </ScrollView>
     </View>
   );
@@ -41,7 +52,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.neutral100,
     justifyContent: "center",
     paddingTop: 40,
-    
   },
   header: {
     marginTop: 40,

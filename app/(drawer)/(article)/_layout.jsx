@@ -15,11 +15,10 @@ const _layout = () => {
         headerShown: true,
         header: () => (
           <View
-          className="w-full flex-row items-center pt-10  pb-3 rounded-b-lg justify-between absolute"
-        
+            className="w-full flex-row items-center pt-10  pb-3 rounded-b-lg justify-between absolute"
             style={{
               backgroundColor:
-                theme === "pink" ? COLORS.accent400 : COLORS.neutral280,
+                theme === "pink" ? COLORS.accent500 : COLORS.accent800,
               height: SIZES.height * 0.14,
               paddingHorizontal: 16,
             }}
@@ -31,7 +30,7 @@ const _layout = () => {
               >
                 <Ionicons
                   name="arrow-back"
-                  color={theme === "pink" ? "white" : COLORS.accent800}
+                  color={"white" }
                   size={24}
                 />
               </TouchableOpacity>

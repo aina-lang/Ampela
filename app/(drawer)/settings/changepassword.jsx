@@ -120,7 +120,7 @@ const ChangePassword = () => {
         flex: 1,
         justifyContent: "center",
         backgroundColor:
-          theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
+        COLORS.bg100
       }}
     >
       <HeaderWithGoBack
@@ -144,7 +144,9 @@ const ChangePassword = () => {
           />
         </View>
         {currentPasswordError && (
-          <Text style={{ color: "red" }}>{currentPasswordError}</Text>
+          <Text style={{ color: "red", textAlign: "left" }}>
+            {currentPasswordError}
+          </Text>
         )}
         <View style={styles.inputContainer}>
           <TextInput
@@ -155,8 +157,11 @@ const ChangePassword = () => {
           />
         </View>
         {newPasswordError && (
-          <Text style={{ color: "red" }}>{newPasswordError}</Text>
+          <Text style={{ color: "red", textAlign: "left" }}>
+            {newPasswordError}
+          </Text>
         )}
+
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
@@ -166,25 +171,36 @@ const ChangePassword = () => {
           />
         </View>
         {confirmPasswordError && (
-          <Text style={{ color: "red" }}>{confirmPasswordError}</Text>
+          <Text
+            style={{
+              color: "red",
+              textAlign: "left",
+              paddingLeft: 13,
+              alignSelf: "flex-start",
+            }}
+          >
+            {confirmPasswordError}
+          </Text>
         )}
 
         <TouchableOpacity
-          disabled={currentPassword == "" || newPassword == ""}
+          disabled={currentPassword === "" || newPassword === ""}
           style={{
             backgroundColor:
-              theme === "pink"
-                ? currentPassword == "" || newPassword == ""
-                  ? "rgba(226,68,92, .8)"
-                  : "gray"
+              currentPassword === "" || newPassword === ""
+                ? theme === "pink"
+                  ? COLORS.accent500_40
+                  : COLORS.accent800_40
+                : theme === "pink"
+                ? COLORS.accent500
                 : COLORS.accent800,
             width: Math.floor(Dimensions.get("window").width) - 40,
           }}
           onPress={handleChangePassword}
-          className="p-3 rounded-md  mt-5 shadow-md shadow-black flex-row justify-center space-x-2 items-center"
+          className="p-3 rounded-md mt-5 flex-row justify-center space-x-2 items-center py-4"
         >
           <Text className="text-white">Modifier le mot de passe</Text>
-          <AntDesign name="right" size={20} color="white" className="ml-3" />
+          {/* <AntDesign name="right" size={20} color="white" className="ml-3" /> */}
         </TouchableOpacity>
       </View>
     </View>

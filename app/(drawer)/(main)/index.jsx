@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { View, ScrollView, Text, StyleSheet, SafeAreaView, BackHandler } from "react-native";
+import {
+  View,
+  ScrollView,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  BackHandler,
+} from "react-native";
 import { COLORS, SIZES } from "@/constants";
 import BackgroundContainer from "@/components/background-container";
 import IndicationCalendar from "@/components/calendar/indication-calendar";
@@ -8,11 +15,13 @@ import ReminderItem from "@/components/calendar/reminder-item";
 import moment from "moment";
 import { observer, useSelector } from "@legendapp/state/react";
 import {
+  clearAsyncStorage,
   cycleMenstruelState,
   preferenceState,
 } from "@/legendstate/AmpelaStates";
 import i18n from "@/constants/i18n";
 import { useNavigation } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Index = () => {
   const [howmanytimeReminder1, setHowmanytimeReminder1] = useState("quotidien");
@@ -21,24 +30,7 @@ const Index = () => {
   const [scrollDisabled, setScrollDisabled] = useState(true);
   const { theme, language } = useSelector(() => preferenceState.get());
 
-  const navigation = useNavigation();
-
-  useEffect(() => {
-    const onBackPress = () => {
-      return true;
-    };
-
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      onBackPress
-    );
-
-    navigation.addListener('beforeRemove', (e) => {
-      e.preventDefault(); 
-    });
-
-    return () => backHandler.remove();
-  }, [navigation]);
+  console.log(preferenceState.get());
 
   const [time1, setTime1] = useState({
     hour: 0,
@@ -142,6 +134,7 @@ const Index = () => {
 
   LocaleConfig.defaultLocale = language;
 
+  const [clicked, setIsClicked] = useState(false);
   const handleReminderBtnOnePress = () => {
     setReminderInfo({ as: "Début des règles" });
     setReminderModalIsVisible(true);
@@ -157,33 +150,10 @@ const Index = () => {
     setReminderModalIsVisible(true);
   };
 
-  const handleRegisterButtonPress = (type, hour, minutes, active) => {
-    setScrollDisabled(true);
-    switch (type) {
-      case "Début des règles":
-        setTime1({ ...time1, hour, minutes });
-        setHowmanytimeReminder1(active);
-        dispatch(scheduleMenstruationNotifications());
-        break;
-      case "Jour d'ovulation":
-        setTime2({ ...time2, hour, minutes });
-        setHowmanytimeReminder2(active);
-        dispatch(scheduleOvulationNotifications());
-        break;
-      case "Prise de pilule":
-        setTime3({ ...time3, hour, minutes });
-        setHowmanytimeReminder3(active);
-        dispatch(schedulePillNotifications());
-        break;
-      default:
-        return null;
-    }
-  };
-
   const { cyclesData } = useSelector(() => cycleMenstruelState.get());
-  const cycles = cyclesData;
+  const cycles = cyclesData?.cyclesData ? cyclesData?.cyclesData : cyclesData;
   const markedDates = {};
-
+  // console.log(cycles);
   const generateMarkedDates = () => {
     cycles.forEach((cycle) => {
       // FECONDITY
@@ -376,4 +346,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default observer(Index);
+export default Index;

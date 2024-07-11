@@ -1,7 +1,14 @@
-import { View, ScrollView, Text, StyleSheet, Image } from "react-native";
+import {
+  View,
+  ScrollView,
+  Text,
+  StyleSheet,
+  Image,
+  StatusBar,
+} from "react-native";
 import { COLORS, SIZES } from "@/constants";
 import { images } from "@/constants";
-import { useRoute } from "@react-navigation/native";
+import { useNavigationState, useRoute } from "@react-navigation/native";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import i18n from "@/constants/i18n";
 
@@ -34,12 +41,10 @@ const onearticle = () => {
 
   const scrollRef = useAnimatedRef();
   const scrollOffset = useScrollViewOffset(scrollRef);
-
   const imageAnimatedStyle = useAnimatedStyle(() => {
     return {
       transform: [
         {
-         
           translateY: interpolate(
             scrollOffset.value,
             [-SIZES.height * 0.3, 0, SIZES.height * 0.3],
@@ -69,7 +74,10 @@ const onearticle = () => {
   useEffect(() => {
     console.log(content2);
   }, []);
-
+  const routeName = useNavigationState(
+    (state) => state.routes[state.index]?.name
+  );
+  console.log(routeName);
   return (
     <Animated.ScrollView
       ref={scrollRef}
@@ -78,28 +86,24 @@ const onearticle = () => {
         styles.container,
         {
           backgroundColor:
-            theme === "pink" ? COLORS.accent400 : COLORS.neutral280,
+            theme === "pink" ? COLORS.accent500 : COLORS.accent800,
         },
       ]}
       showsVerticalScrollIndicator={false}
     >
+     
       <Animated.View
         style={[
           styles.cover,
           {
             backgroundColor:
-              theme === "pink" ? COLORS.accent400 : COLORS.neutral280,
+              theme === "pink" ? COLORS.accent500 : COLORS.accent800,
           },
         ]}
       >
         <View style={styles.flex}>
           <View style={{ width: "55%" }}>
-            <Text
-              style={[
-                styles.title,
-                { color: theme === "pink" ? "white" : COLORS.accent800 },
-              ]}
-            >
+            <Text style={[styles.title, { color: "white" }]}>
               {i18n.t(title)}
             </Text>
           </View>
@@ -115,7 +119,11 @@ const onearticle = () => {
       </Animated.View>
 
       <View
-        style={{ padding: 20, backgroundColor: "white", width: SIZES.width }}
+        style={{
+          padding: 20,
+          backgroundColor: COLORS.bg100,
+          width: SIZES.width,
+        }}
         className="rounded-t-3xl mx-auto"
       >
         {content.split(",").map((c) => (
@@ -197,8 +205,8 @@ const styles = StyleSheet.create({
   },
   cover: {
     height: SIZES.height * 0.45,
-    justifyContent:"flex-end",
-    paddingBottom:20
+    justifyContent: "flex-end",
+    paddingBottom: 20,
   },
   flex: {
     flexDirection: "row",

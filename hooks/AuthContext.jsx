@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, database } from "@/services/firebaseConfig";
+import { auth,  realtimeDatabase } from "@/services/firebaseConfig";
 import {
   collection,
   doc,
@@ -10,6 +10,7 @@ import {
   where,
 } from "firebase/firestore";
 import { useNetInfo } from "@react-native-community/netinfo";
+import { get, onValue, ref } from "firebase/database";
 
 export const AuthContext = createContext();
 
@@ -20,39 +21,38 @@ export const AuthContextProvider = ({ children }) => {
   const { isConnected, isInternetReachable } = useNetInfo();
 
   useEffect(() => {
-    if (isConnected && isInternetReachable) {
-      const unsub = onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          setIsAuthenticated(true);
-          const q = query(
-            collection(database, "users"),
-            where("userId", "==", user?.uid)
-          );
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        if (isConnected && isInternetReachable) {
           // console.log(user);
-          const querySnapshot = await getDocs(q);
-          let userProfile = null;
-
-          querySnapshot.forEach((doc) => {
-            userProfile = doc.data();
-          });
-
-          if (userProfile) {
-            // console.log("User profile:", userProfile);
-
-            setUserProfile(userProfile);
-          } else {
-            // console.error("No such user document!");
+          try {
+            const userRef = ref( realtimeDatabase, `users/${user.uid}`);
+            onValue(
+              userRef,
+              (snapshot) => {
+                const data = snapshot.val();
+                console.log(data);
+                if (data) {
+                  setUserProfile(data.user);
+                }
+              },
+              {
+                onlyOnce: true,
+              }
+            );
+          } catch (error) {
+            console.error("Error fetching user data: ", error);
           }
-
-          setUser(user);
-        } else {
-          setIsAuthenticated(false);
-          setUser(null);
-          setUserProfile(null);
         }
-      });
-      return unsub;
-    }
+        setUser(user);
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+        setUserProfile(null);
+      }
+    });
+    return unsub;
   }, [isConnected, isInternetReachable]);
 
   return (

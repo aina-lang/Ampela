@@ -1,12 +1,13 @@
+import OptionMenu from "@/components/OptionMenu";
 import { COLORS, SIZES } from "@/constants";
 import { useAuth } from "@/hooks/AuthContext";
 import { preferenceState } from "@/legendstate/AmpelaStates";
 import { database } from "@/services/firebaseConfig";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { useSelector } from "@legendapp/state/react";
 import { useRoute } from "@react-navigation/native";
-import { useNavigation } from "expo-router";
+import { router, useNavigation } from "expo-router";
 import {
   Timestamp,
   addDoc,
@@ -39,10 +40,23 @@ export default function OneMessageScreen() {
   const route = useRoute();
   const { target } = route?.params;
   const { user, userProfile } = useAuth();
-
+  const menuItems = [
+    {
+      title: "Settings",
+      action: () => console.log("Navigate to Settings"),
+    },
+    {
+      title: "Other Option",
+      action: () => console.log("Handle Other Option"),
+    },
+    {
+      title: "Another Option",
+      action: () => console.log("Handle Another Option"),
+    },
+  ];
   useEffect(() => {
     createRoomIfNotExists();
-    const roomId = getRoomId(user?.uid, target?.userId);
+    const roomId = getRoomId(user?.uid, target?.id);
     const docRef = doc(database, "rooms", roomId);
     const messagesRef = collection(docRef, "messages");
     const q = query(messagesRef, orderBy("createdAt", "desc"));
@@ -63,15 +77,15 @@ export default function OneMessageScreen() {
   }, [user, target]);
 
   const createRoomIfNotExists = async () => {
-    const roomId = getRoomId(user?.uid, target?.userId);
+    const roomId = getRoomId(user?.uid, target?.id);
     await setDoc(doc(database, "rooms", roomId), {
       roomId,
       createdAt: Timestamp.fromDate(new Date()),
     });
   };
 
-  const getRoomId = (userId1, userId2) => {
-    const sortedIds = [userId1, userId2].sort();
+  const getRoomId = (id1, id2) => {
+    const sortedIds = [id1, id2].sort();
     const roomId = sortedIds.join("_");
     return roomId;
   };
@@ -79,14 +93,15 @@ export default function OneMessageScreen() {
   const handleSend = useCallback(async (newMessages = []) => {
     console.log("yes", user);
     try {
-      const roomId = getRoomId(user?.uid, target?.userId);
+      const roomId = getRoomId(user?.uid, target?.id);
       const docRef = doc(database, "rooms", roomId);
       const messagesRef = collection(docRef, "messages");
       let message = newMessages[0];
 
+      // console.log({... userProfile});
       let myMsg = {
         ...message,
-        userId: user?.uid,
+        id: user?.uid,
         avatar: userProfile?.profileImage,
         expediteur: userProfile?.username,
         createdAt: Timestamp.now(),
@@ -94,9 +109,9 @@ export default function OneMessageScreen() {
 
       await addDoc(messagesRef, myMsg);
 
-      // setMessages((previousMessages) =>
-      //   GiftedChat.append(previousMessages, myMsg)
-      // );
+      setMessages((previousMessages) =>
+        GiftedChat.append(...previousMessages, myMsg)
+      );
     } catch (error) {
       console.error(error);
     }
@@ -143,23 +158,20 @@ export default function OneMessageScreen() {
 
   const customInputToolbar = (props) => {
     return (
-      <View
-        style={styles.inputToolbarContainer}
-        className="shadow-md shadow-black"
-      >
+      <View style={styles.inputToolbarContainer} className="">
         <InputToolbar {...props} containerStyle={styles.inputToolbar} />
       </View>
     );
   };
 
   return (
-    <SafeAreaView className="flex-1">
+    <SafeAreaView className="flex-1 " style={{ backgroundColor: COLORS.bg100 }}>
       <View
-        className="w-full flex-row items-center pt-20  pb-3 rounded-b-lg justify-between shadow-md shadow-black absolute "
+        className="w-full flex-row items-center pt-10  pb-3 rounded-b-lg justify-between  absolute  z-50"
         style={{
           backgroundColor:
             theme === "orange" ? COLORS.accent800 : COLORS.accent500,
-          height: SIZES.height * 0.2,
+          height: SIZES.height * 0.14,
           paddingHorizontal: 16,
         }}
       >
@@ -168,17 +180,16 @@ export default function OneMessageScreen() {
             className="p-2 pl-0 mr-3"
             onPress={() => navigation.goBack()}
           >
-            <AntDesign name="left" color={"white"} size={24} />
+            <Ionicons name="arrow-back" color={"white"} size={24} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{target?.username}</Text>
         </View>
-        <TouchableOpacity onPress={() => navigation.navigate("Settings")}>
-          <AntDesign name="setting" color={"white"} size={24} />
-        </TouchableOpacity>
+        <OptionMenu menuItems={menuItems} />
       </View>
 
       <GiftedChat
-        showUserAvatar
+        // showUserAvatar
+        placeholder="ecrire un message"
         messages={messages}
         onSend={(messages) => handleSend(messages)}
         user={{
@@ -191,7 +202,11 @@ export default function OneMessageScreen() {
           return (
             <Send {...props}>
               <View style={styles.sendButton}>
-                <Feather name="send" size={24} color={COLORS.accent800} />
+                <Feather
+                  name="send"
+                  size={24}
+                  color={theme === "pink" ? COLORS.accent500 : COLORS.accent800}
+                />
               </View>
             </Send>
           );
@@ -229,15 +244,19 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   inputToolbar: {
-    backgroundColor: COLORS.neutral100,
+    // elevation: 2,
+    backgroundColor: "white",
     borderTopWidth: 0,
     borderRadius: 98,
     paddingHorizontal: 10,
+    // borderWidth: 2,
+    // borderColor: "",
   },
   sendButton: {
     height: "100%",
     alignItems: "center",
     // backgroundColor:"red",
+    elevation: 0,
     justifyContent: "center",
   },
 });

@@ -7,6 +7,7 @@ import { AntDesign } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { updatePreference } from "@/legendstate/AmpelaStates";
+import i18n from "@/constants/i18n";
 const OnBoarding = [
   {
     title: "  Bienvenue sur Ampela",
@@ -214,8 +215,7 @@ const index = () => {
       <View className="absolute top-10 right-5">
         <TouchableOpacity onPress={skipHandler}>
           <Text className="text-[16px]" style={{ color: "#424242" }}>
-            {" "}
-            Ignorer
+            {i18n.t("ignorer")}
           </Text>
           <AntDesign name="" />
         </TouchableOpacity>

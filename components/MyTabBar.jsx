@@ -89,7 +89,7 @@ function MyTabBar({ state, descriptors, navigation }) {
           return !isKeyboardVisible || !hideOnKeyboard ? (
             <View
               key={index}
-              style={[route.name === "index" ? styles.indexContainer : null]}
+              // style={[route.name === "index" ? styles.indexContainer : null]}
             >
               <TouchableOpacity
                 key={index}
@@ -101,17 +101,17 @@ function MyTabBar({ state, descriptors, navigation }) {
                 onLongPress={onLongPress}
                 style={[
                   styles.tabButton,
-                  route.name === "index"
-                    ? [
-                        styles.indexTabButton,
-                        {
-                          backgroundColor:
-                            theme === "orange"
-                              ? COLORS.neutral250
-                              : COLORS.accent400,
-                        },
-                      ]
-                    : null,
+                  // route.name === "index"
+                  //   ? [
+                  //       styles.indexTabButton,
+                  //       {
+                  //         backgroundColor:
+                  //           theme === "orange"
+                  //             ? COLORS.neutral250
+                  //             : COLORS.accent400,
+                  //       },
+                  //     ]
+                  //   : null,
                   isFocused
                     ? [
                         styles.tabButtonFocused,
@@ -131,8 +131,8 @@ function MyTabBar({ state, descriptors, navigation }) {
                   color={
                     isFocused
                       ? "white"
-                      : route.name === "index"
-                      ? "white"
+                      // : route.name === "index"
+                      // ? "white"
                       : "#bdb9b9"
                   }
                 />

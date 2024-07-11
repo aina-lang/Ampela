@@ -1,10 +1,11 @@
 import { COLORS, icons, images } from "@/constants";
 import i18n from "@/constants/i18n";
 import { preferenceState } from "@/legendstate/AmpelaStates";
-import { Ionicons } from "@expo/vector-icons";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useSelector } from "@legendapp/state/react";
 import { Image } from "expo-image";
 import { router, useRouter } from "expo-router";
+import { getAuth } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -38,6 +39,16 @@ const OneForum = () => {
           <Text>Aina mercia</Text>
         </View>
         <Text>20 octobre 2041</Text>
+      </View>
+      <View className="flex-row  z-50 items-center p-3 bg-gray-200 justify-end">
+        <View className="flex-row space-x-2 items-center ">
+          <AntDesign name={"heart"} color={COLORS.accent600} size={24} />
+          <Text>30 </Text>
+        </View>
+        <View className="flex-row space-x-2 ml-2">
+          <Image source={icons.message} style={{ height: 20, width: 20 }} />
+          <Text>20 </Text>
+        </View>
       </View>
       <ScrollView contentContainerStyle={{ padding: 20 }}>
         <View>
@@ -84,9 +95,20 @@ const OneForum = () => {
           </Text>
         </View>
         <View>
-          <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>
-            Commentaires
-          </Text>
+          <View
+            className="flex-row items-center space-x-4"
+            style={{ marginBottom: 10, marginTop: 20 }}
+          >
+            <Text
+              style={{
+                fontSize: 20,
+                fontWeight: "bold",
+              }}
+            >
+              Commentaires
+            </Text>
+            <View className="flex-grow h-[1px] rounded-full bg-gray-400" />
+          </View>
           {comments.map((comment, index) => (
             <View key={index} style={styles.commentContainer}>
               <View className="flex-row justify-between z-50 items-center mb-2">
@@ -112,28 +134,30 @@ const OneForum = () => {
           ))}
         </View>
       </ScrollView>
-      <View
-        style={styles.inputToolbarContainer}
-        className="shadow-md shadow-black bg-white w-[90%] rounded-md  -top-3 flex-row"
-      >
-        <TextInput
-          multiline
-          placeholder={i18n.t("ecrireUnCommentaire")}
-          style={styles.commentInput}
-          value={commentValue}
-          onChangeText={setCommentValue}
-        />
-        <TouchableOpacity
-          className="items-center justify-center"
-          onPress={handleSendComment}
+      {getAuth().currentUser && (
+        <View
+          style={styles.inputToolbarContainer}
+          className="shadow-md shadow-black bg-white w-[90%] rounded-md  -top-3 flex-row"
         >
-          <Ionicons
-            name="send"
-            size={20}
-            color={theme === "orange" ? COLORS.accent800 : COLORS.accent500}
+          <TextInput
+            multiline
+            placeholder={i18n.t("ecrireUnCommentaire")}
+            style={styles.commentInput}
+            value={commentValue}
+            onChangeText={setCommentValue}
           />
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            className="items-center justify-center"
+            onPress={handleSendComment}
+          >
+            <Ionicons
+              name="send"
+              size={20}
+              color={theme === "orange" ? COLORS.accent800 : COLORS.accent500}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
     </>
   );
 };

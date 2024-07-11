@@ -17,7 +17,11 @@ import {
 } from "@/components/response-of-question";
 import { addCycleMenstruel, addUser } from "@/services/database";
 import { generateCycleMenstrualData } from "@/utils/menstruationUtils";
-import { updateUser, userState } from "@/legendstate/AmpelaStates";
+import {
+  updateCycleMenstruelData,
+  updateUser,
+  userState,
+} from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 
 const durationMenstruations = [];
@@ -55,7 +59,7 @@ const QuestionsSeries = () => {
 
   function getNumberFromString(strs) {
     if (strs === dontRememberText) {
-      return 28; // Valeur par défaut si l'utilisateur ne se souvient pas
+      return 28; 
     } else {
       const arrs = strs.split(" ");
       return parseInt(arrs[0], 10);
@@ -73,11 +77,11 @@ const QuestionsSeries = () => {
   const handleNextBtnPress = async () => {
     setIsLoading(true);
 
-    // Ajustez la valeur du cycle de menstruation et de la durée des menstruations
+
     const cycleDuration = getNumberFromString(response1);
     const durationMenstruation = getNumberFromString(response0);
 
-    // Générer les données du cycle menstruel
+
     const cycleData = generateCycleMenstrualData(
       user.lastMenstruationDate,
       cycleDuration,
@@ -95,14 +99,15 @@ const QuestionsSeries = () => {
       user.profileImage
     );
 
-    // Boucle pour enregistrer chaque cycle dans la base de données
+    updateCycleMenstruelData({ cyclesData: cycleData });
+
     for (let i = 0; i < cycleData.length; i++) {
       const cycle = cycleData[i];
 
-      // Mise à jour du pourcentage de progression
+   
       setProgress(((i + 1) / cycleData.length) * 100);
 
-      // Ajout du cycle menstruel dans la base de données
+   
       await addCycleMenstruel(
         cycle.fecundityPeriodEnd,
         cycle.fecundityPeriodStart,
@@ -112,12 +117,12 @@ const QuestionsSeries = () => {
         cycle.nextMenstruationDate,
         cycle.nextMenstruationEndDate,
         cycle.ovulationDate,
-        durationMenstruation, // Inclure la durée des menstruations
-        cycleDuration // Inclure la durée du cycle
+        durationMenstruation,
+        cycleDuration
       );
     }
 
-    // Mise à jour de l'utilisateur avec les nouvelles valeurs
+
     await updateUser({
       ...user,
       lastMenstruationDate: user.lastMenstruationDate,
@@ -147,7 +152,7 @@ const QuestionsSeries = () => {
     <SafeAreaView style={styles.container}>
       <Text
         style={styles.title}
-            className="bg-[#FF7575] text-white  rounded-br-[120px] pt-20"
+        className="bg-[#FF7575] text-white  rounded-br-[120px] pt-20"
       >
         Indiquez vos durées menstruelles et de cycle
       </Text>

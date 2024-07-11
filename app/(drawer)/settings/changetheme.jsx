@@ -1,18 +1,13 @@
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import HeaderWithGoBack from "@/components/header-with-go-back";
 import { SIZES, COLORS, images } from "@/constants";
 import { useNavigation } from "expo-router";
 import { preferenceState, updatePreference } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
+import i18n from "@/constants/i18n";
 
 const ThemeScreen = () => {
-  const { theme,language } = useSelector(() => preferenceState.get());
+  const { theme, language } = useSelector(() => preferenceState.get());
   const navigation = useNavigation();
   const handleThemeChange = (theme) => {
     updatePreference({ theme });
@@ -23,14 +18,13 @@ const ThemeScreen = () => {
         styles.container,
         {
           backgroundColor:
-            theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
+          COLORS.bg100
         },
       ]}
-
-      className="space-x-3"
+      className="space-x-3 "
     >
       <HeaderWithGoBack
-        title={"theme"}
+        title={i18n.t("theme")}
         navigation={navigation}
         onIconLeftPress={() => navigation.goBack()}
       />
@@ -44,14 +38,17 @@ const ThemeScreen = () => {
             <View
               style={{
                 padding: 10,
-                backgroundColor:
-                  theme == "pink" ? COLORS.accent500 : null,
+                backgroundColor: theme == "pink" ? COLORS.accent500 : null,
                 borderRadius: 10,
               }}
             >
               <Image
                 source={images.pinkTheme}
-                style={{ width: SIZES.width*0.35, height: 320, borderRadius: 10 }}
+                style={{
+                  width: SIZES.width * 0.35,
+                  height: 320,
+                  borderRadius: 10,
+                }}
                 resizeMode="contain"
               />
             </View>
@@ -76,14 +73,17 @@ const ThemeScreen = () => {
             <View
               style={{
                 padding: 10,
-                backgroundColor:
-                  theme === "orange" ? COLORS.accent800 : null,
+                backgroundColor: theme === "orange" ? COLORS.accent800 : null,
                 borderRadius: 10,
               }}
             >
               <Image
                 source={images.orangeTheme}
-                style={{ width: SIZES.width*0.35, height: 320, borderRadius: 10 }}
+                style={{
+                  width: SIZES.width * 0.35,
+                  height: 320,
+                  borderRadius: 10,
+                }}
                 resizeMode="contain"
               />
             </View>

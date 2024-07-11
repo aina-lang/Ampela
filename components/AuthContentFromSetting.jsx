@@ -7,32 +7,41 @@ import {
   Dimensions,
   TouchableOpacity,
   FlatList,
+  Modal,
 } from "react-native";
 import { COLORS } from "@/constants";
-import { auth, database, storage } from "@/services/firebaseConfig";
+import {
+  auth,
+  database,
+  realtimeDatabase,
+  storage,
+} from "@/services/firebaseConfig";
 import {
   createUserWithEmailAndPassword,
+  sendEmailVerification,
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  where,
-} from "firebase/firestore";
-import { useSelector } from "@legendapp/state/react";
-import { preferenceState, updateUser, userState } from "@/legendstate/AmpelaStates";
 
+import { useSelector } from "@legendapp/state/react";
 import {
+  preferenceState,
+  updateUser,
+  userState,
+} from "@/legendstate/AmpelaStates";
+import { useModal } from "@/hooks/ModalProvider";
+import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  BounceIn,
 } from "react-native-reanimated";
-import { updateUserSqlite } from "@/services/database";
-import { query } from "firebase/database";
+
+import {set } from "firebase/database";
+import * as FileSystem from "expo-file-system";
+import * as MediaLibrary from "expo-media-library";
+import i18n from "@/constants/i18n";
+import { fetchUserDataFromRealtimeDB } from "@/services/firestoreAPI";
 
 const { width } = Dimensions.get("window");
 
@@ -51,16 +60,52 @@ const AuthContent = ({ closeModal }) => {
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [loginErrorPresent, setLoginErrorPresent] = useState(false);
   const [signupErrorPresent, setSignupErrorPresent] = useState(false);
-  const scale = useSharedValue(0);
   const [loading, setLoading] = useState(false);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [isVerificationModalVisible, setVerificationModalVisible] =
+    useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [forgotPasswordEmailError, setForgotPasswordEmailError] = useState("");
+  const [isForgotPasswordModalVisible, setForgotPasswordModalVisible] =
+    useState(false);
+
+  // Function to handle password reset
+  const handleForgotPassword = async () => {
+    if (!validateEmail(forgotPasswordEmail)) {
+      setForgotPasswordEmailError("Veuillez saisir une adresse e-mail valide");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await auth.sendPasswordResetEmail(forgotPasswordEmail);
+      setForgotPasswordModalVisible(true);
+      setForgotPasswordEmail("");
+    } catch (error) {
+      let errorMessage;
+      switch (error.code) {
+        case "auth/invalid-email":
+          errorMessage = "Adresse e-mail invalide";
+          break;
+        case "auth/user-not-found":
+          errorMessage = "Aucun utilisateur trouvé avec cette adresse e-mail";
+          break;
+        default:
+          errorMessage = "Erreur inconnue, veuillez réessayer";
+      }
+      setForgotPasswordEmailError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const [linkVerification, setLinkVerfification] = useState("");
+
+  const scale = useSharedValue(0);
   const { theme } = useSelector(() => preferenceState.get());
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { scale: withSpring(scale.value, { damping: 10, stiffness: 200 }) },
-      ],
-    };
-  });
+
+  const flatListRef = useRef(null);
+
   const handleLoginEmailChange = (text) => {
     setLoginEmail(text);
     if (!text) {
@@ -118,97 +163,170 @@ const AuthContent = ({ closeModal }) => {
 
   const handleSignUp = async () => {
     setLoading(true);
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        signupEmail,
-        signupPassword
-      );
-      const userFromFirestoreUid = userCredential?.user?.uid;
+    createUserWithEmailAndPassword(auth, signupEmail, signupPassword)
+      .then(async (userCredential) => {
+        const userFromFirestoreUid = userCredential?.user?.uid;
+        const { uid, email, emailVerified } = userCredential.user;
 
-      const blob = await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.onload = function () {
-          resolve(xhr.response);
-        };
-        xhr.onerror = function () {
-          reject(new TypeError("Network request failed"));
-        };
-        xhr.responseType = "blob";
-        xhr.open("GET", user.profileImage, true);
-        xhr.send(null);
+        if (emailVerified) {
+        } else {
+          // Send email verification
+          await sendEmailVerification(userCredential.user).then((response) => {
+            console.log(response);
+          });
+          handleScrollToIndex(0);
+          setSignupEmail("");
+          setSignupPassword("");
+          setConfirmPassword("");
+          setVerificationModalVisible(true);
+        }
+      })
+      .catch((error) => {
+        let errorMessage;
+        switch (error.code) {
+          case "auth/invalid-email":
+            errorMessage = "Adresse e-mail invalide";
+            break;
+          case "auth/user-disabled":
+            errorMessage = "Ce compte a été désactivé";
+            break;
+          case "auth/network-request-failed":
+            errorMessage = "Problème de connexion réseau";
+            break;
+          case "auth/email-already-in-use":
+            errorMessage = "L'adresse e-mail est déjà associée à un compte.";
+            break;
+          case "auth/weak-password":
+            errorMessage =
+              "Le mot de passe est trop faible. Veuillez choisir un mot de passe plus fort.";
+            break;
+          default:
+            errorMessage = "Erreur inconnue, veuillez réessayer";
+        }
+        setLoginError(errorMessage);
+        setModalVisible(true);
+        setLoading(false);
+      })
+      .finally(() => {
+        setLoading(false);
       });
-
-      const storageRef = ref(storage, `Avatar/${user.username}_avatar`);
-      await uploadBytes(storageRef, blob);
-
-      const profilePhotoUrl = await getDownloadURL(storageRef);
-
-      const userDocRef = collection(database, "users");
-      await addDoc(userDocRef, {
-        userId: userFromFirestoreUid,
-        username: user.username,
-        profession: user.profession,
-        lastMenstruationDate: user.lastMenstruationDate,
-        durationMenstruation: user.durationMenstruation,
-        cycleDuration: user.cycleDuration,
-        email: signupEmail,
-        profileImage: profilePhotoUrl,
-      });
-
-      setSignupEmail("");
-      setSignupPassword("");
-      setConfirmPassword("");
-    } catch (error) {
-      console.error("Erreur lors de l'inscription:", error.message);
-    } finally {
-      closeModal();
-      setLoading(false);
-    }
   };
 
   const handleLogin = async () => {
     setLoading(true);
-    try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        loginEmail,
-        loginPassword
-      );
+    await signInWithEmailAndPassword(auth, loginEmail, loginPassword)
+      .then(async (userCredential) => {
+        if (!userCredential.user.emailVerified) {
+          await sendEmailVerification(userCredential.user).then((response) => {
+            console.log(response);
+          });
+          setVerificationModalVisible(true);
+        } else {
+          const userId = userCredential.user.uid;
 
-      const usersCollectionRef = collection(database, "users");
-      const q = query(
-        usersCollectionRef,
-        where("userId", "==", userCredential.user.uid)
-      );
-      const querySnapshot = await getDocs(q);
+          const userData = await fetchUserDataFromRealtimeDB(userId);
+          console.log("USER DATA ", userData);
+          if (userData) {
+            const { username, email, profileImage } = userData.user;
 
-      if (!querySnapshot.empty) {
-        const userDoc = querySnapshot.docs[0];
-        console.log("User data:", userDoc.data());
-        const userData = userDoc.data();
-        updateUser({
-          id: userCredential.user.uid,
-          username: userData.username,
-          email: userData.email,
-          profileImage: userData.profileImage,
-        });
+            let localUri;
+            if (profileImage.startsWith("file://")) {
+              // L'image est déjà téléchargée localement
+              localUri = profileImage;
+            } else {
+              // Télécharger l'image de profil depuis une URL HTTP/HTTPS
+              localUri = `${FileSystem.documentDirectory}${username}_avatar.jpg`;
+              await FileSystem.downloadAsync(profileImage, localUri)
+                .then(({ uri }) => {
+                  console.log("Finished downloading to ", uri);
+                })
+                .catch((error) => {
+                  console.error("Error downloading image:", error);
+                });
 
-        // Sauvegarder les données dans SQLite
-        updateUserSqlite({
-          id: userCredential.user.uid,
-          username: userData.username,
-          email: userData.email,
-          profileImage: userData.profileImage,
-        });
-      } else {
-        console.error("No such user document!");
-      }
-    } catch (error) {
-      console.error("Erreur lors de la connexion:", error.message);
-    } finally {
-      setLoading(false);
-    }
+              // Sauvegarder l'image dans la bibliothèque de médias
+              await MediaLibrary.saveToLibraryAsync(localUri);
+            }
+
+            updateUser({
+              id: userCredential.user.uid,
+              ...user,
+              email: userCredential.user.email,
+              profileImage: localUri,
+            });
+
+            // updateUserSqlite({
+            //   id: userCredential.user.uid,
+            //   // username: username,
+            //   email: userCredential.user.email,
+            //   profileImage: localUri,
+            // });
+          } else {
+            const blob = await new Promise((resolve, reject) => {
+              const xhr = new XMLHttpRequest();
+              xhr.onload = function () {
+                resolve(xhr.response);
+              };
+              xhr.onerror = function () {
+                reject(new TypeError("Network request failed"));
+              };
+              xhr.responseType = "blob";
+              xhr.open("GET", user.profileImage, true);
+              xhr.send(null);
+            });
+
+            const storageRef = ref(storage, `Avatar/${user.username}_avatar`);
+            await uploadBytes(storageRef, blob);
+
+            const profilePhotoUrl = await getDownloadURL(storageRef);
+
+            const userRef = ref(realtimeDatabase, `users/${userId}`);
+            await set(userRef, {
+              userId: userId,
+              username: user.username,
+              lastMenstruationDate: user.lastMenstruationDate,
+              durationMenstruation: user.durationMenstruation,
+              cycleDuration: user.cycleDuration,
+              email: loginEmail,
+              profileImage: profilePhotoUrl,
+            });
+          }
+        }
+        closeModal();
+        setLoading(false);
+      })
+      .catch((error) => {
+        let errorMessage;
+        console.log(error);
+        switch (error.code) {
+          case "auth/user-not-found":
+            errorMessage = "Adresse e-mail non trouvée";
+            break;
+          case "auth/invalid-credential":
+            errorMessage = "Vérifier votre identifiants et votre mot de passe ";
+            break;
+          case "auth/wrong-password":
+            errorMessage = "Mot de passe incorrect";
+            break;
+          case "auth/invalid-email":
+            errorMessage = "Adresse e-mail invalide";
+            break;
+          case "auth/user-disabled":
+            errorMessage = "Ce compte a été désactivé";
+            break;
+          case "auth/network-request-failed":
+            errorMessage = "Problème de connexion réseau";
+            break;
+          case "auth/too-many-requests":
+            errorMessage = "Réessayer plus tard";
+            break;
+          default:
+            errorMessage = "Erreur inconnue, veuillez réessayer";
+        }
+        setLoginError(errorMessage);
+        setModalVisible(true);
+        setLoading(false);
+      });
   };
 
   const validateEmail = (email) => {
@@ -221,30 +339,19 @@ const AuthContent = ({ closeModal }) => {
     return passwordRegex.test(password);
   };
 
-  const flatListRef = useRef(null);
-
   const handleScrollToIndex = (index) => {
     flatListRef.current.scrollToIndex({ index });
   };
 
   useEffect(() => {
-    if (!loginEmail || !loginPassword) {
-      setLoginErrorPresent(true);
-    } else {
-      setLoginErrorPresent(false);
-    }
-
-    if (
+    setLoginErrorPresent(!loginEmail || !loginPassword);
+    setSignupErrorPresent(
       !signupEmail ||
-      !signupPassword ||
-      !confirmPassword ||
-      signupPasswordError ||
-      confirmPasswordError
-    ) {
-      setSignupErrorPresent(true);
-    } else {
-      setSignupErrorPresent(false);
-    }
+        !signupPassword ||
+        !confirmPassword ||
+        signupPasswordError ||
+        confirmPasswordError
+    );
   }, [
     loginEmail,
     loginPassword,
@@ -258,139 +365,178 @@ const AuthContent = ({ closeModal }) => {
   const pages = [
     {
       key: "1",
-      title: "Connexion",
+      title: i18n.t("connecter"),
       content: (
         <>
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
-              placeholder="Email"
+              placeholder={i18n.t("adressemail")}
               keyboardType="email-address"
               onChangeText={handleLoginEmailChange}
               editable={!loading}
             />
           </View>
           {loginEmailError && (
-            <Text style={{ color: "red" }}>{loginEmailError}</Text>
+            <Text style={styles.errorText}>{loginEmailError}</Text>
           )}
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
-              placeholder="Password"
+              placeholder={i18n.t("motDePasse")}
               secureTextEntry
               onChangeText={handleLoginPasswordChange}
               editable={!loading}
             />
           </View>
           {loginPasswordError && (
-            <Text style={{ color: "red" }}>{loginPasswordError}</Text>
+            <Text style={styles.errorText}>{loginPasswordError}</Text>
           )}
           <TouchableOpacity
             style={[
               styles.button,
               {
                 backgroundColor:
-                  loginErrorPresent || loading ? "#e7e5e5" : "#FF7575",
+                  loginErrorPresent || loading
+                    ? theme === "pink"
+                      ? COLORS.accent500_40
+                      : COLORS.accent800_40
+                    : theme === "pink"
+                    ? COLORS.accent500
+                    : COLORS.accent800,
               },
             ]}
             onPress={handleLogin}
             disabled={loginErrorPresent || loading}
           >
             <Text style={styles.buttonText}>
-              {loading ? "Chargement..." : "Se connecter"}
+              {loading ? i18n.t("chargement") : i18n.t("connection")}
             </Text>
           </TouchableOpacity>
-          {loginError && <Text style={{ color: "red" }}>{loginError}</Text>}
-          <Text className="text-center py-2">Ou</Text>
+          {/* {loginError && <Text style={styles.errorText}>{loginError}</Text>} */}
+          <Text style={styles.orText} className="lowercase">
+            {i18n.t("ou")}
+          </Text>
           <TouchableOpacity
-            style={{
-              padding: 15,
-              borderRadius: 15,
-              backgroundColor: "white",
-              borderWidth: 1,
-              borderColor:
-                theme === "pink" ? COLORS.accent500 : COLORS.accent800,
-            }}
-            className=" mb-5"
+            style={[
+              styles.switchButton,
+              {
+                borderColor:
+                  theme === "pink" ? COLORS.accent500 : COLORS.accent800,
+              },
+            ]}
             onPress={() => handleScrollToIndex(1)}
           >
-            <Text className="text-center" style={{ color: COLORS.accent500 }}>
-              S'inscrire
+            <Text
+              style={[
+                styles.switchButtonText,
+                {
+                  color: theme === "pink" ? COLORS.accent500 : COLORS.accent800,
+                },
+              ]}
+            >
+              {i18n.t("inscription")}
             </Text>
           </TouchableOpacity>
+          <View className="mt-3 flex-row justify-end">
+            <TouchableOpacity
+              style={styles.forgotPasswordButton}
+              onPress={() => setForgotPasswordModalVisible(true)} 
+              className=""
+            >
+              <Text style={styles.forgotPasswordText}>
+                {/* {i18n.t("motDePasseOublie")} */}
+                mot de passe uoblié
+              </Text>
+            </TouchableOpacity>
+          </View>
         </>
       ),
     },
     {
       key: "2",
-      title: "Inscription",
+      title: i18n.t("inscription"),
       content: (
         <>
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
-              placeholder="Email"
+              placeholder={i18n.t("adressemail")}
               keyboardType="email-address"
               onChangeText={handleSignupEmailChange}
               editable={!loading}
             />
           </View>
           {signupEmailError && (
-            <Text style={{ color: "red" }}>{signupEmailError}</Text>
+            <Text style={styles.errorText}>{signupEmailError}</Text>
           )}
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
-              placeholder="Password"
+              placeholder={i18n.t("motDePasse")}
               secureTextEntry
               onChangeText={handleSignupPasswordChange}
               editable={!loading}
             />
           </View>
           {signupPasswordError && (
-            <Text style={{ color: "red" }}>{signupPasswordError}</Text>
+            <Text style={styles.errorText}>{signupPasswordError}</Text>
           )}
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
-              placeholder="Confirm Password"
+              placeholder={i18n.t("confirmerpassword")}
               secureTextEntry
               onChangeText={handleConfirmPasswordChange}
               editable={!loading}
             />
           </View>
           {confirmPasswordError && (
-            <Text style={{ color: "red" }}>{confirmPasswordError}</Text>
+            <Text style={styles.errorText}>{confirmPasswordError}</Text>
           )}
           <TouchableOpacity
             style={[
               styles.button,
               {
                 backgroundColor:
-                  signupErrorPresent || loading ? "#e7e5e5" : "#FF7575",
+                  signupErrorPresent || loading
+                    ? theme === "pink"
+                      ? COLORS.accent500_40
+                      : COLORS.accent800_40
+                    : theme === "pink"
+                    ? COLORS.accent500
+                    : COLORS.accent800,
               },
             ]}
             onPress={handleSignUp}
             disabled={signupErrorPresent || loading}
           >
             <Text style={styles.buttonText}>
-              {loading ? "Chargement..." : "S'inscrire"}
+              {loading ? i18n.t("chargement") : i18n.t("connection")}
             </Text>
           </TouchableOpacity>
-          <Text className="text-center py-2">Ou</Text>
+          <Text style={styles.orText} className="lowercase">
+            {i18n.t("ou")}
+          </Text>
           <TouchableOpacity
-            style={{
-              padding: 15,
-              borderRadius: 15,
-              borderWidth: 1,
-              borderColor:
-                theme === "pink" ? COLORS.accent500 : COLORS.accent800,
-            }}
-            className=" mb-5"
+            style={[
+              styles.switchButton,
+              {
+                borderColor:
+                  theme === "pink" ? COLORS.accent500 : COLORS.accent800,
+              },
+            ]}
             onPress={() => handleScrollToIndex(0)}
           >
-            <Text className="text-center" style={{ color: COLORS.accent500 }}>
-              Se connecter
+            <Text
+              style={[
+                styles.switchButtonText,
+                {
+                  color: theme === "pink" ? COLORS.accent500 : COLORS.accent800,
+                },
+              ]}
+            >
+              {i18n.t("connecter")}
             </Text>
           </TouchableOpacity>
         </>
@@ -400,11 +546,8 @@ const AuthContent = ({ closeModal }) => {
 
   return (
     <>
-      <TouchableOpacity
-        className="absolute z-50 top-5 right-5"
-        onPress={closeModal}
-      >
-        <Text>Non merci</Text>
+      <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+        <Text style={styles.closeButtonText}>{i18n.t("ignorer")}</Text>
       </TouchableOpacity>
       <FlatList
         ref={flatListRef}
@@ -415,7 +558,16 @@ const AuthContent = ({ closeModal }) => {
         keyExtractor={(item) => item.key}
         renderItem={({ item }) => (
           <View style={styles.pageContainer}>
-            <Text style={styles.title}>{item.title}</Text>
+            <Text
+              style={[
+                styles.title,
+                {
+                  color: theme === "pink" ? COLORS.accent500 : COLORS.accent800,
+                },
+              ]}
+            >
+              {item.title}
+            </Text>
             <Text style={styles.infoText}>
               Si vous voulez poser des questions, commenter ou réagir, et
               envoyer des messages (forum, message privé), veuillez vous
@@ -425,8 +577,60 @@ const AuthContent = ({ closeModal }) => {
             {item.content}
           </View>
         )}
-        contentContainerStyle={{ backgroundColor: "white" }}
+        contentContainerStyle={styles.flatListContent}
       />
+      <Modal
+        visible={isModalVisible}
+        onRequestClose={() => setModalVisible(false)}
+        transparent
+      >
+        <View style={styles.modalBackdrop}>
+          <Animated.View entering={BounceIn} style={styles.modalContent}>
+            <Text style={styles.modalText}>Erreur lors de la connexion:</Text>
+            <Text style={styles.modalText}>{loginError}</Text>
+            <TouchableOpacity
+              onPress={() => setModalVisible(false)}
+              style={[
+                styles.modalButton,
+                {
+                  backgroundColor:
+                    theme === "pink" ? COLORS.accent500 : COLORS.accent800,
+                },
+              ]}
+            >
+              <Text style={styles.modalButtonText}>Fermer</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={isVerificationModalVisible}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setVerificationModalVisible(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <Animated.View entering={BounceIn} style={styles.modalContent}>
+            <Text style={styles.modalText}>
+              Un email de vérification a été envoyé. Veuillez vérifier votre
+              boîte de réception.
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.modalButton,
+                {
+                  backgroundColor:
+                    theme === "pink" ? COLORS.accent500 : COLORS.accent800,
+                },
+              ]}
+              onPress={() => setVerificationModalVisible(false)}
+            >
+              <Text style={styles.modalButtonText}>Fermer</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </Modal>
     </>
   );
 };
@@ -436,6 +640,21 @@ const styles = StyleSheet.create({
     width,
     padding: 20,
     justifyContent: "center",
+    backgroundColor: "white",
+  },
+  closeButton: {
+    position: "absolute",
+    zIndex: 50,
+    top: 0,
+    justifyContent: "flex-end",
+    padding: 15,
+    width: "100%",
+    backgroundColor: "white",
+    flexDirection: "row",
+  },
+  closeButtonText: {
+    fontSize: 16,
+    color: COLORS.primary,
   },
   title: {
     fontSize: 24,
@@ -443,8 +662,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 20,
   },
-
   infoText: {
+    fontSize: 16,
     marginBottom: 20,
     textAlign: "center",
   },
@@ -452,14 +671,13 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 15,
     overflow: "hidden",
+    borderColor: COLORS.inputBorder, 
   },
   inputContainer: {
-    borderWidth: 1,
-    borderColor: "#c0bdbd",
     borderRadius: 15,
     marginVertical: 10,
-    width: Math.floor(Dimensions.get("window").width) - 40,
-    backgroundColor: "rgb(243 244 246)",
+    width: width - 40,
+    backgroundColor: COLORS.bg200,
   },
   button: {
     padding: 15,
@@ -470,6 +688,58 @@ const styles = StyleSheet.create({
     color: "white",
     textAlign: "center",
     fontSize: 16,
+  },
+  errorText: {
+    color: "red",
+    marginBottom: 10,
+    marginLeft: 10,
+  },
+  orText: {
+    textAlign: "center",
+    paddingVertical: 10,
+    fontSize: 16, // Ajustez la taille de la police en fonction de votre thème
+  },
+  switchButton: {
+    padding: 15,
+    borderRadius: 15,
+    borderWidth: 1,
+    marginTop: 0,
+    backgroundColor: "white",
+  },
+  switchButtonText: {
+    textAlign: "center",
+    fontSize: 16, // Ajustez la taille de la police en fonction de votre thème
+  },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 10,
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 15,
+    alignItems: "center",
+    zIndex: 9999,
+  },
+  modalText: {
+    fontSize: 18,
+    marginBottom: 10,
+    color: COLORS.modalTextColor, // Ajustez la couleur en fonction de votre thème
+  },
+  modalButton: {
+    marginTop: 20,
+    padding: 10,
+    borderRadius: 5,
+  },
+  modalButtonText: {
+    color: "white",
+    textAlign: "center",
+  },
+  flatListContent: {
+    backgroundColor: "white",
   },
 });
 

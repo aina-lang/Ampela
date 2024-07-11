@@ -8,6 +8,7 @@ import {
   Platform,
   SafeAreaView,
   FlatList,
+  RefreshControl,
 } from "react-native";
 import ForumItem from "@/components/forum-item";
 import { COLORS, SIZES } from "@/constants";
@@ -16,7 +17,7 @@ import { auth, database } from "@/services/firebaseConfig";
 import { Link, useNavigation } from "expo-router";
 import SearchForum from "@/components/SearchForum";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
-import AuthContent from "@/components/AuthContent";
+
 import { useModal } from "@/hooks/ModalProvider";
 import {
   collection,
@@ -28,8 +29,9 @@ import {
   where,
 } from "firebase/firestore";
 import { useNetInfo } from "@react-native-community/netinfo";
+import AuthContent from "@/components/AuthContentFromSetting";
 
-const PAGE_SIZE = 10; // Number of posts to load at a time
+const PAGE_SIZE = 10;
 
 const Index = () => {
   const navigation = useNavigation();
@@ -39,10 +41,11 @@ const Index = () => {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [lastVisible, setLastVisible] = useState(null);
   const [searchText, setSearchText] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
   const { openModal } = useModal();
   const { isConnected, isInternetReachable } = useNetInfo();
+  const { closeModal } = useModal();
 
-  // Function to fetch posts
   const fetchPosts = async (loadMore = false) => {
     if (!isConnected || !isInternetReachable) {
       setIsLoading(false);
@@ -71,6 +74,8 @@ const Index = () => {
           loadMore ? [...prevPosts, ...newPosts] : newPosts
         );
         setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
+      } else if (loadMore) {
+        setIsFetchingMore(false);
       }
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -104,6 +109,8 @@ const Index = () => {
             ...doc.data(),
           }));
           setFilteredPosts(newPosts);
+        } else {
+          setFilteredPosts([]);
         }
       } catch (error) {
         console.error("Error searching posts:", error);
@@ -120,7 +127,7 @@ const Index = () => {
 
   useEffect(() => {
     if (!auth.currentUser) {
-      openModal(<AuthContent />);
+      openModal(<AuthContent  closeModal={closeModal}/>);
     }
   }, []);
 
@@ -135,6 +142,13 @@ const Index = () => {
       setIsFetchingMore(true);
       fetchPosts(true);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    setLastVisible(null); // Reset pagination on refresh
+    await fetchPosts();
+    setRefreshing(false);
   };
 
   return (
@@ -174,7 +188,7 @@ const Index = () => {
               />
               <Text style={styles.text}>Hors ligne</Text>
             </View>
-          ) : isLoading ? (
+          ) : isLoading && posts.length === 0 && filteredPosts.length === 0 ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={COLORS.primary} />
             </View>
@@ -186,17 +200,34 @@ const Index = () => {
                 renderItem={({ item, index }) => (
                   <ForumItem post={item} navigation={navigation} key={index} />
                 )}
-                keyExtractor={(item, index) => index}
+                keyExtractor={(item, index) => index.toString()}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ padding: 12, paddingBottom: 80 }}
                 onEndReached={handleLoadMore}
                 onEndReachedThreshold={0.5}
+                ListEmptyComponent={
+                  !isLoading &&
+                  !searchText &&
+                  posts.length === 0 &&
+                  filteredPosts.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                      <Text>Pas de données pour le moment</Text>
+                    </View>
+                  ) : null
+                }
                 ListFooterComponent={
-                  isFetchingMore && (
+                  isFetchingMore &&
+                  posts.length != 0 && (
                     <View style={{ paddingVertical: 20 }}>
                       <ActivityIndicator size="large" color={COLORS.primary} />
                     </View>
                   )
+                }
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                  />
                 }
               />
             </>
@@ -240,6 +271,11 @@ const styles = StyleSheet.create({
   text: {
     color: "red",
     fontWeight: "bold",
+  },
+  emptyContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
   },
 });
 

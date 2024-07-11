@@ -1868,7 +1868,6 @@
 
 // export default ReminderItem;
 
-
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -1937,7 +1936,8 @@ const handleTaskExecution = async (taskName) => {
   try {
     const storedData = await AsyncStorage.getItem(taskName);
     if (storedData) {
-      const { notificationDate, title, body, frequency } = JSON.parse(storedData);
+      const { notificationDate, title, body, frequency } =
+        JSON.parse(storedData);
       await scheduleNotification(notificationDate, title, body, frequency);
     }
   } catch (error) {
@@ -1946,7 +1946,12 @@ const handleTaskExecution = async (taskName) => {
 };
 
 // Schedule notification
-const scheduleNotification = async (notificationDate, title, body, frequency) => {
+const scheduleNotification = async (
+  notificationDate,
+  title,
+  body,
+  frequency
+) => {
   await Notifications.scheduleNotificationAsync({
     content: {
       title,
@@ -1957,7 +1962,9 @@ const scheduleNotification = async (notificationDate, title, body, frequency) =>
   });
 
   if (frequency === "quotidien") {
-    const nextNotificationTime = moment(notificationDate).add(1, 'day').toDate();
+    const nextNotificationTime = moment(notificationDate)
+      .add(1, "day")
+      .toDate();
     await Notifications.scheduleNotificationAsync({
       content: {
         title,
@@ -1971,15 +1978,26 @@ const scheduleNotification = async (notificationDate, title, body, frequency) =>
 };
 
 // Register tasks
-const registerTask = async (taskName, notificationDate, title, body, frequency) => {
+const registerTask = async (
+  taskName,
+  notificationDate,
+  title,
+  body,
+  frequency
+) => {
   const status = await BackgroundFetch.getStatusAsync();
-  if (status === BackgroundFetch.BackgroundFetchStatus.Restricted ||
-      status === BackgroundFetch.BackgroundFetchStatus.Denied) {
+  if (
+    status === BackgroundFetch.BackgroundFetchStatus.Restricted ||
+    status === BackgroundFetch.BackgroundFetchStatus.Denied
+  ) {
     console.log("Background execution is restricted or denied.");
     return;
   }
 
-  await AsyncStorage.setItem(taskName, JSON.stringify({ notificationDate, title, body, frequency }));
+  await AsyncStorage.setItem(
+    taskName,
+    JSON.stringify({ notificationDate, title, body, frequency })
+  );
 
   await BackgroundFetch.registerTaskAsync(taskName, {
     minimumInterval: 60 * 15, // Minimum interval in seconds for testing
@@ -1990,14 +2008,47 @@ const registerTask = async (taskName, notificationDate, title, body, frequency) 
 };
 
 // Register individual tasks
-const registerPillReminderTask = async (notificationDate, title, body, frequency) => {
-  return await registerTask(PILL_REMINDER_TASK, notificationDate, title, body, frequency);
+const registerPillReminderTask = async (
+  notificationDate,
+  title,
+  body,
+  frequency
+) => {
+  return await registerTask(
+    PILL_REMINDER_TASK,
+    notificationDate,
+    title,
+    body,
+    frequency
+  );
 };
-const registerOvulationReminderTask = async (notificationDate, title, body, frequency) => {
-  return await registerTask(OVULATION_REMINDER_TASK, notificationDate, title, body, frequency);
+const registerOvulationReminderTask = async (
+  notificationDate,
+  title,
+  body,
+  frequency
+) => {
+  return await registerTask(
+    OVULATION_REMINDER_TASK,
+    notificationDate,
+    title,
+    body,
+    frequency
+  );
 };
-const registerMenstruationReminderTask = async (notificationDate, title, body, frequency) => {
-  return await registerTask(MENSTRUATION_REMINDER_TASK, notificationDate, title, body, frequency);
+const registerMenstruationReminderTask = async (
+  notificationDate,
+  title,
+  body,
+  frequency
+) => {
+  return await registerTask(
+    MENSTRUATION_REMINDER_TASK,
+    notificationDate,
+    title,
+    body,
+    frequency
+  );
 };
 
 const handleRegistrationError = (errorMessage) => {
@@ -2016,22 +2067,29 @@ const registerForPushNotificationsAsync = async () => {
   }
 
   if (Device.isDevice) {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    const { status: existingStatus } =
+      await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
     if (existingStatus !== "granted") {
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
     }
     if (finalStatus !== "granted") {
-      handleRegistrationError("Permission not granted to get push token for push notification!");
+      handleRegistrationError(
+        "Permission not granted to get push token for push notification!"
+      );
       return;
     }
-    const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+    const projectId =
+      Constants?.expoConfig?.extra?.eas?.projectId ??
+      Constants?.easConfig?.projectId;
     if (!projectId) {
       handleRegistrationError("Project ID not found");
     }
     try {
-      const pushTokenString = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+      const pushTokenString = (
+        await Notifications.getExpoPushTokenAsync({ projectId })
+      ).data;
       console.log(pushTokenString);
       return pushTokenString;
     } catch (e) {
@@ -2142,6 +2200,20 @@ const ReminderItem = ({ as, time, howmanytimeReminder }) => {
 
   const renderFrequencyItem = ({ item }) => {
     const isSelected = item.value === selectedFrequency;
+    const styles = {
+      regularFrequency: {
+        backgroundColor: COLORS.neutral100,
+        color: "black",
+        padding: 10,
+        borderRadius: 5,
+      },
+      selectedFrequency: {
+        backgroundColor: theme === "pink" ? COLORS.accent600 : COLORS.accent800,
+        color: COLORS.white,
+        padding: 10,
+        borderRadius: 5,
+      },
+    };
     const itemStyle = isSelected
       ? styles.selectedFrequency
       : styles.regularFrequency;
@@ -2149,7 +2221,7 @@ const ReminderItem = ({ as, time, howmanytimeReminder }) => {
       <TouchableOpacity
         onPress={() => {
           setSelectedFrequency(item.value);
-          saveSelectedFrequency(item.value);
+          saveSelectedFrequency(item.label);
         }}
       >
         <Text style={[itemStyle, { color: isSelected ? "white" : "black" }]}>
@@ -2204,7 +2276,7 @@ const ReminderItem = ({ as, time, howmanytimeReminder }) => {
             <Button
               title="Terminer"
               onPress={() => setModalVisible(false)}
-              color={COLORS.accent500}
+              color={theme === "pink" ? COLORS.accent600 : COLORS.accent800}
             />
           </View>
         </View>

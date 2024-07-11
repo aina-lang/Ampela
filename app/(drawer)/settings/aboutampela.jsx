@@ -38,7 +38,7 @@ const InfoScreen = () => {
         styles.container,
         {
           backgroundColor:
-            theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
+          COLORS.bg100
         },
       ]}
     >

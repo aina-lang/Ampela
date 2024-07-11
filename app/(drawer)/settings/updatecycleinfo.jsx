@@ -26,16 +26,18 @@ import {
   updateUserSqlite,
 } from "@/services/database";
 import { generateCycleMenstrualData } from "@/utils/menstruationUtils";
+import { useSelector } from "@legendapp/state/react";
 
 const UpdateCycleInfo = () => {
   const navigation = useNavigation();
   const [selectedDate, setSelectedDate] = useState(null);
+  const user = useSelector(() => userState.get());
   const [cycleDuration, setCycleDuration] = useState("");
   const [periodDuration, setPeriodDuration] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const { theme } = preferenceState.get();
-  const user = userState.get();
+
   const isDateSelected = !!selectedDate;
 
   const getFirstDayOfLastMonth = () => {
@@ -159,8 +161,7 @@ const UpdateCycleInfo = () => {
       style={[
         styles.container,
         {
-          backgroundColor:
-            theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
+          backgroundColor: COLORS.bg100,
         },
       ]}
     >
@@ -175,12 +176,13 @@ const UpdateCycleInfo = () => {
         </Text>
         <Calendar
           onDayPress={handleDayPress}
-          maxDate={getLastDayOfLastMonth().toISOString().split("T")[0]}
+          maxDate={new Date().toISOString().split("T")[0]}
           markedDates={{
             [selectedDate]: {
               selected: true,
               marked: true,
-              selectedColor: COLORS.accent500,
+              selectedColor:
+                theme === "pink" ? COLORS.accent500 : COLORS.accent800,
             },
           }}
           style={{
@@ -189,7 +191,8 @@ const UpdateCycleInfo = () => {
           }}
           theme={{
             textSectio0nTitleColor: COLORS.neutral400,
-            todayTextColor: COLORS.accent500,
+            todayTextColor:
+              theme === "pink" ? COLORS.accent500 : COLORS.accent800,
             dayTextColor: "#2d4150",
             textDisabledColor: COLORS.neutral400,
             arrowColor: COLORS.primary,
@@ -203,7 +206,9 @@ const UpdateCycleInfo = () => {
           }}
         />
         <View style={styles.inputContainer} className="mt-5">
-          <Text className="my-2">Nouvelle durée des règles</Text>
+          <Text className="my-3 " style={{ fontSize: 15 }}>
+            Nouvelle durée des règles
+          </Text>
           <TextInput
             style={[styles.input, !isDateSelected && styles.inputDisabled]}
             keyboardType="numeric"
@@ -217,13 +222,19 @@ const UpdateCycleInfo = () => {
                 setPeriodDuration("");
               }
             }}
-            placeholder="Entrez une nouvelle durée des règles"
+            placeholder={
+              "Votre durée des règles actuel est " +
+              user.durationMenstruation +
+              " jours"
+            }
             maxLength={1}
             editable={isDateSelected}
           />
         </View>
         <View style={styles.inputContainer} className="mt-2">
-          <Text className="my-2">Nouvelle durée du cycle</Text>
+          <Text className="my-3 " style={{ fontSize: 15 }}>
+            Nouvelle durée du cycle
+          </Text>
           <TextInput
             style={[styles.input, !isDateSelected && styles.inputDisabled]}
             keyboardType="numeric"
@@ -237,7 +248,9 @@ const UpdateCycleInfo = () => {
                 setCycleDuration("");
               }
             }}
-            placeholder="Entrez une nouvelle durée du cycle"
+            placeholder={
+              "Votre durée du cycle est  actuel " + user.cycleDuration + " jours"
+            }
             maxLength={2}
             editable={isDateSelected}
           />
@@ -245,8 +258,16 @@ const UpdateCycleInfo = () => {
         <TouchableOpacity
           style={[
             styles.button,
-            (!selectedDate || !cycleDuration || !periodDuration) &&
-              styles.buttonDisabled,
+            {
+              backgroundColor:
+                !selectedDate || !cycleDuration || !periodDuration
+                  ? theme === "pink"
+                    ? COLORS.accent500_40
+                    : COLORS.accent800_40
+                  : theme === "pink"
+                  ? COLORS.accent500
+                  : COLORS.accent800,
+            },
           ]}
           onPress={handleUpdateCycleInfo}
           disabled={!selectedDate || !cycleDuration || !periodDuration}
@@ -263,7 +284,16 @@ const UpdateCycleInfo = () => {
               Chargement de vos données... {Math.round(progress)}%
             </Text>
             <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBar, { width: `${progress}%` }]} />
+              <View
+                style={[
+                  styles.progressBar,
+                  {
+                    width: `${progress}%`,
+                    backgroundColor:
+                      theme === "pink" ? COLORS.accent500 : COLORS.accent800,
+                  },
+                ]}
+              />
             </View>
           </View>
         </View>
@@ -286,15 +316,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#ffe",
+    backgroundColor: COLORS.bg200,
     borderRadius: 8,
     padding: 10,
     fontSize: 16,
     color: COLORS.dark,
   },
   inputDisabled: {
-    backgroundColor: COLORS.lightGrey,
+    // backgroundColor: COLORS.lightGrey,
   },
   button: {
     backgroundColor: COLORS.accent500,
@@ -303,11 +332,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonDisabled: {
-    backgroundColor: COLORS.lightGrey,
+    backgroundColor: "#e7e5e5",
   },
   buttonText: {
     fontSize: 18,
-    color: COLORS.light,
+    color: COLORS.neutral100,
   },
   modalContent: {
     width: 250,
@@ -331,7 +360,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: "100%",
-    backgroundColor: COLORS.accent600,
+
     borderRadius: 5,
   },
   modalContainer: {
