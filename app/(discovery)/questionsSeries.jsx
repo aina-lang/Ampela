@@ -59,7 +59,7 @@ const QuestionsSeries = () => {
 
   function getNumberFromString(strs) {
     if (strs === dontRememberText) {
-      return 28; 
+      return 28;
     } else {
       const arrs = strs.split(" ");
       return parseInt(arrs[0], 10);
@@ -77,10 +77,8 @@ const QuestionsSeries = () => {
   const handleNextBtnPress = async () => {
     setIsLoading(true);
 
-
     const cycleDuration = getNumberFromString(response1);
     const durationMenstruation = getNumberFromString(response0);
-
 
     const cycleData = generateCycleMenstrualData(
       user.lastMenstruationDate,
@@ -104,10 +102,8 @@ const QuestionsSeries = () => {
     for (let i = 0; i < cycleData.length; i++) {
       const cycle = cycleData[i];
 
-   
       setProgress(((i + 1) / cycleData.length) * 100);
 
-   
       await addCycleMenstruel(
         cycle.fecundityPeriodEnd,
         cycle.fecundityPeriodStart,
@@ -121,7 +117,6 @@ const QuestionsSeries = () => {
         cycleDuration
       );
     }
-
 
     await updateUser({
       ...user,
@@ -314,7 +309,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
-    width: 250,
+    minWidth: 250,
     padding: 20,
     backgroundColor: "white",
     borderRadius: 10,

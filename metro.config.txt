@@ -1,0 +1,42 @@
+// metro.config.js
+const path = require("path");
+
+module.exports = {
+  transformer: {
+    minifierPath: require.resolve("metro-minify-terser"),
+    minifierConfig: {
+      // Options de configuration pour Terser
+      compress: {
+        // Réduction du code
+        drop_console: true, // Supprimer les appels console.*
+        drop_debugger: true, // Supprimer les appels debugger
+        passes: 2, // Nombre de passes pour la compression
+      },
+      mangle: {
+        // Options pour le mangle des noms
+        toplevel: true, // Également mangle les noms des variables et fonctions au niveau supérieur
+      },
+      format: {
+        // Options de format
+        comments: false, // Supprimer les commentaires
+      },
+    },
+  },
+  resolver: {
+    // Configurez ici les options de résolution des modules si nécessaire
+  },
+  server: {
+    // Configurez ici les options du serveur si nécessaire
+  },
+  // Autres configurations possibles pour Metro
+  watchFolders: [
+    path.resolve(__dirname, "app"), // Dossier principal de votre code source
+    path.resolve(__dirname, "components"), // Dossier des composants réutilisables
+    path.resolve(__dirname, "assets"), // Dossier des ressources statiques (images, polices, etc.)
+    path.resolve(__dirname, "utils"), // Dossier des utilitaires et helpers
+    path.resolve(__dirname, "services"),
+    path.resolve(__dirname, "constants"),
+    path.resolve(__dirname, "hooks"),
+    path.resolve(__dirname, "legendstate"),
+  ],
+};

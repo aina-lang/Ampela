@@ -19,29 +19,26 @@ import {
 import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
 } from "firebase/auth";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-
+import { getDownloadURL, uploadBytes } from "firebase/storage";
 import { useSelector } from "@legendapp/state/react";
 import {
+  cycleMenstruelState,
   preferenceState,
+  updateCycleMenstruelData,
   updateUser,
   userState,
 } from "@/legendstate/AmpelaStates";
-import { useModal } from "@/hooks/ModalProvider";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  BounceIn,
-} from "react-native-reanimated";
-
-import {set } from "firebase/database";
+import Animated, { BounceIn } from "react-native-reanimated";
+import { ref as dbRef, set as dbSet } from "firebase/database";
+import { ref as storageRef } from "firebase/storage";
 import * as FileSystem from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import i18n from "@/constants/i18n";
 import { fetchUserDataFromRealtimeDB } from "@/services/firestoreAPI";
+import { getAllCycle } from "@/services/database";
 
 const { width } = Dimensions.get("window");
 
@@ -66,23 +63,28 @@ const AuthContent = ({ closeModal }) => {
     useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const [forgotPasswordEmailError, setForgotPasswordEmailError] = useState("");
-  const [isForgotPasswordModalVisible, setForgotPasswordModalVisible] =
+
+  const [forgotPasswordModalVisible, setForgotPasswordModalVisible] =
+    useState(false);
+  const [resetEmailSentModalVisible, setResetEmailSentModalVisible] =
     useState(false);
 
-  // Function to handle password reset
   const handleForgotPassword = async () => {
-    if (!validateEmail(forgotPasswordEmail)) {
+    await sendPasswordResetEmail(loginEmail);
+    if (!validateEmail(loginEmail)) {
       setForgotPasswordEmailError("Veuillez saisir une adresse e-mail valide");
       return;
     }
 
     setLoading(true);
     try {
-      await auth.sendPasswordResetEmail(forgotPasswordEmail);
-      setForgotPasswordModalVisible(true);
-      setForgotPasswordEmail("");
+ 
+
+      setForgotPasswordModalVisible(false); // Close the modal
+      setResetEmailSentModalVisible(true); // Open the info modal
     } catch (error) {
       let errorMessage;
+      console.log(error);
       switch (error.code) {
         case "auth/invalid-email":
           errorMessage = "Adresse e-mail invalide";
@@ -99,13 +101,11 @@ const AuthContent = ({ closeModal }) => {
     }
   };
 
-  const [linkVerification, setLinkVerfification] = useState("");
-
-  const scale = useSharedValue(0);
   const { theme } = useSelector(() => preferenceState.get());
 
   const flatListRef = useRef(null);
-
+  const { cyclesData } = useSelector(() => cycleMenstruelState.get());
+  const cycles = cyclesData?.cyclesData ? cyclesData?.cyclesData : cyclesData;
   const handleLoginEmailChange = (text) => {
     setLoginEmail(text);
     if (!text) {
@@ -165,12 +165,9 @@ const AuthContent = ({ closeModal }) => {
     setLoading(true);
     createUserWithEmailAndPassword(auth, signupEmail, signupPassword)
       .then(async (userCredential) => {
-        const userFromFirestoreUid = userCredential?.user?.uid;
-        const { uid, email, emailVerified } = userCredential.user;
+        const { emailVerified } = userCredential.user;
 
-        if (emailVerified) {
-        } else {
-          // Send email verification
+        if (!emailVerified) {
           await sendEmailVerification(userCredential.user).then((response) => {
             console.log(response);
           });
@@ -214,54 +211,60 @@ const AuthContent = ({ closeModal }) => {
 
   const handleLogin = async () => {
     setLoading(true);
-    await signInWithEmailAndPassword(auth, loginEmail, loginPassword)
-      .then(async (userCredential) => {
-        if (!userCredential.user.emailVerified) {
-          await sendEmailVerification(userCredential.user).then((response) => {
-            console.log(response);
-          });
-          setVerificationModalVisible(true);
-        } else {
-          const userId = userCredential.user.uid;
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        loginEmail,
+        loginPassword
+      );
 
-          const userData = await fetchUserDataFromRealtimeDB(userId);
-          console.log("USER DATA ", userData);
-          if (userData) {
-            const { username, email, profileImage } = userData.user;
+      if (!userCredential.user.emailVerified) {
+        await sendEmailVerification(userCredential.user);
+        setVerificationModalVisible(true);
+      } else {
+        const userId = userCredential.user.uid;
+        // const userData = await fetchUserDataFromRealtimeDB(userId);
+        console.log("USER DATA ", user);
 
-            let localUri;
-            if (profileImage.startsWith("file://")) {
-              // L'image est déjà téléchargée localement
-              localUri = profileImage;
-            } else {
-              // Télécharger l'image de profil depuis une URL HTTP/HTTPS
-              localUri = `${FileSystem.documentDirectory}${username}_avatar.jpg`;
-              await FileSystem.downloadAsync(profileImage, localUri)
-                .then(({ uri }) => {
-                  console.log("Finished downloading to ", uri);
-                })
-                .catch((error) => {
-                  console.error("Error downloading image:", error);
-                });
+        if (user) {
+          console.log("JE SUIS ICI");
+          const { username, email, profileImage } = user;
+
+          let localUri;
+          if (profileImage.startsWith("file://")) {
+            // L'image est déjà téléchargée localement
+            localUri = profileImage;
+          } else if (profileImage) {
+            // Télécharger l'image de profil depuis une URL HTTP/HTTPS
+            localUri = `${FileSystem.documentDirectory}${username}_avatar.jpg`;
+            try {
+              await FileSystem.downloadAsync(profileImage, localUri);
+              console.log("Finished downloading to ", localUri);
 
               // Sauvegarder l'image dans la bibliothèque de médias
               await MediaLibrary.saveToLibraryAsync(localUri);
+            } catch (error) {
+              console.error("Error downloading image:", error);
+              throw new Error("Erreur lors du téléchargement de l'image.");
             }
+          }
 
-            updateUser({
-              id: userCredential.user.uid,
-              ...user,
-              email: userCredential.user.email,
-              profileImage: localUri,
-            });
-
-            // updateUserSqlite({
-            //   id: userCredential.user.uid,
-            //   // username: username,
-            //   email: userCredential.user.email,
-            //   profileImage: localUri,
-            // });
-          } else {
+          // Mettre à jour les données de l'utilisateur avec les informations locales
+          await updateUser({
+            id: userCredential.user.uid,
+            email: userCredential.user.email,
+            username: user.username,
+            profileImage: localUri || null,
+            onlineImage: profileImage ? profileImage : null, // Mettre à jour onlineImage
+          });
+          const updatedCycles = await getAllCycle();
+          updateCycleMenstruelData({ cyclesData: updatedCycles });
+          closeModal();
+          setLoading(false);
+        } else {
+          console.log("ICIII", user);
+          // Télécharger l'image en ligne et la téléverser sur Firebase Storage
+          if (user.profileImage) {
             const blob = await new Promise((resolve, reject) => {
               const xhr = new XMLHttpRequest();
               xhr.onload = function () {
@@ -275,13 +278,16 @@ const AuthContent = ({ closeModal }) => {
               xhr.send(null);
             });
 
-            const storageRef = ref(storage, `Avatar/${user.username}_avatar`);
-            await uploadBytes(storageRef, blob);
+            const avatarStorageRef = storageRef(
+              storage,
+              `Avatar/${user.username}_avatar`
+            );
+            await uploadBytes(avatarStorageRef, blob);
+            const profilePhotoUrl = await getDownloadURL(avatarStorageRef);
 
-            const profilePhotoUrl = await getDownloadURL(storageRef);
-
-            const userRef = ref(realtimeDatabase, `users/${userId}`);
-            await set(userRef, {
+            console.log("ici");
+            const userDbRef = dbRef(realtimeDatabase, `users/${userId}`);
+            await dbSet(userDbRef, {
               userId: userId,
               username: user.username,
               lastMenstruationDate: user.lastMenstruationDate,
@@ -290,43 +296,53 @@ const AuthContent = ({ closeModal }) => {
               email: loginEmail,
               profileImage: profilePhotoUrl,
             });
+
+            await updateUser({
+              id: userId,
+              username: user.username,
+              email: loginEmail,
+              profileImage: profilePhotoUrl,
+            });
+            const updatedCycles = await getAllCycle();
+            updateCycleMenstruelData({ cyclesData: updatedCycles });
           }
         }
-        closeModal();
+
         setLoading(false);
-      })
-      .catch((error) => {
-        let errorMessage;
-        console.log(error);
-        switch (error.code) {
-          case "auth/user-not-found":
-            errorMessage = "Adresse e-mail non trouvée";
-            break;
-          case "auth/invalid-credential":
-            errorMessage = "Vérifier votre identifiants et votre mot de passe ";
-            break;
-          case "auth/wrong-password":
-            errorMessage = "Mot de passe incorrect";
-            break;
-          case "auth/invalid-email":
-            errorMessage = "Adresse e-mail invalide";
-            break;
-          case "auth/user-disabled":
-            errorMessage = "Ce compte a été désactivé";
-            break;
-          case "auth/network-request-failed":
-            errorMessage = "Problème de connexion réseau";
-            break;
-          case "auth/too-many-requests":
-            errorMessage = "Réessayer plus tard";
-            break;
-          default:
-            errorMessage = "Erreur inconnue, veuillez réessayer";
-        }
-        setLoginError(errorMessage);
-        setModalVisible(true);
-        setLoading(false);
-      });
+      }
+    } catch (error) {
+      let errorMessage;
+      console.log(error);
+      auth.signOut();
+      switch (error.code) {
+        case "auth/user-not-found":
+          errorMessage = "Adresse e-mail non trouvée";
+          break;
+        case "auth/invalid-credential":
+          errorMessage = "Vérifier votre identifiants et votre mot de passe";
+          break;
+        case "auth/wrong-password":
+          errorMessage = "Mot de passe incorrect";
+          break;
+        case "auth/invalid-email":
+          errorMessage = "Adresse e-mail invalide";
+          break;
+        case "auth/user-disabled":
+          errorMessage = "Ce compte a été désactivé";
+          break;
+        case "auth/network-request-failed":
+          errorMessage = "Problème de connexion réseau";
+          break;
+        case "auth/too-many-requests":
+          errorMessage = "Réessayer plus tard";
+          break;
+        default:
+          errorMessage = "Erreur inconnue, veuillez réessayer";
+      }
+      setLoginError(errorMessage);
+      setModalVisible(true);
+      setLoading(false);
+    }
   };
 
   const validateEmail = (email) => {
@@ -389,6 +405,21 @@ const AuthContent = ({ closeModal }) => {
               editable={!loading}
             />
           </View>
+          <View className="mt-3 flex-row justify-end">
+            <TouchableOpacity
+              style={styles.forgotPasswordButton}
+              onPress={() => {
+                setResetEmailSentModalVisible(true);
+                handleForgotPassword();
+              }}
+              className=""
+            >
+              <Text style={styles.forgotPasswordText}>
+                {i18n.t("motDePasseOublie")}
+                {/* mot de passe oublié ? */}
+              </Text>
+            </TouchableOpacity>
+          </View>
           {loginPasswordError && (
             <Text style={styles.errorText}>{loginPasswordError}</Text>
           )}
@@ -438,18 +469,6 @@ const AuthContent = ({ closeModal }) => {
               {i18n.t("inscription")}
             </Text>
           </TouchableOpacity>
-          <View className="mt-3 flex-row justify-end">
-            <TouchableOpacity
-              style={styles.forgotPasswordButton}
-              onPress={() => setForgotPasswordModalVisible(true)} 
-              className=""
-            >
-              <Text style={styles.forgotPasswordText}>
-                {/* {i18n.t("motDePasseOublie")} */}
-                mot de passe uoblié
-              </Text>
-            </TouchableOpacity>
-          </View>
         </>
       ),
     },
@@ -631,6 +650,34 @@ const AuthContent = ({ closeModal }) => {
           </Animated.View>
         </View>
       </Modal>
+
+      <Modal
+        visible={resetEmailSentModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setResetEmailSentModalVisible(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <Animated.View entering={BounceIn} style={styles.modalContent}>
+            <Text style={styles.modalText}>
+              Un e-mail de réinitialisation de mot de passe a été envoyé à{" "}
+              {loginEmail}.
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.modalButton,
+                {
+                  backgroundColor:
+                    theme === "pink" ? COLORS.accent500 : COLORS.accent800,
+                },
+              ]}
+              onPress={() => setResetEmailSentModalVisible(false)}
+            >
+              <Text style={styles.modalButtonText}>Fermer</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </Modal>
     </>
   );
 };
@@ -671,13 +718,14 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 15,
     overflow: "hidden",
-    borderColor: COLORS.inputBorder, 
   },
   inputContainer: {
     borderRadius: 15,
     marginVertical: 10,
     width: width - 40,
     backgroundColor: COLORS.bg200,
+    borderWidth: 1,
+    borderColor: "#c0bdbd",
   },
   button: {
     padding: 15,
@@ -727,7 +775,7 @@ const styles = StyleSheet.create({
   modalText: {
     fontSize: 18,
     marginBottom: 10,
-    color: COLORS.modalTextColor, // Ajustez la couleur en fonction de votre thème
+    color: COLORS.modalTextColor,
   },
   modalButton: {
     marginTop: 20,

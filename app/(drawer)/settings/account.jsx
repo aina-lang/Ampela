@@ -51,30 +51,18 @@ const AccountScreen = () => {
     setIsModalVisible(true);
   };
   const handleSave = async () => {
-    userState.set((prev) => ({
-      ...prev,
-      username,
-    }));
-
-    // await updateUserSqlite(
-    //   user.id,
-    //   user.username,
-    //   user.password,
-    //   user.profession,
-    //   user.lastMenstruationDate,
-    //   user.durationMenstruation,
-    //   user.cycleDuration,
-    //   user.email,
-    //   user.profileImage
-    // );
-
-    setIsModalVisible(false);
+    try {
+      // Utiliser updateUser pour mettre à jour l'utilisateur
+      await updateUser({ username });
+      setIsModalVisible(false);
+    } catch (error) {
+      console.error("Error updating user: ", error);
+    }
   };
 
   const handleProfileImageChange = async () => {
     try {
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
         Alert.alert(
           "Permission refusée",
@@ -93,26 +81,7 @@ const AccountScreen = () => {
       if (!result.canceled) {
         const profileImage = result.assets[0].uri;
         await MediaLibrary.saveToLibraryAsync(profileImage);
-
-        userState.set((prev) => ({
-          ...prev,
-          profileImage,
-        }));
-
-        const user = userState.get();
-
-        // await updateUserSqlite(
-        //   user.id,
-        //   user.username,
-        //   user.password,
-        //   user.profession,
-        //   user.lastMenstruationDate,
-        //   user.durationMenstruation,
-        //   user.cycleDuration,
-        //   user.email,
-        //   user.profileImage
-        // );
-
+        await updateUser({ profileImage });
         setProfileImage(profileImage);
       }
     } catch (error) {
@@ -204,7 +173,7 @@ const AccountScreen = () => {
             onPress={() => {
               navigation.navigate("settings/updatecycleinfo");
             }}
-            style={styles.infoContainer} // Appliquer le style infoContainer
+            style={styles.infoContainer} 
           >
             <Text style={styles.infoLabel}>
               Modifier les informations du cycle
@@ -222,7 +191,7 @@ const AccountScreen = () => {
               onPress={() => {
                 navigation.navigate("settings/changepassword");
               }}
-              style={[styles.infoContainer, styles.mt10]} // Appliquer le style infoContainer et une marge supplémentaire
+              style={[styles.infoContainer, styles.mt10]} 
             >
               <Text style={styles.infoLabel}>Changer mon mot de passe</Text>
               <AntDesign

@@ -73,7 +73,9 @@ import orangeTheme from "../assets/images/orange-theme.png";
 import imgVs1Mg from "../assets/images/articles/imgVs1_mg.png";
 import imgVs2Mg from "../assets/images/articles/imgVs2_mg.png";
 import avatar from "../assets/images/avatar.jpg";
+import otp1 from "../assets/images/otp1.jpg";
 export default {
+  otp1,
   avatar,
   pinkTheme,
   orangeTheme,

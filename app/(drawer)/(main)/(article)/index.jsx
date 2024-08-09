@@ -16,7 +16,6 @@ import ArticleCategory from "@/components/article-category";
 import ArticleContent from "@/components/article-content";
 import BackgroundContainer from "@/components/background-container";
 import { useNavigation } from "expo-router";
-import { useSelector } from "react-redux";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import i18n from "@/constants/i18n";
 

@@ -213,7 +213,7 @@ const index = () => {
                 style={{ marginTop: 20 }}
               />
             ) : users.length === 0 ? (
-              <View>
+              <View className="items-center justify-center">
                 <Text>Pas de données pour le moment</Text>
               </View>
             ) : null

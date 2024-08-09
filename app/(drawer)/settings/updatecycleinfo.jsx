@@ -249,7 +249,9 @@ const UpdateCycleInfo = () => {
               }
             }}
             placeholder={
-              "Votre durée du cycle est  actuel " + user.cycleDuration + " jours"
+              "Votre durée du cycle est  actuel " +
+              user.cycleDuration +
+              " jours"
             }
             maxLength={2}
             editable={isDateSelected}
@@ -321,6 +323,8 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 16,
     color: COLORS.dark,
+    borderWidth: 1,
+    borderColor: "#c0bdbd",
   },
   inputDisabled: {
     // backgroundColor: COLORS.lightGrey,

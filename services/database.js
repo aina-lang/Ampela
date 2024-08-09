@@ -13,7 +13,7 @@ export const db = SQLite.openDatabaseSync("ampela.db");
 
 export const addUser = async (
   username,
-  password,
+  // password,
   profession,
   lastMenstruationDate,
   durationMenstruation,
@@ -22,12 +22,12 @@ export const addUser = async (
   photoUri
 ) => {
   const statement = await db.prepareAsync(
-    "INSERT INTO users (username, password, profession, lastMenstruationDate, durationMenstruation, cycleDuration, email, profileImage) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO users (username, profession, lastMenstruationDate, durationMenstruation, cycleDuration, email, profileImage) VALUES (?, ?, ?, ?, ?, ?, ?)"
   );
   try {
     const result = await statement.executeAsync([
       username,
-      password,
+      // password,
       profession,
       lastMenstruationDate,
       durationMenstruation,
@@ -45,7 +45,7 @@ export const addUser = async (
 export const updateUserSqlite = async (
   id,
   username,
-  password,
+  // password,
   profession,
   lastMenstruationDate,
   durationMenstruation,
@@ -56,7 +56,6 @@ export const updateUserSqlite = async (
   const statement = await db.prepareAsync(
     `UPDATE users 
      SET username = ?, 
-         password = ?, 
          profession = ?, 
          lastMenstruationDate = ?, 
          durationMenstruation = ?, 
@@ -69,7 +68,7 @@ export const updateUserSqlite = async (
   try {
     const result = await statement.executeAsync([
       username,
-      password,
+      // password,
       profession,
       lastMenstruationDate,
       durationMenstruation,
@@ -102,7 +101,6 @@ export const initializeDatabase = async () => {
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT NOT NULL ,
-        password TEXT NOT NULL,
         profession TEXT NULL,
         lastMenstruationDate DATE NULL,
         durationMenstruation INTEGER NULL,

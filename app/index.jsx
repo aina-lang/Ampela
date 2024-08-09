@@ -11,6 +11,7 @@ import { isFirstLaunch, initializeDatabase } from "@/services/database";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import LoadingScreen from "@/components/Splash";
 import { updatePreference } from "@/legendstate/AmpelaStates";
+import i18n from "@/constants/i18n";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -28,10 +29,11 @@ async function fetchInitialData(
       await initializeDatabase();
       const preferenceData = { theme: "pink", language: "fr" };
       updatePreference(preferenceData);
+      i18n.defaultLocale="fr";
     }
 
     setInitialRouteName(
-      isFirstTimeLaunch ? "(discovery)" : "(drawer)/"
+      isFirstTimeLaunch ? "(discovery)" : "(discovery)/login"
     );
   } catch (error) {
     console.error("Error:", error);

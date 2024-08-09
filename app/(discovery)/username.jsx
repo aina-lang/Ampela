@@ -11,10 +11,11 @@ import {
   Image,
 } from "react-native";
 import * as MediaLibrary from "expo-media-library";
+import * as ImagePicker from "expo-image-picker";
 import { COLORS, SIZES } from "../../constants";
 import { useNavigation } from "@react-navigation/native";
 import Feather from "@expo/vector-icons/Feather";
-import * as ImagePicker from "expo-image-picker";
+
 import { updateUser } from "@/legendstate/AmpelaStates";
 
 const UsernameAndPasswordScreen = () => {
@@ -154,8 +155,8 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     width: SIZES.width - 40,
     backgroundColor: COLORS.bg200,
-    // borderWidth: 1,
-    // borderColor: "#c0bdbd",
+    borderWidth: 1,
+    borderColor: "#c0bdbd",
   },
   input: {
     paddingHorizontal: 20,
