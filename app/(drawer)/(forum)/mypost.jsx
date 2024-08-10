@@ -33,7 +33,7 @@ import AuthContent from "@/components/AuthContentFromSetting";
 
 const PAGE_SIZE = 10;
 
-const Index = () => {
+const mypost = () => {
   const navigation = useNavigation();
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
@@ -125,7 +125,6 @@ const Index = () => {
     fetchPosts();
   }, [isConnected, isInternetReachable]);
 
-
   useEffect(() => {
     if (!auth.currentUser) {
       openModal(<AuthContent closeModal={closeModal} />);
@@ -151,7 +150,7 @@ const Index = () => {
     setRefreshing(false);
   };
 
-  console.log(auth.currentUser);
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -159,15 +158,7 @@ const Index = () => {
     >
       <SafeAreaView style={styles.container}>
         <BackgroundContainer paddingBottom={0} paddingHorizontal={2}>
-          <View
-            style={{
-              paddingBottom: 40,
-              paddingHorizontal: 16,
-              height: SIZES.height * 0.15,
-            }}
-          >
-            <View style={styles.headerContainer}></View>
-          </View>
+        
           <View style={{ height: 8 }} />
           {!isConnected || !isInternetReachable ? (
             <View style={styles.offlineContainer}>
@@ -184,10 +175,10 @@ const Index = () => {
               <ActivityIndicator size="large" color={COLORS.primary} />
             </View>
           ) : (
-            <>
+            <View className="mt-2">
               <SearchForum onSearch={handleSearch} />
               {auth.currentUser && (
-                <View className="flex-row space-x-2 items-center justify-center px-5 mb-10">
+                <View className="flex-row space-x-2 items-center justify-end px-5 mb-10">
                   <Link
                     href={"(drawer)/(forum)/addpost"}
                     className="flex-row space-x-2 p-2 bg-white rounded-md shadow-sm shadow-black"
@@ -195,16 +186,9 @@ const Index = () => {
                     <AntDesign name="edit" size={24} color={COLORS.accent600} />
                     <Text>Poser une question</Text>
                   </Link>
-                  <Link
-                    href={"(drawer)/(forum)/mypost"}
-                    className="flex-row space-x-2 p-2 bg-white rounded-md shadow-sm shadow-black"
-                  >
-                    <AntDesign name="edit" size={24} color={COLORS.accent600} />
-                    <Text>Mes publications</Text>
-                  </Link>
+               
                 </View>
               )}
-
               <FlatList
                 data={searchText ? filteredPosts : posts}
                 renderItem={({ item, index }) => (
@@ -240,7 +224,7 @@ const Index = () => {
                   />
                 }
               />
-            </>
+            </View>
           )}
         </BackgroundContainer>
       </SafeAreaView>
@@ -289,4 +273,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Index;
+export default mypost;

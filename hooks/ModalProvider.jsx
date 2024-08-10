@@ -37,6 +37,7 @@ export const ModalProvider = ({ children }) => {
             height: SIZES.height,
             alignItems: "center",
             justifyContent: "center",
+            padding: 20,
           }}
         >
           {content}

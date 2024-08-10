@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { useSelector } from "@legendapp/state/react";
 import { preferenceState } from "@/legendstate/AmpelaStates";
 
 const CustomAlert = ({
+  description,
   type = "info",
   message,
   onConfirm,
@@ -33,10 +34,11 @@ const CustomAlert = ({
         useNativeDriver: true,
       }).start();
 
-      if (autoClose && (type === "info" || type === "loading")) {
-        setTimeout(() => {
+      if (autoClose && type === "info") {
+        const timer = setTimeout(() => {
           onClose();
         }, autoCloseTime);
+        return () => clearTimeout(timer);
       }
     } else {
       Animated.timing(opacity, {
@@ -61,7 +63,7 @@ const CustomAlert = ({
             }
             size={50}
             color={
-              type === "confirmation" || type === "loading"
+              type === "confirmation"
                 ? theme === "pink"
                   ? COLORS.accent500
                   : COLORS.accent800
@@ -71,8 +73,9 @@ const CustomAlert = ({
             }
             style={styles.icon}
           />
-          <Text style={styles.message}>{message}</Text>
-          {type === "confirmation" ? (
+          {message && <Text style={styles.message}>{message}</Text>}
+          <Text style={styles.message}>{description ?? null}</Text>
+          {type === "confirmation" && (
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[
@@ -87,16 +90,29 @@ const CustomAlert = ({
                 <Text style={styles.buttonText}>Oui</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
-                <Text style={[styles.buttonText,{ color: "black",}]}>Annuler</Text>
+                <Text style={[styles.buttonText, { color: "black" }]}>
+                  Annuler
+                </Text>
               </TouchableOpacity>
             </View>
-          ) : type !== "loading" ? (
+          )}
+
+          {type !== "loading" && type !== "confirmation" && (
             <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.confirmButton} onPress={onClose}>
+              <TouchableOpacity
+                style={[
+                  styles.confirmButton,
+                  {
+                    backgroundColor:
+                      theme === "pink" ? COLORS.accent500 : COLORS.accent800,
+                  },
+                ]}
+                onPress={onClose}
+              >
                 <Text style={styles.buttonText}>Fermer</Text>
               </TouchableOpacity>
             </View>
-          ) : null /* No buttons for loading type */}
+          )}
         </Animated.View>
       </View>
     </Modal>

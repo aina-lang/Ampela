@@ -5,6 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  SafeAreaView,
   StatusBar,
 } from "react-native";
 import { COLORS, images, SIZES } from "@/constants";
@@ -12,61 +13,38 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSelector } from "@legendapp/state/react";
 import { preferenceState } from "@/legendstate/AmpelaStates";
 import { Image } from "expo-image";
-import { SafeAreaView } from "react-native-safe-area-context";
-import CustomAlert from "@/components/CustomAlert"; // Assurez-vous que le chemin est correct
-import { getAuth, signInWithPhoneNumber } from "firebase/auth";
 
 const OTPScreen = () => {
   const { phoneNumber, confirmation } = useLocalSearchParams();
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
-  const [alertVisible, setAlertVisible] = useState(false); // Gestion de l'alerte
-  const [alertMessage, setAlertMessage] = useState("");
   const router = useRouter();
   const { theme } = useSelector(() => preferenceState.get());
 
   // Créer des références pour chaque champ OTP
   const otpRefs = useRef([]);
-  // otpRefs.focus();
 
   const handleVerify = async () => {
-    if (!confirmation || typeof confirmation.confirm !== 'function') {
-      setAlertMessage("Erreur: L'objet confirmation est invalide");
-      setAlertVisible(true);
-      return;
-    }
-
     setLoading(true);
-    setAlertVisible(true); // Afficher l'alerte de chargement
     try {
       await confirmation.confirm(otp);
       setLoading(false);
-      setAlertVisible(false); // Masquer l'alerte après le succès
-      router.replace("(drawer)"); // Naviguer vers le Drawer
+      // Navigate to the next screen or show success message
     } catch (error) {
       setLoading(false);
-      setAlertVisible(false); // Masquer l'alerte en cas d'erreur
       console.error(error);
-      setAlertMessage("Erreur de vérification OTP");
-      setAlertVisible(true);
     }
   };
 
   const handleResend = async () => {
     setLoading(true);
-    setAlertVisible(true); // Afficher l'alerte de chargement
     try {
-      const auth = getAuth();
-      const newConfirmation = await signInWithPhoneNumber(auth, phoneNumber);
+      const newConfirmation = await signInWithPhoneNumber(phoneNumber);
       router.setParams({ confirmation: newConfirmation });
       setLoading(false);
-      setAlertVisible(false); // Masquer l'alerte après le succès
     } catch (error) {
       setLoading(false);
-      setAlertVisible(false); // Masquer l'alerte en cas d'erreur
       console.error(error);
-      setAlertMessage("Erreur lors de l'envoi du code OTP");
-      setAlertVisible(true);
     }
   };
 
@@ -84,27 +62,11 @@ const OTPScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Afficher le CustomAlert pour le chargement */}
-      <CustomAlert
-        type="loading"
-        message="Vérification en cours..."
-        visible={loading}
-        onClose={() => setAlertVisible(false)}
-        autoClose={false}
-      />
-      <CustomAlert
-        type="error"
-        message={alertMessage}
-        visible={alertVisible && !loading}
-        onClose={() => setAlertVisible(false)}
-        autoClose={false}
-      />
+      <StatusBar backgroundColor={"white"} barStyle={"dark-content"} />
       <View style={styles.topContainer}>
         <Image source={images.otp1} style={styles.image} contentFit="contain" />
-        <Text style={styles.title}>Vérifier le Téléphone</Text>
-        <Text style={styles.subtitle}>
-          Le code a été envoyé à {phoneNumber}
-        </Text>
+        <Text style={styles.title}>Verify Phone</Text>
+        <Text style={styles.subtitle}>Code has been sent to {phoneNumber}</Text>
       </View>
       <View style={styles.middleContainer}>
         <View style={styles.otpContainer}>
@@ -139,12 +101,12 @@ const OTPScreen = () => {
           disabled={loading}
         >
           <Text style={styles.buttonText}>
-            {loading ? "Chargement..." : "Vérifier"}
+            {loading ? "Loading..." : "Verify"}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.resendButton} onPress={handleResend}>
           <Text>
-            Vous n'avez pas reçu le code OTP ?{" "}
+            Didn't get OTP Code ?{" "}
             <Text style={styles.resendText}> RENVOYER LE CODE</Text>
           </Text>
         </TouchableOpacity>

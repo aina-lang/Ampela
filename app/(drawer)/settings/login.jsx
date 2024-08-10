@@ -10,26 +10,21 @@ import {
 import { COLORS, images, SIZES } from "@/constants";
 import { auth, database } from "@/services/firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { collection } from "firebase/firestore";
+
 import { useSelector } from "@legendapp/state/react";
 import {
   preferenceState,
   updateCycleMenstruelData,
   updateUser,
+  userState,
 } from "@/legendstate/AmpelaStates";
 import i18n from "@/constants/i18n";
-import { useNavigation } from "expo-router";
-import {
-  addCyclesToSQLite,
-  deleteAllCycles,
-  updateUserSqlite,
-} from "@/services/database";
-import {
-  fetchCyclesFromFirebase,
-  fetchUserDataFromRealtimeDB,
-} from "@/services/firestoreAPI";
+import { router, useNavigation } from "expo-router";
+
 import CustomAlert from "@/components/CustomAlert";
-import { Image } from "expo-image";
+
+import { AntDesign, Feather } from "@expo/vector-icons";
+import { getAllCycle } from "@/services/database";
 
 const Login = () => {
   const [loginEmail, setLoginEmail] = useState("");
@@ -42,6 +37,8 @@ const Login = () => {
   const navigation = useNavigation();
   const { theme } = useSelector(() => preferenceState.get());
   const [loading, setLoading] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
+  const user = useSelector(() => userState.get());
   const handleLoginEmailChange = (text) => {
     setLoginEmail(text);
     if (!text) {
@@ -73,82 +70,105 @@ const Login = () => {
 
       if (!userCredential.user.emailVerified) {
         await sendEmailVerification(userCredential.user);
-        // setVerificationModalVisible(true);
+        setVerificationModalVisible(true);
       } else {
         const userId = userCredential.user.uid;
+        // const userData = await fetchUserDataFromRealtimeDB(userId);
+        console.log("USER DATA ", user);
 
-        const userData = await fetchUserDataFromRealtimeDB(userId);
+        if (user) {
+          console.log("JE SUIS ICI");
+          const { username, email, profileImage } = user;
 
-        if (userData) {
-          const { username, email, profileImage, online } = userData.user;
+          let localUri;
+          if (profileImage.startsWith("file://")) {
+            // L'image est déjà téléchargée localement
+            localUri = profileImage;
+          } else if (profileImage) {
+            // Télécharger l'image de profil depuis une URL HTTP/HTTPS
+            localUri = `${FileSystem.documentDirectory}${username}_avatar.jpg`;
+            try {
+              await FileSystem.downloadAsync(profileImage, localUri);
+              console.log("Finished downloading to ", localUri);
 
-          updateUser({
-            id: userId,
-            username: username,
-            email: email,
-            profileImage: profileImage,
+              // Sauvegarder l'image dans la bibliothèque de médias
+              await MediaLibrary.saveToLibraryAsync(localUri);
+            } catch (error) {
+              console.error("Error downloading image:", error);
+              throw new Error("Erreur lors du téléchargement de l'image.");
+            }
+          }
+
+          // Mettre à jour les données de l'utilisateur avec les informations locales
+          await updateUser({
+            id: userCredential.user.uid,
+            email: userCredential.user.email,
+            username: user.username,
+            profileImage: localUri || null,
+            onlineImage: profileImage ? profileImage : null, // Mettre à jour onlineImage
           });
-
-          updateUserSqlite({
-            id: userId,
-            username: username,
-            email: email,
-            profileImage: profileImage,
-          });
-          deleteAllCycles();
-          const firebaseCycles = await fetchCyclesFromFirebase(userId);
-          updateCycleMenstruelData(firebaseCycles.cyclesData);
-          await addCyclesToSQLite(firebaseCycles.cyclesData);
+          const updatedCycles = await getAllCycle();
+          updateCycleMenstruelData({ cyclesData: updatedCycles });
+          navigation.goBack();
+          setLoading(false);
         } else {
-          const blob = await new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.onload = function () {
-              resolve(xhr.response);
-            };
-            xhr.onerror = function () {
-              reject(new TypeError("Network request failed"));
-            };
-            xhr.responseType = "blob";
-            xhr.open("GET", userCredential.user.photoURL, true);
-            xhr.send(null);
-          });
+          console.log("ICIII", user);
+          if (user.profileImage) {
+            const blob = await new Promise((resolve, reject) => {
+              const xhr = new XMLHttpRequest();
+              xhr.onload = function () {
+                resolve(xhr.response);
+              };
+              xhr.onerror = function () {
+                reject(new TypeError("Network request failed"));
+              };
+              xhr.responseType = "blob";
+              xhr.open("GET", user.profileImage, true);
+              xhr.send(null);
+            });
 
-          const storageRef = ref(
-            storage,
-            `Avatar/${userCredential.user.displayName}_avatar`
-          );
-          await uploadBytes(storageRef, blob);
+            const avatarStorageRef = storageRef(
+              storage,
+              `Avatar/${user.username}_avatar`
+            );
+            await uploadBytes(avatarStorageRef, blob);
+            const profilePhotoUrl = await getDownloadURL(avatarStorageRef);
 
-          const profilePhotoUrl = await getDownloadURL(storageRef);
+            console.log("ici");
+            const userDbRef = dbRef(realtimeDatabase, `users/${userId}`);
+            await dbSet(userDbRef, {
+              userId: userId,
+              username: user.username,
+              lastMenstruationDate: user.lastMenstruationDate,
+              durationMenstruation: user.durationMenstruation,
+              cycleDuration: user.cycleDuration,
+              email: loginEmail,
+              profileImage: profilePhotoUrl,
+            });
 
-          const userDocRef = collection(database, "users");
-          await addDoc(userDocRef, {
-            userId: userCredential.user.uid,
-            username: userCredential.user.displayName,
-            email: loginEmail,
-            profileImage: profilePhotoUrl,
-          });
-          deleteAllCycles();
-          const firebaseCycles = await fetchCyclesFromFirebase(
-            userCredential.user.uid
-          );
-          updateCycleMenstruelData(firebaseCycles.cyclesData);
-          await addCyclesToSQLite(firebaseCycles.cyclesData);
+            await updateUser({
+              id: userId,
+              username: user.username,
+              email: loginEmail,
+              profileImage: profilePhotoUrl,
+            });
+            const updatedCycles = await getAllCycle();
+            updateCycleMenstruelData({ cyclesData: updatedCycles });
+          }
         }
 
-
-        navigation.navigate("(drawer)");
+        setLoading(false);
       }
     } catch (error) {
-  
-      console.log(error);
       let errorMessage;
+      console.log(error);
+      auth.signOut();
       switch (error.code) {
         case "auth/user-not-found":
           errorMessage = "Adresse e-mail non trouvée";
           break;
         case "auth/invalid-credential":
-          errorMessage = "Vérifier vos identifiants et votre mot de passe";
+          errorMessage = "Vérifier votre identifiants et votre mot de passe";
           break;
         case "auth/wrong-password":
           errorMessage = "Mot de passe incorrect";
@@ -163,14 +183,13 @@ const Login = () => {
           errorMessage = "Problème de connexion réseau";
           break;
         case "auth/too-many-requests":
-          errorMessage = "Réessayez plus tard";
+          errorMessage = "Réessayer plus tard";
           break;
         default:
           errorMessage = "Erreur inconnue, veuillez réessayer";
       }
       setLoginError(errorMessage);
       setModalVisible(true);
-    } finally {
       setLoading(false);
     }
   };
@@ -190,6 +209,12 @@ const Login = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <TouchableOpacity
+        style={styles.closeButton}
+        onPress={() => router.back()}
+      >
+        <Text style={styles.closeButtonText}>{i18n.t("ignorer")}</Text>
+      </TouchableOpacity>
       <CustomAlert
         type="loading"
         message="Vérification en cours..."
@@ -207,7 +232,10 @@ const Login = () => {
       />
       <View className="p-5" style={[]}>
         <Text
-          style={[styles.confidentialityTitle, { color: COLORS.accent500 }]}
+          style={[
+            styles.confidentialityTitle,
+            { color: theme == "pink" ? COLORS.accent500 : COLORS.accent800 },
+          ]}
           className="rounded-b-xl pt-20 text-white"
         >
           {i18n.t("connecter")}
@@ -217,13 +245,13 @@ const Login = () => {
           connecter ou créer un compte.
         </Text>
       </View>
-      <Image
+      {/* <Image
         source={images.otp1}
         style={{ width: SIZES.width, height: SIZES.height * 0.2 }}
         contentFit="contain"
-      />
+      /> */}
       <View style={styles.pageContainer}>
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { flexDirection: "column" }]}>
           <TextInput
             style={styles.input}
             placeholder="Email"
@@ -234,13 +262,26 @@ const Login = () => {
         {loginEmailError && (
           <Text style={{ color: "red" }}>{loginEmailError}</Text>
         )}
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer]}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { width: "90%" }]}
             placeholder="Password"
-            secureTextEntry
+            secureTextEntry={isHidden}
             onChangeText={handleLoginPasswordChange}
           />
+
+          <TouchableOpacity
+            className="items-center justify-center"
+            onPress={() => {
+              setIsHidden(!isHidden);
+            }}
+          >
+            <Feather
+              name={isHidden ? "eye" : "eye-off"}
+              size={20}
+              color={"gray"}
+            />
+          </TouchableOpacity>
         </View>
         <View className="mt-0 mb-2 flex-row justify-end">
           <TouchableOpacity
@@ -289,13 +330,18 @@ const Login = () => {
                 theme === "pink" ? COLORS.accent500 : COLORS.accent800,
             },
           ]}
-          onPress={() => navigation.navigate("username")}
+          onPress={() => navigation.navigate("settings/signup")}
           className="mt-10"
         >
           <Text className="text-center">
             Je suis un nouveau utilisatrice {"  "}
             <Text
-              style={[styles.switchButtonText, { color: COLORS.accent500 }]}
+              style={[
+                styles.switchButtonText,
+                {
+                  color: theme == "pink" ? COLORS.accent500 : COLORS.accent800,
+                },
+              ]}
             >
               {i18n.t("inscription")}
             </Text>
@@ -318,6 +364,21 @@ const styles = StyleSheet.create({
   pageContainer: {
     padding: 20,
     justifyContent: "center",
+    // flex: 2,
+  },
+  closeButton: {
+    position: "absolute",
+    zIndex: 50,
+    top: 30,
+    justifyContent: "flex-end",
+    padding: 15,
+    width: "100%",
+    backgroundColor: "white",
+    flexDirection: "row",
+  },
+  closeButtonText: {
+    fontSize: 16,
+    color: COLORS.primary,
   },
   infoText: {
     marginTop: 20,
@@ -327,13 +388,18 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     overflow: "hidden",
   },
+  switchButtonText: {
+    textAlign: "center",
+    fontSize: 16,
+  },
   inputContainer: {
     borderRadius: 5,
     marginVertical: 10,
     width: SIZES.width - 40,
-    backgroundColor: COLORS.bg200,
+    backgroundColor: COLORS.bg100,
     borderWidth: 1,
     borderColor: "#c0bdbd",
+    flexDirection: "row",
   },
   button: {
     padding: 15,

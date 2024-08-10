@@ -145,12 +145,18 @@ const QuestionsSeries = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text
-        style={styles.title}
-        className="bg-[#FF7575] text-white  rounded-br-[120px] pt-20"
-      >
-        Indiquez vos durées menstruelles et de cycle
-      </Text>
+      <View className="p-5" style={[]}>
+        <Text
+          style={[styles.confidentialityTitle, { color: COLORS.accent500 }]}
+          className="rounded-b-xl pt-20 text-white"
+        >
+          date de vos dernières règles
+        </Text>
+        <Text style={styles.infoText}>
+          Si vous voulez participer au message privée et forum, veuillez vous
+          connecter ou créer un compte.
+        </Text>
+      </View>
       <View style={styles.content} className="flex justify-center">
         <View style={styles.contentItem}>
           <Text style={styles.question}>Durée de vos règles </Text>
@@ -205,7 +211,7 @@ const QuestionsSeries = () => {
                   alignItems: "center",
                   justifyContent: "center",
                   paddingHorizontal: 10,
-                  borderRadius: 10,
+                  borderRadius: 5,
                 },
                 {
                   backgroundColor:
@@ -245,7 +251,7 @@ const QuestionsSeries = () => {
           <Text className="text-[#8a8888]">Précedent</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          className="p-3 items-center rounded-md px-5 shadow-sm shadow-black" // Change shadow-md to shadow-sm
+          className="p-3 items-center rounded-md px-5 shadow-sm shadow-black" 
           onPress={handleNextBtnPress}
           disabled={isNextBtnDisabled}
           style={{
@@ -279,9 +285,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.neutral100,
   },
+  confidentialityTitle: {
+    fontSize: SIZES.width * 0.08,
+    fontFamily: "Bold",
+  },
+  pageContainer: {
+    padding: 20,
+    justifyContent: "center",
+  },
+  infoText: {
+    marginTop: 20,
+  },
   content: {
     width: SIZES.width,
-    height: SIZES.height * 0.6,
+    height: SIZES.height * 0.58,
   },
   contentItem: {
     marginTop: 10,

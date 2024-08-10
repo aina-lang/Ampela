@@ -42,7 +42,7 @@ const OTPScreen = () => {
       await confirmation.confirm(otp);
       setLoading(false);
       setAlertVisible(false); // Masquer l'alerte après le succès
-      router.replace("(drawer)"); // Naviguer vers le Drawer
+      router.replace("/drawer"); // Naviguer vers le Drawer
     } catch (error) {
       setLoading(false);
       setAlertVisible(false); // Masquer l'alerte en cas d'erreur

@@ -30,16 +30,19 @@ const selectlanguage = () => {
   return (
     <>
       <View style={[styles.container, {}]}>
-        <Text
-          style={styles.confidentialityTitle}
-          className="bg-[#FF7575] text-white  rounded-br-[120px] pt-20"
-        >
-          Choisissez votre langue
-        </Text>
-        {/* <Image
-          source={images.wavebg}
-          style={{ width: SIZES.width, height: SIZES.height * 0.3, }}
-        /> */}
+        
+        <View className="p-5" style={[]}>
+          <Text
+            style={[styles.confidentialityTitle, { color: COLORS.accent500 }]}
+            className="rounded-b-xl pt-20 text-white"
+          >
+            {i18n.t("connecter")}
+          </Text>
+          <Text style={styles.infoText}>
+            Si vous voulez participer au message privée et forum, veuillez vous
+            connecter ou créer un compte.
+          </Text>
+        </View>
         <View className=" p-10 flex-1  pt-20 space-y-8">
           <TouchableOpacity
             style={{
@@ -90,7 +93,7 @@ const selectlanguage = () => {
           className="flex items-center  justify-end flex-row  p-5"
         >
           <TouchableOpacity
-            className="p-3  items-center rounded-md px-5 shadow-md shadow-black"
+            className="p-3  items-center rounded-md px-5 shadow-sm shadow-black"
             onPress={handleNextBtnPress}
             style={{
               backgroundColor: "#FF7575",
@@ -120,7 +123,10 @@ const styles = StyleSheet.create({
     fontSize: SIZES.medium,
   },
   content: {
-    marginTop: 100,
+    marginTop: 20,
+  },
+  infoText: {
+    marginTop: 20,
   },
   flex: {
     flexDirection: "row",
@@ -135,8 +141,7 @@ const styles = StyleSheet.create({
   confidentialityTitle: {
     fontSize: SIZES.width * 0.08,
     fontFamily: "Bold",
-    textAlign: "center",
-    height: SIZES.height * 0.3,
+    // height: SIZES.height * 0.3,
     // width: SIZES.width + 156,
   },
   confidentialityItem: {

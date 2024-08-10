@@ -16,10 +16,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 
-const OneForum = () => {
-  const route = useRouter();
-  const post = { title: "yes" };
-
+const oneForum = () => {
   const [comments, setComments] = useState([1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
   const [commentValue, setCommentValue] = useState("");
   const { theme } = useSelector(() => preferenceState.get());
@@ -35,7 +32,10 @@ const OneForum = () => {
     <>
       <View className="flex-row justify-between z-50 items-center p-3 bg-gray-200">
         <View className="flex-row space-x-2 items-center">
-          <Image source={images.doctor01} style={{ height: 40, width: 40 }} />
+          <Image
+            source={images.avatar}
+            style={{ height: 40, width: 40, borderRadius: 100 }}
+          />
           <Text>Aina mercia</Text>
         </View>
         <Text>20 octobre 2041</Text>
@@ -59,39 +59,6 @@ const OneForum = () => {
             Lorem ipsum dolor sit amet consectetur adipisicing elit. Sequi
             similique ad cum aspernatur unde enim soluta tempora cumque possimus
             optio magnam ducimus facilis in mollitia tenetur beatae alias,
-            incidunt laboriosam? Voluptas labore magnam non magni ea eum.
-            Pariatur dolor, in quod aliquid beatae architecto earum corrupti.
-            Dolores ex sint odit, earum dolore a quod deserunt, dolorum vero
-            odio, sunt voluptas. Nesciunt quae architecto consectetur sapiente
-            quia quidem fugiat maiores, adipisci laudantium fugit, eum hic odio,
-            tenetur rem vero explicabo quis officiis voluptates sed est quasi
-            quibusdam iure natus? Delectus, officiis! Maiores perspiciatis eius
-            ipsum. Placeat unde quibusdam nisi voluptate, ipsa perspiciatis
-            repellat, cum vero iure minima pariatur magni neque tenetur
-            praesentium voluptatibus doloremque enim qui consectetur hic
-            consequuntur ipsam? Consequatur? Blanditiis, minima excepturi amet,
-            fugit delectus possimus id dolore maiores maxime nisi obcaecati quis
-            laboriosam placeat molestiae temporibus eos facere nam molestias
-            odit corporis sunt libero porro. In, veritatis eligendi? Facere
-            nesciunt aperiam repellendus nobis, cumque laboriosam consectetur
-            aut odit quaerat facilis impedit beatae sunt. Iure, eos vitae qui
-            inventore laborum, voluptatibus repellendus, saepe exercitationem
-            expedita laudantium tenetur a voluptatum. Cum, eligendi. Sint veniam
-            provident necessitatibus dolorem doloribus eveniet magni,
-            repellendus excepturi illum nulla, ipsum, eaque quasi perspiciatis
-            harum nisi est deserunt asperiores. Dignissimos officia sed ipsa
-            similique. Incidunt, debitis. Blanditiis consectetur eveniet
-            explicabo officiis ducimus aliquid minus! Non, velit. Id possimus
-            eaque debitis et deserunt eum incidunt pariatur veniam saepe qui
-            optio veritatis recusandae, aut iusto unde obcaecati consequuntur?
-            Quis, tempore cumque aliquid illum adipisci laborum qui soluta
-            tempora molestiae magni quasi quisquam, dolore consequuntur enim
-            asperiores mollitia! Dignissimos recusandae esse at, laboriosam cum
-            expedita minus sapiente beatae voluptate. Reprehenderit quam ut
-            sapiente molestias sint perferendis alias maxime neque id?
-            Inventore, corrupti magnam ducimus, quidem animi dolore vero
-            repellendus ad incidunt aliquam possimus alias facilis voluptas quo
-            similique ipsa?
           </Text>
         </View>
         <View>
@@ -117,8 +84,8 @@ const OneForum = () => {
                   style={{ backgroundColor: "#f0f0f0" }}
                 >
                   <Image
-                    source={images.doctor01}
-                    style={{ height: 40, width: 40 }}
+                    source={images.avatar}
+                    style={{ height: 40, width: 40, borderRadius: 100 }}
                   />
                   <Text>Aina mercia</Text>
                 </View>
@@ -178,4 +145,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default OneForum;
+export default oneForum;

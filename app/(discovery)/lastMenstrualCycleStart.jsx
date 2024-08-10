@@ -15,8 +15,10 @@ import { updateUser, userState } from "@/legendstate/AmpelaStates";
 const LastMenstrualCycleStartAge = () => {
   const today = new Date();
   const todayString = today.toISOString().split("T")[0];
-  const firstDayOfMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-01`;
-  
+  const firstDayOfMonth = `${today.getFullYear()}-${String(
+    today.getMonth() + 1
+  ).padStart(2, "0")}-01`;
+
   const [selected, setSelected] = useState(todayString);
   const [isNextBtnDisabled, setIsNextBtnDisabled] = useState(true);
 
@@ -47,26 +49,34 @@ const LastMenstrualCycleStartAge = () => {
     if (new Date(selectedDate) <= today) {
       setSelected(selectedDate);
     } else {
-      console.warn("La date sélectionnée doit être aujourd'hui ou dans le passé.");
+      console.warn(
+        "La date sélectionnée doit être aujourd'hui ou dans le passé."
+      );
     }
   };
 
   const handleForgetDate = () => {
-    setSelected(""); 
+    setSelected("");
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text
-        style={styles.title}
-            className="bg-[#FF7575] text-white  rounded-br-[120px] pt-20"
-      >
-        {user.username + "  , "} date de vos dernières règles
-      </Text>
+      <View className="p-5" style={[]}>
+        <Text
+          style={[styles.confidentialityTitle, { color: COLORS.accent500 }]}
+          className="rounded-b-xl pt-20 text-white"
+        >
+           date de vos dernières règles
+        </Text>
+        <Text style={styles.infoText}>
+          Si vous voulez participer au message privée et forum, veuillez vous
+          connecter ou créer un compte.
+        </Text>
+      </View>
       <View style={styles.calendar}>
         <Calendar
           style={{
-            height: 360,
+            height: 340,
             borderRadius: 8,
             backgroundColor: "rgba(255, 255, 255, .5)",
           }}
@@ -118,7 +128,7 @@ const LastMenstrualCycleStartAge = () => {
           <Text className="text-[#8a8888]">Précédent</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          className="p-3 items-center rounded-md px-5 shadow-lg"
+          className="p-3 items-center rounded-md px-5 shadow-sm shadow-black"
           onPress={handleNextBtnPress}
           disabled={isNextBtnDisabled}
           style={{
@@ -137,6 +147,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.neutral100,
   },
+  confidentialityTitle: {
+    fontSize: SIZES.width * 0.08,
+    fontFamily: "Bold",
+  },
+  pageContainer: {
+    padding: 20,
+    justifyContent: "center",
+  },
+  infoText: {
+    marginTop: 20,
+  },
   title: {
     fontSize: SIZES.width * 0.08,
     fontFamily: "Bold",
@@ -149,7 +170,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   btnBox: {
-    height: SIZES.height * 0.15,
+    // height: SIZES.height * 0.15,
     width: SIZES.width,
   },
 });

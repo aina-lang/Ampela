@@ -29,11 +29,11 @@ async function fetchInitialData(
       await initializeDatabase();
       const preferenceData = { theme: "pink", language: "fr" };
       updatePreference(preferenceData);
-      i18n.defaultLocale="fr";
+      i18n.defaultLocale = "fr";
     }
 
     setInitialRouteName(
-      isFirstTimeLaunch ? "(discovery)" : "(discovery)/login"
+      isFirstTimeLaunch ? "(discovery)" : "(drawer)/(forum)/oneforum"
     );
   } catch (error) {
     console.error("Error:", error);

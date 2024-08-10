@@ -17,6 +17,7 @@ import { useNavigation } from "@react-navigation/native";
 import Feather from "@expo/vector-icons/Feather";
 
 import { updateUser } from "@/legendstate/AmpelaStates";
+import i18n from "@/constants/i18n";
 
 const UsernameAndPasswordScreen = () => {
   const navigation = useNavigation();
@@ -75,12 +76,19 @@ const UsernameAndPasswordScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text
-        style={styles.title}
-        className="bg-[#FF7575] text-white  rounded-br-[120px] pt-20"
-      >
-        Votre nom et ajoutez une photo de profile
-      </Text>
+      <View className="p-5" style={[]}>
+        <Text
+          style={[styles.confidentialityTitle, { color: COLORS.accent500 }]}
+          className="rounded-b-xl pt-20 text-white"
+        >
+          {/* {i18n.t("connecter")} */}
+          Crée un profile
+        </Text>
+        <Text style={{ marginTop: 20 }}>
+          Si vous voulez participer au message privée et forum, veuillez vous
+          connecter ou créer un compte.
+        </Text>
+      </View>
       <View className=" " style={{ height: SIZES.height * 0.6 }}>
         <View style={styles.inputBoxDeeper}>
           <View style={styles.inputContainer}>
@@ -120,7 +128,7 @@ const UsernameAndPasswordScreen = () => {
           <Text className="text-[#8a8888]">Précédent</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          className="p-3 items-center rounded-md px-5 shadow-md shadow-black"
+          className="p-3 items-center rounded-md px-5 shadow-sm shadow-black"
           onPress={handleNextBtnPress}
           disabled={isNextBtnDisabled}
           style={{
@@ -139,11 +147,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.neutral100,
   },
-  title: {
+  confidentialityTitle: {
     fontSize: SIZES.width * 0.08,
     fontFamily: "Bold",
-    textAlign: "center",
-    height: SIZES.height * 0.3,
   },
   inputBoxDeeper: {
     marginTop: 70,
@@ -151,7 +157,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   inputContainer: {
-    borderRadius: 15,
+    borderRadius: 5,
     marginVertical: 10,
     width: SIZES.width - 40,
     backgroundColor: COLORS.bg200,

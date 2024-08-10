@@ -109,7 +109,7 @@ const index = () => {
             key={index}
             className={`${
               currentBoard == index
-                ? "bg-[#FF7575] w-3 p-1"
+                ? "bg-[#FF7575] w-5 p-1"
                 : "bg-[#FFADAD] w-2"
             }  h-2 rounded-full mx-2 flex items-center flex-row justify-center `}
           ></View>
@@ -189,7 +189,7 @@ const index = () => {
           <TouchableOpacity
             style={{ backgroundColor: COLORS.accent500 }}
             onPress={nextHandled}
-            className="p-3 rounded-md shadow-md shadow-black"
+            className="p-3 rounded-md shadow-sm shadow-black"
           >
             <Text className="text-white"> Suivant </Text>
             {/* <AntDesign
@@ -203,7 +203,7 @@ const index = () => {
           <TouchableOpacity
             style={{ backgroundColor: COLORS.accent500 }}
             onPress={getStartedHandler}
-            className="p-3 rounded-md shadow-md shadow-black"
+            className="p-3 rounded-md shadow-sm shadow-black"
           >
             <Text className="text-white"> Commencer </Text>
             {/* <AntDesign

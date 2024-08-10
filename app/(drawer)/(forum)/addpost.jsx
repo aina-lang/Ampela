@@ -77,7 +77,7 @@ const AddPost = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <Text style={styles.label} className="mt-5">
         Titre
       </Text>
@@ -113,7 +113,7 @@ const AddPost = () => {
         {loading ? (
           <ActivityIndicator size="small" color="#fff" />
         ) : (
-          <Text style={styles.submitButtonText}>Submit Post</Text>
+          <Text style={styles.submitButtonText}>Publier </Text>
         )}
       </TouchableOpacity>
     </ScrollView>
@@ -124,7 +124,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    // paddingBottom:20
   },
   label: {
     fontSize: 18,
@@ -145,7 +144,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   submitButton: {
-    padding: 16,
+    padding: 12,
     borderRadius: 10,
     alignItems: "center",
     marginTop: 16,

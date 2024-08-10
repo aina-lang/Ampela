@@ -209,7 +209,7 @@ const ForumItem = ({ post, refToCommentItem }) => {
             borderColor: "gray",
           }}
         />
-        <View style={styles.headerTextContainer}>
+        <View style={styles.headerTextContainer} className="space-x-1">
           <Text style={styles.authorName}>{post.authorName || "Anonyme"}</Text>
           <Text style={styles.date}>{formattedDate}</Text>
         </View>
@@ -276,20 +276,21 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerTextContainer: {
-    flexGrow: 1,
-    justifyContent: "space-between",
+  
     flexDirection: "row",
-    alignItems: "center",
+    // alignItems: "center",
   },
   authorName: {
     fontFamily: "Bold",
     fontSize: SIZES.small,
     color: "#555",
+    maxWidth: "50%",
   },
   date: {
     fontFamily: "Regular",
     fontSize: SIZES.small,
     color: "#888",
+    maxWidth: "50%",
   },
   content: {
     marginVertical: 20,

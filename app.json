@@ -41,6 +41,7 @@
     "plugins": [
       [
         "expo-notifications",
+
         {
           "icon": "./assets/images/logo/logo-1.png",
           "color": "#ffffff",
@@ -62,7 +63,9 @@
         }
       ],
       "expo-router",
-      "expo-font"
+      "expo-font",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth"
     ],
     "experiments": {
       "typedRoutes": true
@@ -70,7 +73,7 @@
     "extra": {
       "router": {
         "origin": false
-      },
+      }
       // "eas": {
       //   "projectId": "71d88606-9e38-42eb-a633-106e37e52f3d"
       // }

@@ -453,6 +453,7 @@ const DrawerComponent = observer(() => {
             flex: 1,
             alignItems: "center",
             justifyContent: "center",
+            padding: 20,
           }}
         >
           <Animated.View style={[styles.modalContent, animatedStyle]}>
