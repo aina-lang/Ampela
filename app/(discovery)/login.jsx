@@ -8,7 +8,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { COLORS, images, SIZES } from "@/constants";
-import { auth, database } from "@/services/firebaseConfig";
+import { auth, database, realtimeDatabase } from "@/services/firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { collection } from "firebase/firestore";
 import { useSelector } from "@legendapp/state/react";
@@ -18,10 +18,11 @@ import {
   updateUser,
 } from "@/legendstate/AmpelaStates";
 import i18n from "@/constants/i18n";
-import { useNavigation } from "expo-router";
+import { router, useNavigation } from "expo-router";
 import {
   addCyclesToSQLite,
   deleteAllCycles,
+  getAllCycle,
   updateUserSqlite,
 } from "@/services/database";
 import {
@@ -30,6 +31,8 @@ import {
 } from "@/services/firestoreAPI";
 import CustomAlert from "@/components/CustomAlert";
 import { Image } from "expo-image";
+import { get, ref } from "firebase/database";
+import * as FileSystem from "expo-file-system";
 
 const Login = () => {
   const [loginEmail, setLoginEmail] = useState("");
@@ -65,114 +68,131 @@ const Login = () => {
   const handleLogin = async () => {
     setLoading(true);
     try {
+      console.log("Attempting to sign in with email and password");
       const userCredential = await signInWithEmailAndPassword(
         auth,
         loginEmail,
         loginPassword
       );
+      console.log("User signed in successfully:", userCredential.user.uid);
 
       if (!userCredential.user.emailVerified) {
+        console.log("Email not verified, sending verification email");
         await sendEmailVerification(userCredential.user);
-        // setVerificationModalVisible(true);
-      } else {
-        const userId = userCredential.user.uid;
+        setVerificationModalVisible(true);
+        console.log("Verification email sent");
+        setLoading(false);
+        return;
+      }
 
-        const userData = await fetchUserDataFromRealtimeDB(userId);
+      const userId = userCredential.user.uid;
+      console.log(
+        `Fetching user data from Realtime Database for userId: ${userId}`
+      );
+      const userDbRef = ref(realtimeDatabase, `users/${userId}/user`);
 
-        if (userData) {
-          const { username, email, profileImage, online } = userData.user;
+      console.log(
+        `Fetching user data from Realtime Database for userId: ${userId}`
+      );
 
-          updateUser({
-            id: userId,
-            username: username,
-            email: email,
-            profileImage: profileImage,
-          });
+      const snapshot = await get(userDbRef);
 
-          updateUserSqlite({
-            id: userId,
-            username: username,
-            email: email,
-            profileImage: profileImage,
-          });
-          deleteAllCycles();
-          const firebaseCycles = await fetchCyclesFromFirebase(userId);
-          updateCycleMenstruelData(firebaseCycles.cyclesData);
-          await addCyclesToSQLite(firebaseCycles.cyclesData);
-        } else {
-          const blob = await new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.onload = function () {
-              resolve(xhr.response);
-            };
-            xhr.onerror = function () {
-              reject(new TypeError("Network request failed"));
-            };
-            xhr.responseType = "blob";
-            xhr.open("GET", userCredential.user.photoURL, true);
-            xhr.send(null);
-          });
+      if (!snapshot.exists()) {
+        throw new Error("User data does not exist.");
+      }
 
-          const storageRef = ref(
-            storage,
-            `Avatar/${userCredential.user.displayName}_avatar`
-          );
-          await uploadBytes(storageRef, blob);
+      const data = snapshot.val();
 
-          const profilePhotoUrl = await getDownloadURL(storageRef);
+      if (data.onlineImage) {
+        console.log("Downloading online image");
+        const localUri = `${FileSystem.documentDirectory}${userId}_profile.jpg`;
 
-          const userDocRef = collection(database, "users");
-          await addDoc(userDocRef, {
+        const downloadResult = await FileSystem.downloadAsync(
+          data.onlineImage,
+          localUri
+        );
+
+        if (downloadResult.status === 200) {
+          console.log("Image downloaded successfully");
+          await updateUser({
             userId: userCredential.user.uid,
-            username: userCredential.user.displayName,
-            email: loginEmail,
-            profileImage: profilePhotoUrl,
+            username: data.username,
+            lastMenstruationDate: data.lastMenstruationDate,
+            durationMenstruation: data.durationMenstruation,
+            cycleDuration: data.cycleDuration,
+            email: userCredential.user.email,
+            profileImage: downloadResult.uri,
+            onlineImage: data.onlineImage,
           });
-          deleteAllCycles();
-          const firebaseCycles = await fetchCyclesFromFirebase(
-            userCredential.user.uid
-          );
-          updateCycleMenstruelData(firebaseCycles.cyclesData);
-          await addCyclesToSQLite(firebaseCycles.cyclesData);
+
+          await updateProfile(auth.currentUser, {
+            displayName: data.username,
+            photoURL: data.onlineImage,
+          });
+
+          console.log("User profile updated in Firebase auth");
+        } else {
+          console.error("Failed to download image");
         }
-
-
-        navigation.navigate("(drawer)");
+      } else {
+        console.log("No online image to download");
+        await updateUser({
+          userId: userCredential.user.uid,
+          username: data.username,
+          lastMenstruationDate: data.lastMenstruationDate,
+          durationMenstruation: data.durationMenstruation,
+          cycleDuration: data.cycleDuration,
+          email: userCredential.user.email,
+          profileImage: data.profileImage,
+          onlineImage: data.onlineImage,
+        });
       }
+
+      const updatedCycles = await getAllCycle();
+      updateCycleMenstruelData({ cyclesData: updatedCycles });
+      console.log("Menstrual cycle data updated");
+
+      console.log("Navigating back");
+      router.navigate("(drawer)/(main)");
     } catch (error) {
-  
-      console.log(error);
-      let errorMessage;
-      switch (error.code) {
-        case "auth/user-not-found":
-          errorMessage = "Adresse e-mail non trouvée";
-          break;
-        case "auth/invalid-credential":
-          errorMessage = "Vérifier vos identifiants et votre mot de passe";
-          break;
-        case "auth/wrong-password":
-          errorMessage = "Mot de passe incorrect";
-          break;
-        case "auth/invalid-email":
-          errorMessage = "Adresse e-mail invalide";
-          break;
-        case "auth/user-disabled":
-          errorMessage = "Ce compte a été désactivé";
-          break;
-        case "auth/network-request-failed":
-          errorMessage = "Problème de connexion réseau";
-          break;
-        case "auth/too-many-requests":
-          errorMessage = "Réessayez plus tard";
-          break;
-        default:
-          errorMessage = "Erreur inconnue, veuillez réessayer";
-      }
-      setLoginError(errorMessage);
-      setModalVisible(true);
+      console.error("Login failed:", error.message);
+      handleAuthError(error);
     } finally {
       setLoading(false);
+      console.log("Loading state set to false");
     }
+  };
+
+  const handleAuthError = (error) => {
+    let errorMessage;
+    auth.signOut();
+    switch (error.code) {
+      case "auth/user-not-found":
+        errorMessage = "Adresse e-mail non trouvée";
+        break;
+      case "auth/invalid-credential":
+        errorMessage = "Vérifier vos identifiants et votre mot de passe";
+        break;
+      case "auth/wrong-password":
+        errorMessage = "Mot de passe incorrect";
+        break;
+      case "auth/invalid-email":
+        errorMessage = "Adresse e-mail invalide";
+        break;
+      case "auth/user-disabled":
+        errorMessage = "Ce compte a été désactivé";
+        break;
+      case "auth/network-request-failed":
+        errorMessage = "Problème de connexion réseau";
+        break;
+      case "auth/too-many-requests":
+        errorMessage = "Réessayez plus tard";
+        break;
+      default:
+        errorMessage = "Erreur inconnue, veuillez réessayer";
+    }
+    setLoginError(errorMessage);
+    setModalVisible(true);
   };
 
   const validateEmail = (email) => {

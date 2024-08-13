@@ -1,18 +1,188 @@
 import { auth, database } from "@/services/firebaseConfig";
-import { get, getDatabase, ref } from "firebase/database";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import {
+  getFirestore,
   collection,
   addDoc,
+  updateDoc,
+  doc,
+  serverTimestamp,
+  query,
+  onSnapshot,
   getDocs,
   getCountFromServer,
   where,
-  query,
-  updateDoc,
+  deleteDoc,
+  increment,
 } from "firebase/firestore";
+import { getDatabase, ref, get } from "firebase/database";
 import { Alert } from "react-native";
 
-//ajout des données de l'utilisateur
-async function addUserCollection(
+// Add a new comment
+export async function addNewComment(data) {
+  try {
+    if (auth.currentUser) {
+      const commentsRef = collection(
+        database,
+        "posts",
+        data.postId,
+        "comments"
+      );
+      const docRef = await addDoc(commentsRef, {
+        content: data.content,
+        authorId: data.authorId,
+        // authorName: data.authorName,
+        // authorAvatar: data.authorAvatar,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      const postRef = doc(database, "posts", data.postId);
+      await updateDoc(postRef, {
+        comment: increment(1),
+      });
+      console.log("Comment doc written with ID: ", docRef.id);
+    } else {
+      return { msg: "no-auth" };
+    }
+  } catch (err) {
+    console.log("Error adding new comment: ", err);
+  }
+}
+
+// Add a new like
+export async function addNewLike(data) {
+  try {
+    if (!auth.currentUser) {
+      return { msg: "no-auth" };
+    }
+
+    const likesRef = collection(database, "posts", data.postId, "likes");
+    const docRef = await addDoc(likesRef, {
+      userId: data.userId,
+      createdAt: serverTimestamp(),
+    });
+
+    console.log("Like added successfully. Like ID:", docRef.id);
+  } catch (err) {
+    console.error("Error adding like: ", err);
+  }
+}
+
+// Get all posts with real-time updates
+export async function getAllPosts(callback) {
+  try {
+    const postsRef = collection(database, "posts");
+    const q = query(postsRef);
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const posts = [];
+      querySnapshot.forEach((doc) => {
+        posts.push({ id: doc.id, ...doc.data() });
+      });
+      callback(posts);
+    });
+
+    return unsubscribe;
+  } catch (err) {
+    console.error("Error retrieving posts: ", err);
+    throw err;
+  }
+}
+
+// Get all comments for a specific post with real-time updates
+export async function getAllComments(postId, callback) {
+  try {
+    const commentsRef = collection(database, "posts", postId, "comments");
+    const q = query(commentsRef);
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const comments = [];
+      querySnapshot.forEach((doc) => {
+        comments.push({ id: doc.id, ...doc.data() });
+      });
+      callback(comments);
+    });
+
+    return unsubscribe;
+  } catch (err) {
+    console.log("Error retrieving comments: ", err);
+    throw err;
+  }
+}
+
+// Get the number of likes for a specific post
+// export async function getLikeNumber(postId, callback) {
+//   try {
+//     const likesRef = collection(database, "posts", postId, "likes");
+//     const q = query(likesRef);
+
+//     const unsubscribe = onSnapshot(q, (querySnapshot) => {
+//       const likesCount = querySnapshot.size;
+//       if (callback) {
+//         callback(likesCount);
+//       }
+//     });
+
+//     return unsubscribe;
+//   } catch (err) {
+//     console.error("Error retrieving likes count: ", err);
+//     throw err;
+//   }
+// }
+
+export async function getLikeNumber(postId, callback) {
+  try {
+    const postRef = doc(database, "posts", postId);
+
+    const unsubscribe = onSnapshot(postRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const postData = docSnapshot.data();
+        const likesCount = postData.like || 0;
+        if (callback) {
+          callback(likesCount);
+        }
+      } else {
+        console.warn("Post does not exist!");
+        if (callback) {
+          callback(0);
+        }
+      }
+    });
+
+    return unsubscribe;
+  } catch (err) {
+    console.error("Error retrieving likes count: ", err);
+    throw err;
+  }
+}
+
+// Add a new post
+export async function addNewPost(data) {
+  try {
+    if (auth.currentUser) {
+      const docRef = await addDoc(collection(database, "posts"), {
+        content: data.content,
+        authorId: data.authorId,
+        // authorAvatar: data.authorAvatar,
+        // authorName:data.authorName,
+        like: data.like,
+        comment: 0,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      const postId = docRef.id;
+      console.log("New post added successfully. Post ID:", postId);
+    } else {
+      return { msg: "no-auth" };
+    }
+  } catch (err) {
+    console.log("Error adding new post: ", err);
+  }
+}
+
+// Add a user to the collection
+export async function addUserCollection(
   username,
   password,
   profession,
@@ -23,10 +193,9 @@ async function addUserCollection(
   try {
     const userCredential = await createUserWithEmailAndPassword(
       auth,
-      mailOrTel,
+      username,
       password
     );
-
     const user = userCredential.user;
     const { uid, email } = user;
 
@@ -43,8 +212,6 @@ async function addUserCollection(
       dureeCycle: cycleDuration,
     });
 
-    // setIsAuthenticated(true);
-
     Alert.alert(
       "Registration Successful!",
       "Your account has been created successfully."
@@ -55,172 +222,94 @@ async function addUserCollection(
   }
 }
 
-// Ajout du nouveau post
-async function addNewPost(data) {
-  console.log(data);
+// Remove a like
+export async function removeLike(userId, postId) {
   try {
-    if (auth.currentUser) {
-      const docRef = await addDoc(collection(database, "posts"), {
-        content: data.content,
-        authorId: data.authorId,
-        like: data.like,
+    const likesCollection = collection(database, "posts", postId, "likes");
+    const likesQuery = query(likesCollection, where("userId", "==", userId));
+    const likesSnapshot = await getDocs(likesQuery);
 
-        createdAt: data.createdAt,
-        updatedAt: data.updatedAt,
-      });
-
-      const postId = docRef.id;
-
-      console.log(postId);
-
-      await updateDoc(docRef, { postId });
-
-      console.log("Nouveau post ajouté avec succès. ID du post :", postId);
-    } else {
-      return { msg: "no-auth" };
+    if (likesSnapshot.empty) {
+      console.log("No like found for this user on this post.");
+      return;
     }
+
+    const likeDoc = likesSnapshot.docs[0];
+    await deleteDoc(doc(database, "posts", postId, "likes", likeDoc.id));
+
+    console.log("Like removed successfully.");
   } catch (err) {
-    console.log("Error adding new post: ", err);
+    console.error("Error removing like: ", err);
   }
 }
 
-// Ajout du nouveau commentaire
-async function addNewComment(data) {
-  console.log(data);
-  try {
-    if (auth.currentUser) {
-      const docRef = await addDoc(collection(database, "comments"), {
-        content: data.content,
-        authorId: data.authorId,
-        postId: data.postId,
-        createdAt: data.createdAt,
-        updatedAt: data.updatedAt,
-      });
-      console.log("Comment doc written with ID: ", docRef.id);
-    } else {
-      return { msg: "no-auth" };
+export const checkUserLikedPost = (userId, postId, callback) => {
+  // Reference to the "likes" subcollection of a specific post
+  const likesRef = collection(database, "posts", postId, "likes");
+
+  // Create a query to find documents where userId matches
+  const likesQuery = query(likesRef, where("userId", "==", userId));
+
+  // Use onSnapshot for real-time updates
+  const unsubscribe = onSnapshot(
+    likesQuery,
+    (querySnapshot) => {
+      const isLiked = !querySnapshot.empty; // Check if there are any documents in the query snapshot
+      callback(isLiked); // Invoke the callback with the isLiked value
+    },
+    (error) => {
+      console.error("Error fetching likes:", error); // Handle potential errors
     }
-  } catch (err) {
-    console.log("Error adding new comment: ", err);
-  }
-}
+  );
 
-// Ajout de nouvelle réaction(like) sur un post
-async function addNewLike(data) {
-  try {
-    if (auth.currentUser) {
-      const docRef = await addDoc(collection(database, "likes"), {
-        userId: data.userId,
-        postId: data.postId,
-        createdAt: data.createdAt,
-      });
-      console.log("Like doc written with ID: ", docRef.id);
-    } else {
-      return { msg: "no-auth" };
-    }
-  } catch (err) {
-    console.log("Error adding new reaction(like): ", err);
-  }
-}
+  return unsubscribe; // Return the unsubscribe function to allow unsubscription
+};
+// export async function getCommentNumber(postId, callback) {
+//   try {
+//     const commentsRef = collection(database, "posts", postId, "comments");
+//     const q = query(commentsRef);
 
-// Obtient tout posts
-function getAllPosts() {
-  try {
-    const posts = [];
-    const querySnapshot = getDocs(collection(database, "posts"));
-    querySnapshot.forEach((doc) => {
-      // Pour chaque document, vous pouvez extraire ses données
-      console.log(doc);
-      const post = doc.data();
-      posts.push(post);
-    });
-    return posts;
-  } catch (err) {
-    console.error("Erreur lors de la récupération des messages : ", err);
-    throw err; // Vous pouvez également lever l'erreur pour gérer les erreurs à l'extérieur de cette fonction
-  }
-}
+//     // Set up real-time listener
+//     const unsubscribe = onSnapshot(q, (querySnapshot) => {
+//       const count = querySnapshot.size;
+//       callback(count); // Pass the count to the callback
+//     });
 
-// Obtient tout commentaires concernant post publié
-function getAllComments(postId) {
+//     return unsubscribe; // Return the unsubscribe function to allow stopping the listener
+//   } catch (err) {
+//     console.error("Error retrieving number of comments: ", err);
+//     throw err; // Ensure error is thrown to be handled by the caller
+//   }
+// }
+
+export async function getCommentNumber(postId, callback) {
   try {
-    const comments = [];
-    const querySnapshot = getDocs(collection(database, "comments"));
-    querySnapshot.forEach((doc) => {
-      console.log(doc);
-      if (doc.data().postId == postId) {
-        comments.push(doc.data());
+    const postRef = doc(database, "posts", postId);
+
+    const unsubscribe = onSnapshot(postRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const postData = docSnapshot.data();
+        const commentsCount = postData.comment || 0;
+        if (callback) {
+          callback(commentsCount);
+        }
+      } else {
+        console.warn("Post does not exist!");
+        if (callback) {
+          callback(0);
+        }
       }
     });
-    if (comments.length != 0) {
-      return comments;
-    } else {
-      console.log("No comments docs written yet.");
-    }
+
+    return unsubscribe;
   } catch (err) {
-    console.log("Error getting comments docs: ", err);
+    console.error("Error retrieving comments count: ", err);
+    throw err;
   }
 }
 
-// Obtient effectif de réaction pour un post
-async function getLikeNumber(postId) {
-  try {
-    // Obtient la référence de la collection
-    const colRef = collection(database, "likes");
-
-    // Crée une requête avec une condition
-    const q = query(colRef, where("postId", "==", postId));
-
-    // Obtient nombre docs correspond à la requête
-    const count = getCountFromServer(q);
-
-    if (count > 0) {
-      return count;
-    } else {
-      console.log("No likes docs written yet.");
-    }
-  } catch (err) {
-    console.log("Error getting likes docs: ", err);
-  }
-}
-
-// Obtient effectif de commentaire pour un post
-async function getCommentNumber(postId) {
-  try {
-    // Obtient la référence de la collection
-    const colRef = collection(database, "comments");
-
-    // Crée une requête avec une condition
-    const q = query(colRef, "postId", "==", postId);
-
-    // Obtient nombre docs correspond à la requête
-    const count = getCountFromServer(q);
-
-    if (count > 0) {
-      return count;
-    } else {
-      console.log("No comments docs written yet.");
-      return "";
-    }
-  } catch (err) {
-    console.log("Error getting comments docs: ", err);
-  }
-}
-
-// const fetchCyclesFromFirebase = async () => {
-//   const db = getDatabase();
-//   const cyclesRef = ref(db, "cycles_menstruels");
-//   const snapshot = await geg(cyclesRef);
-//   if (snapshot.exists()) {
-//     return snapshot.val();
-//   } else {
-//     console.log("No data available");
-//     return [];
-//   }
-// };
-
-
-const fetchUserDataFromRealtimeDB = async (userId) => {
+// Fetch user data from Realtime Database
+export const fetchUserDataFromRealtimeDB = async (userId) => {
   const db = getDatabase();
   const userRef = ref(db, `users/${userId}`);
 
@@ -228,7 +317,7 @@ const fetchUserDataFromRealtimeDB = async (userId) => {
     const snapshot = await get(userRef);
     if (snapshot.exists()) {
       const userData = snapshot.val();
-      console.log("User data from Realtime Database:", userData);
+      // console.log("User data from Realtime Database:", userData);
       return userData;
     } else {
       console.log("No user data available");
@@ -240,7 +329,10 @@ const fetchUserDataFromRealtimeDB = async (userId) => {
   }
 };
 
-const fetchCyclesFromFirebase = async (userId) => {
+
+
+// Fetch cycles data from Realtime Database
+export const fetchCyclesFromFirebase = async (userId) => {
   const db = getDatabase();
   const cyclesRef = ref(db, `users/${userId}/cycleMenstruel`);
 
@@ -260,15 +352,13 @@ const fetchCyclesFromFirebase = async (userId) => {
   }
 };
 
-export {
-  addUserCollection,
-  addNewPost,
-  addNewComment,
-  addNewLike,
-  getAllPosts,
-  getAllComments,
-  getLikeNumber,
-  getCommentNumber,
-  fetchCyclesFromFirebase,
-  fetchUserDataFromRealtimeDB
+export const handleDeletePost = async (postId) => {
+  console.log(postId);
+  try {
+    await deleteDoc(doc(database, "posts", postId));
+  } catch (error) {
+    console.error("Error deleting post:", error);
+  }
 };
+
+

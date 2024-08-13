@@ -17,14 +17,17 @@ import {
   getCommentNumber,
   checkUserLikedPost,
   fetchUserDataFromRealtimeDB,
+  handleDeletePost,
 } from "@/services/firestoreAPI";
 import { getAuth } from "firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import i18n from "@/constants/i18n";
 import { doc, getDoc, increment, updateDoc } from "firebase/firestore";
 import { database } from "@/services/firebaseConfig";
+import { Swipeable } from "react-native-gesture-handler";
+import CustomAlert from "./CustomAlert";
 
 const truncateText = (text, maxLength) => {
   if (!text || typeof text !== "string") return "";
@@ -33,7 +36,7 @@ const truncateText = (text, maxLength) => {
     : text.substring(0, maxLength - 3) + "...";
 };
 
-const ForumItem = ({ post, refToCommentItem }) => {
+const Myforumitem = ({ post, refToCommentItem }) => {
   const [isLikeIconPressed, setIsLikeIconPressed] = useState(false);
   const [commentValue, setCommentValue] = useState("");
   const [likeCount, setLikeCount] = useState(0);
@@ -45,18 +48,17 @@ const ForumItem = ({ post, refToCommentItem }) => {
   const auth = getAuth();
   const userId = auth.currentUser?.uid;
   const [userPosteur, setUserPosteur] = useState();
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isAlertVisible, setAlertVisible] = useState(false);
 
   useEffect(() => {
     if (!post?.postId) return;
-    // if (!auth.currentUser) {
-    //   setIsDisabled(true);
-    // }
-    console.log(post);
+
     const fetchUser = async () => {
       try {
-        const userData = await fetchUserDataFromRealtimeDB(post?.authorId);
-        console.log(userData?.user);
-        setUserPosteur(userData?.user);
+        const userData = await fetchUserDataFromRealtimeDB(post.authorId);
+        console.log(userData.user);
+        setUserPosteur(userData.user);
       } catch (error) {
         console.error("Error fetching user data: ", error);
       }
@@ -159,89 +161,133 @@ const ForumItem = ({ post, refToCommentItem }) => {
       })
     : "Date not available";
 
+  const leftSwipe = () => (
+    <TouchableOpacity
+      style={styles.leftSwipe}
+      onPress={() => setIsConfirmingDelete(true)}
+    >
+      <Ionicons name="trash" size={24} color="white" />
+    </TouchableOpacity>
+  );
+
+  const rightSwipe = () => (
+    <TouchableOpacity
+      style={styles.rightSwipe}
+      onPress={() => {
+        router.navigate({
+          pathname: "(drawer)/(forum)/editpost",
+          params: { ...post },
+        });
+      }}
+      className="bg-blue-500"
+    >
+      <Ionicons name="pencil" size={24} color="white" />
+    </TouchableOpacity>
+  );
+
+  const handleConfirmDelete = () => {
+    handleDeletePost(post?.postId);
+    setIsConfirmingDelete(false);
+  };
+
+  const handleCancelDelete = () => {
+    setIsConfirmingDelete(false);
+  };
   return (
     userPosteur && (
-      <TouchableOpacity
-        onPress={() =>
-          router.navigate({
-            pathname: "(drawer)/(forum)/oneforum",
-            params: { postId: post.postId, ...userPosteur },
-          })
-        }
-        style={styles.container}
-        className={`shadow-sm shadow-black `}
-      >
-        <View style={styles.header}>
-          <Image
-            source={{ uri: userPosteur?.onlineImage }}
-            style={styles.avatar}
-          />
-          <View style={styles.headerTextContainer}>
-            <Text style={styles.authorName}>
-              {userPosteur?.username || "Anonymous"}
-            </Text>
-            <Text style={styles.date}>{formattedDate}</Text>
-          </View>
-        </View>
-
-        <View style={styles.content}>
-          <Text style={styles.title}>
-            {post?.title || "Title not available"}
-          </Text>
-          <Text style={styles.body}>
-            {truncateText(post.description || "Content not available", 500)}
-          </Text>
-        </View>
-
-        <View style={styles.reactions}>
-          <View style={styles.like}>
-            <TouchableOpacity
-              onPress={handleLikeIconPress}
-              disabled={isDisabled}
-            >
-              <AntDesign
-                name={isLikeIconPressed ? "heart" : "hearto"}
-                color={COLORS.accent600}
-                size={24}
-              />
-            </TouchableOpacity>
-            <Text style={styles.textSmall}>{likeCount} reactions</Text>
-          </View>
+      <>
+        <Swipeable
+          renderLeftActions={leftSwipe}
+          renderRightActions={rightSwipe}
+        >
           <TouchableOpacity
-            style={styles.comment}
-            // onPress={handleCommentIconPress}
-            disabled
+            style={styles.container}
+            className={`shadow-sm shadow-black `}
+            onPress={() =>
+              router.navigate({
+                pathname: "(drawer)/(forum)/oneforum",
+                params: { postId: post.postId, ...userPosteur },
+              })
+            }
           >
-            <View style={styles.comment}>
-              <Image source={icons.message} style={styles.commentIcon} />
-              <Text style={styles.textSmall}>{commentCount} comments</Text>
+            <View style={styles.header}>
+              <Image
+                source={{ uri: userPosteur?.onlineImage }}
+                style={styles.avatar}
+              />
+              <View style={styles.headerTextContainer}>
+                <Text style={styles.authorName}>
+                  {userPosteur?.username || "Anonymous"}
+                </Text>
+                <Text style={styles.date}>{formattedDate}</Text>
+              </View>
             </View>
+            <View style={styles.content}>
+              <Text style={styles.title}>
+                {post?.title || "Title not available"}
+              </Text>
+              <Text style={styles.body}>
+                {truncateText(post.description || "Content not available", 500)}
+              </Text>
+            </View>
+            <View style={styles.reactions}>
+              <View style={styles.like}>
+                <TouchableOpacity
+                  onPress={handleLikeIconPress}
+                  disabled={isDisabled}
+                >
+                  <AntDesign
+                    name={isLikeIconPressed ? "heart" : "hearto"}
+                    color={COLORS.accent600}
+                    size={24}
+                  />
+                </TouchableOpacity>
+                <Text style={styles.textSmall}>{likeCount} reactions</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.comment}
+                // onPress={handleCommentIconPress}
+                disabled
+              >
+                <View style={styles.comment}>
+                  <Image source={icons.message} style={styles.commentIcon} />
+                  <Text style={styles.textSmall}>{commentCount} comments</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+            {auth.currentUser && (
+              <View style={styles.commentBox}>
+                <TextInput
+                  multiline
+                  placeholder={i18n.t("writeAComment")}
+                  style={styles.commentInput}
+                  value={commentValue}
+                  onChangeText={setCommentValue}
+                  editable={!isSubmitting}
+                />
+                <TouchableOpacity
+                  onPress={handleCommentSent}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <ActivityIndicator size="small" color={COLORS.primary} />
+                  ) : (
+                    <Image source={icons.send} style={styles.sendIcon} />
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
           </TouchableOpacity>
-        </View>
-
-        {auth.currentUser && (
-          <View style={styles.commentBox}>
-            <TextInput
-              multiline
-              placeholder={i18n.t("writeAComment")}
-              style={styles.commentInput}
-              value={commentValue}
-              onChangeText={setCommentValue}
-              editable={!isSubmitting}
-            />
-            <TouchableOpacity
-              onPress={handleCommentSent}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <ActivityIndicator size="small" color={COLORS.primary} />
-              ) : (
-                <Image source={icons.send} style={styles.sendIcon} />
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
-      </TouchableOpacity>
+        </Swipeable>
+        <CustomAlert
+          description="Are you sure you want to delete this post?"
+          type="confirmation"
+          visible={isConfirmingDelete}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+          onClose={() => setIsConfirmingDelete(false)}
+        />
+      </>
     )
   );
 };
@@ -253,7 +299,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     width: "98%",
     marginHorizontal: "auto",
-    marginBottom: 30,
+    // marginBottom: 30,
   },
   header: {
     flexDirection: "row",
@@ -318,6 +364,20 @@ const styles = StyleSheet.create({
     fontSize: SIZES.small,
     color: "#888",
   },
+  leftSwipe: {
+    backgroundColor: "red",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 85,
+    height: "100%",
+  },
+  rightSwipe: {
+    // backgroundColor: "blue",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 85,
+    height: "100%",
+  },
   commentBox: {
     width: "100%",
     height: 45,
@@ -340,4 +400,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ForumItem;
+export default Myforumitem;

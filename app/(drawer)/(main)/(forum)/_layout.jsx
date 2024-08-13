@@ -35,7 +35,7 @@ const _layout = () => {
               <Text
                 style={{ fontSize: 20, fontWeight: "bold", color: "white" }}
               >
-                Forum
+                Entraide et Partage
               </Text>
             </View>
             <View className="flex-row">

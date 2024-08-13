@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import LoadingScreen from "@/components/Splash";
 import { updatePreference } from "@/legendstate/AmpelaStates";
 import i18n from "@/constants/i18n";
+import { auth } from "@/services/firebaseConfig";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -33,7 +34,7 @@ async function fetchInitialData(
     }
 
     setInitialRouteName(
-      isFirstTimeLaunch ? "(discovery)" : "(drawer)/(forum)/oneforum"
+      isFirstTimeLaunch ? "(discovery)" : "(drawer)/(forum)/"
     );
   } catch (error) {
     console.error("Error:", error);

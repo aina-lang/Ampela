@@ -9,15 +9,14 @@ import {
   SafeAreaView,
   FlatList,
   RefreshControl,
+  TouchableOpacity,
 } from "react-native";
-import ForumItem from "@/components/forum-item";
-import { COLORS, SIZES } from "@/constants";
+import { COLORS } from "@/constants";
 import BackgroundContainer from "@/components/background-container";
 import { auth, database } from "@/services/firebaseConfig";
-import { Link, useNavigation } from "expo-router";
+import { Link, router, useNavigation } from "expo-router";
 import SearchForum from "@/components/SearchForum";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
-
 import { useModal } from "@/hooks/ModalProvider";
 import {
   collection,
@@ -25,15 +24,17 @@ import {
   orderBy,
   limit,
   startAfter,
-  getDocs,
   where,
+  onSnapshot,
+  getDocs,
 } from "firebase/firestore";
 import { useNetInfo } from "@react-native-community/netinfo";
 import AuthContent from "@/components/AuthContentFromSetting";
+import Myforumitem from "@/components/myforumitem";
 
 const PAGE_SIZE = 10;
 
-const mypost = () => {
+const MyPosts = () => {
   const navigation = useNavigation();
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
@@ -42,59 +43,66 @@ const mypost = () => {
   const [lastVisible, setLastVisible] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-  const { openModal } = useModal();
+  const { openModal, closeModal } = useModal();
   const { isConnected, isInternetReachable } = useNetInfo();
-  const { closeModal } = useModal();
 
-  const fetchPosts = async (loadMore = false) => {
+  useEffect(() => {
     if (!isConnected || !isInternetReachable) {
       setIsLoading(false);
       return;
     }
 
-    try {
-      let postsQuery = query(
-        collection(database, "posts"),
-        orderBy("createdAt", "desc"),
-        limit(PAGE_SIZE)
+    // Set up real-time listener
+    const postsQuery = query(
+      collection(database, "posts"),
+      where("authorId", "==", auth.currentUser.uid),
+      orderBy("createdAt", "desc"),
+      limit(PAGE_SIZE)
+    );
+
+    const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
+      const newPosts = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      // Deduplicate posts
+      const uniquePosts = Array.from(
+        new Map(newPosts.map((post) => [post.id, post])).values()
       );
 
-      if (loadMore && lastVisible) {
-        postsQuery = query(postsQuery, startAfter(lastVisible));
-      }
+      setPosts(uniquePosts);
+      setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
+      setIsLoading(false);
+    });
 
-      const snapshot = await getDocs(postsQuery);
-
-      if (!snapshot.empty) {
-        const newPosts = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setPosts((prevPosts) =>
-          loadMore ? [...prevPosts, ...newPosts] : newPosts
-        );
-        setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
-      } else if (loadMore) {
-        setIsFetchingMore(false);
-      }
-    } catch (error) {
-      console.error("Error fetching posts:", error);
-    } finally {
-      if (!loadMore) setIsLoading(false);
-      else setIsFetchingMore(false);
-    }
-  };
+    // Cleanup listener on unmount
+    return () => unsubscribe();
+  }, [
+    isConnected,
+    isInternetReachable,
+    auth.currentUser,
+    openModal,
+    closeModal,
+  ]);
 
   const searchPosts = useCallback(
     async (searchText) => {
+      if (!auth.currentUser) {
+        openModal(<AuthContent closeModal={closeModal} />);
+        setIsLoading(false);
+        return;
+      }
+
       if (!isConnected || !isInternetReachable) {
         setIsLoading(false);
         return;
       }
 
       try {
-        let postsQuery = query(
+        const postsQuery = query(
           collection(database, "posts"),
+          where("authorId", "==", auth.currentUser.uid),
           where("title", ">=", searchText.toLowerCase()),
           where("title", "<=", searchText.toLowerCase() + "\uf8ff"),
           orderBy("createdAt", "desc"),
@@ -118,18 +126,8 @@ const mypost = () => {
         setIsLoading(false);
       }
     },
-    [isConnected, isInternetReachable]
+    [isConnected, isInternetReachable, auth.currentUser, openModal, closeModal]
   );
-
-  useEffect(() => {
-    fetchPosts();
-  }, [isConnected, isInternetReachable]);
-
-  useEffect(() => {
-    if (!auth.currentUser) {
-      openModal(<AuthContent closeModal={closeModal} />);
-    }
-  }, []);
 
   const handleSearch = (text) => {
     setSearchText(text);
@@ -137,19 +135,72 @@ const mypost = () => {
   };
 
   const handleLoadMore = () => {
-    if (!isFetchingMore) {
+    if (!isFetchingMore && lastVisible) {
       setIsFetchingMore(true);
-      fetchPosts(true);
+
+      const postsQuery = query(
+        collection(database, "posts"),
+        where("authorId", "==", auth.currentUser.uid),
+        orderBy("createdAt", "desc"),
+        startAfter(lastVisible),
+        limit(PAGE_SIZE)
+      );
+
+      getDocs(postsQuery)
+        .then((snapshot) => {
+          if (!snapshot.empty) {
+            const newPosts = snapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            }));
+
+            setPosts((prevPosts) => {
+              const allPosts = [...prevPosts, ...newPosts];
+              const uniquePosts = Array.from(
+                new Map(allPosts.map((post) => [post.id, post])).values()
+              );
+              return uniquePosts;
+            });
+
+            setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
+          }
+          setIsFetchingMore(false);
+        })
+        .catch((error) => {
+          console.error("Error fetching more posts:", error);
+          setIsFetchingMore(false);
+        });
     }
   };
 
-  const onRefresh = async () => {
+  const onRefresh = () => {
     setRefreshing(true);
-    setLastVisible(null);
-    await fetchPosts();
-    setRefreshing(false);
-  };
 
+    const postsQuery = query(
+      collection(database, "posts"),
+      where("authorId", "==", auth.currentUser.uid),
+      orderBy("createdAt", "desc"),
+      limit(PAGE_SIZE)
+    );
+
+    // Reset posts and lastVisible to fetch from the beginning
+    const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
+      const newPosts = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      // Deduplicate posts
+      const uniquePosts = Array.from(
+        new Map(newPosts.map((post) => [post.id, post])).values()
+      );
+
+      setPosts(uniquePosts);
+      setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
+      setRefreshing(false);
+      unsubscribe(); // Cleanup listener after refresh
+    });
+  };
 
   return (
     <KeyboardAvoidingView
@@ -158,8 +209,7 @@ const mypost = () => {
     >
       <SafeAreaView style={styles.container}>
         <BackgroundContainer paddingBottom={0} paddingHorizontal={2}>
-        
-          <View style={{ height: 8 }} />
+          <View style={{ height: 14 }} />
           {!isConnected || !isInternetReachable ? (
             <View style={styles.offlineContainer}>
               <MaterialCommunityIcons
@@ -175,26 +225,28 @@ const mypost = () => {
               <ActivityIndicator size="large" color={COLORS.primary} />
             </View>
           ) : (
-            <View className="mt-2">
+            <>
               <SearchForum onSearch={handleSearch} />
               {auth.currentUser && (
-                <View className="flex-row space-x-2 items-center justify-end px-5 mb-10">
-                  <Link
-                    href={"(drawer)/(forum)/addpost"}
+                <View className="flex-row space-x-2 items-center justify-start px-5 mb-5">
+                  <TouchableOpacity
+                    onPress={() => {
+                      router.navigate("(drawer)/(forum)/addpost");
+                    }}
                     className="flex-row space-x-2 p-2 bg-white rounded-md shadow-sm shadow-black"
                   >
                     <AntDesign name="edit" size={24} color={COLORS.accent600} />
                     <Text>Poser une question</Text>
-                  </Link>
-               
+                  </TouchableOpacity>
                 </View>
               )}
+
               <FlatList
                 data={searchText ? filteredPosts : posts}
-                renderItem={({ item, index }) => (
-                  <ForumItem post={item} navigation={navigation} key={index} />
+                renderItem={({ item }) => (
+                  <Myforumitem post={item} navigation={navigation} />
                 )}
-                keyExtractor={(item, index) => index.toString()}
+                keyExtractor={(item) => item.id}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ padding: 12, paddingBottom: 80 }}
                 onEndReached={handleLoadMore}
@@ -209,13 +261,13 @@ const mypost = () => {
                     </View>
                   ) : null
                 }
+                ItemSeparatorComponent={() => <View style={{ height: 20 }} />}
                 ListFooterComponent={
-                  isFetchingMore &&
-                  posts.length != 0 && (
+                  isFetchingMore && posts.length > 0 ? (
                     <View style={{ paddingVertical: 20 }}>
                       <ActivityIndicator size="large" color={COLORS.primary} />
                     </View>
-                  )
+                  ) : null
                 }
                 refreshControl={
                   <RefreshControl
@@ -224,7 +276,7 @@ const mypost = () => {
                   />
                 }
               />
-            </View>
+            </>
           )}
         </BackgroundContainer>
       </SafeAreaView>
@@ -233,44 +285,32 @@ const mypost = () => {
 };
 
 const styles = StyleSheet.create({
-  loadingContainer: {
-    position: "absolute",
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 30001,
-  },
-  headerContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 8,
-  },
   container: {
     flex: 1,
+    backgroundColor: COLORS.background,
   },
   offlineContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
   },
   icon: {
-    marginBottom: 8,
+    marginBottom: 10,
   },
   text: {
     color: "red",
-    fontWeight: "bold",
+    fontSize: 16,
   },
-  emptyContainer: {
+  loadingContainer: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 
-export default mypost;
+export default MyPosts;

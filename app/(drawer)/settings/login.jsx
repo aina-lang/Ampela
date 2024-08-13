@@ -8,9 +8,9 @@ import {
   SafeAreaView,
 } from "react-native";
 import { COLORS, images, SIZES } from "@/constants";
-import { auth, database } from "@/services/firebaseConfig";
-import { signInWithEmailAndPassword } from "firebase/auth";
-
+import { auth, realtimeDatabase, storage } from "@/services/firebaseConfig";
+import { signInWithEmailAndPassword, updateProfile } from "firebase/auth";
+import * as MediaLibrary from "expo-media-library";
 import { useSelector } from "@legendapp/state/react";
 import {
   preferenceState,
@@ -20,11 +20,19 @@ import {
 } from "@/legendstate/AmpelaStates";
 import i18n from "@/constants/i18n";
 import { router, useNavigation } from "expo-router";
-
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  deleteObject,
+} from "firebase/storage";
 import CustomAlert from "@/components/CustomAlert";
 
 import { AntDesign, Feather } from "@expo/vector-icons";
 import { getAllCycle } from "@/services/database";
+import { get, getDatabase, ref, set } from "firebase/database";
+import { Image } from "expo-image";
+import { getDownloadURL } from "firebase/storage";
 
 const Login = () => {
   const [loginEmail, setLoginEmail] = useState("");
@@ -59,140 +67,447 @@ const Login = () => {
     }
   };
 
+  // console.log("USER DATA", user);
+  // console.log(auth?.currentUser?.uid);
+
+  // const handleLogin = async () => {
+  //   setLoading(true);
+  //   try {
+  //     console.log("Attempting to sign in with email and password");
+  //     const userCredential = await signInWithEmailAndPassword(
+  //       auth,
+  //       loginEmail,
+  //       loginPassword
+  //     );
+  //     console.log("User signed in successfully:", userCredential.user.uid);
+
+  //     if (!userCredential.user.emailVerified) {
+  //       console.log("Email not verified, sending verification email");
+  //       await sendEmailVerification(userCredential.user);
+  //       setVerificationModalVisible(true);
+  //       console.log("Verification email sent");
+  //       setLoading(false);
+  //       return;
+  //     }
+
+  //     const userId = userCredential.user.uid;
+  //     const emailFromCredential = userCredential.user.email;
+
+  //     console.log(
+  //       `Fetching user data from Realtime Database for userId: ${userId}`
+  //     );
+  //     const userDbRef = ref(realtimeDatabase, `users/${userId}/user`);
+  //     const snapshot = await get(userDbRef);
+
+  //     if (!snapshot.exists()) {
+  //       console.log("User data not found. Creating profile.");
+  //       if (user.profileImage) {
+  //         const blob = await fetchProfileImageBlob(user.profileImage);
+  //         const avatarStorageRef = storageRef(
+  //           storage,
+  //           `Avatar/${user.username}_avatar`
+  //         );
+  //         await uploadBytes(avatarStorageRef, blob);
+  //         const profilePhotoUrl = await getDownloadURL(avatarStorageRef);
+
+  //         await set(userDbRef, {
+  //           userId: userId,
+  //           username: user.username,
+  //           lastMenstruationDate: user.lastMenstruationDate,
+  //           durationMenstruation: user.durationMenstruation,
+  //           cycleDuration: user.cycleDuration,
+  //           email: loginEmail,
+  //           profileImage: user.profileImage,
+  //           onlineImage: profilePhotoUrl,
+  //         });
+
+  //         console.log("User profile created in the database.");
+  //       } else {
+  //         console.log("Profile image not provided, only creating user data.");
+  //         await set(userDbRef, {
+  //           userId: userId,
+  //           username: user.username,
+  //           lastMenstruationDate: user.lastMenstruationDate,
+  //           durationMenstruation: user.durationMenstruation,
+  //           cycleDuration: user.cycleDuration,
+  //           email: loginEmail,
+  //         });
+  //         console.log("User profile created in the database.");
+  //       }
+
+  //       setLoading(false);
+  //       console.log("Navigating back");
+  //       navigation.goBack();
+  //     }
+
+  //     console.log("User data retrieved from the database:", snapshot.val());
+  //     const data = snapshot.val();
+
+  //     if (emailFromCredential === user.email) {
+  //       console.log(
+  //         "Email matches. Updating local state and Firebase auth profile."
+  //       );
+  //       await updateUser({
+  //         userId: userCredential.user.uid,
+  //         username: data.username,
+  //         lastMenstruationDate: data.lastMenstruationDate,
+  //         durationMenstruation: data.durationMenstruation,
+  //         cycleDuration: data.cycleDuration,
+  //         email: userCredential.user.email,
+  //         profileImage: data.profileImage,
+  //         onlineImage: data.onlineImage,
+  //       });
+
+  //       await updateProfile(auth.currentUser, {
+  //         displayName: data.username,
+  //         photoURL: data.onlineImage,
+  //       });
+
+  //       console.log("User profile updated in Firebase auth");
+  //       const updatedCycles = await getAllCycle();
+  //       updateCycleMenstruelData({ cyclesData: updatedCycles });
+  //       console.log("Menstrual cycle data updated");
+  //     } else {
+  //       console.log(
+  //         "Email does not match. Updating local state with online data."
+  //       );
+  //       await updateUser({
+  //         userId: userCredential.user.uid,
+  //         username: data.username,
+  //         lastMenstruationDate: data.lastMenstruationDate,
+  //         durationMenstruation: data.durationMenstruation,
+  //         cycleDuration: data.cycleDuration,
+  //         email: userCredential.user.email,
+  //         profileImage: data.profileImage,
+  //         onlineImage: data.onlineImage,
+  //       });
+
+  //       await updateProfile(auth.currentUser, {
+  //         displayName: data.username,
+  //         photoURL: data.onlineImage,
+  //       });
+
+  //       console.log("User profile updated in Firebase auth");
+  //       const updatedCycles = await getAllCycle();
+  //       updateCycleMenstruelData({ cyclesData: updatedCycles });
+  //       console.log("Menstrual cycle data updated");
+  //     }
+
+  //     console.log("Navigating back");
+  //     navigation.goBack();
+  //   } catch (error) {
+  //     console.error("Login failed:", error.message);
+  //     handleAuthError(error);
+  //   } finally {
+  //     setLoading(false);
+  //     console.log("Loading state set to false");
+  //   }
+  // };
+
   const handleLogin = async () => {
     setLoading(true);
     try {
+      console.log("Attempting to sign in with email and password");
       const userCredential = await signInWithEmailAndPassword(
         auth,
         loginEmail,
         loginPassword
       );
+      console.log("User signed in successfully:", userCredential.user.uid);
 
       if (!userCredential.user.emailVerified) {
+        console.log("Email not verified, sending verification email");
         await sendEmailVerification(userCredential.user);
         setVerificationModalVisible(true);
-      } else {
-        const userId = userCredential.user.uid;
-        // const userData = await fetchUserDataFromRealtimeDB(userId);
-        console.log("USER DATA ", user);
+        console.log("Verification email sent");
+        setLoading(false);
+        return;
+      }
 
-        if (user) {
-          console.log("JE SUIS ICI");
-          const { username, email, profileImage } = user;
+      const userId = userCredential.user.uid;
+      const emailFromCredential = userCredential.user.email;
 
-          let localUri;
-          if (profileImage.startsWith("file://")) {
-            // L'image est déjà téléchargée localement
-            localUri = profileImage;
-          } else if (profileImage) {
-            // Télécharger l'image de profil depuis une URL HTTP/HTTPS
-            localUri = `${FileSystem.documentDirectory}${username}_avatar.jpg`;
-            try {
-              await FileSystem.downloadAsync(profileImage, localUri);
-              console.log("Finished downloading to ", localUri);
+      console.log(
+        `Fetching user data from Realtime Database for userId: ${userId}`
+      );
+      const userDbRef = ref(realtimeDatabase, `users/${userId}/user`);
+      const snapshot = await get(userDbRef);
 
-              // Sauvegarder l'image dans la bibliothèque de médias
-              await MediaLibrary.saveToLibraryAsync(localUri);
-            } catch (error) {
-              console.error("Error downloading image:", error);
-              throw new Error("Erreur lors du téléchargement de l'image.");
-            }
-          }
+      if (!snapshot.exists()) {
+        console.log("User data not found. Creating profile.");
+        let profileData = {
+          userId: userId,
+          username: user.username,
+          lastMenstruationDate: user.lastMenstruationDate,
+          durationMenstruation: user.durationMenstruation,
+          cycleDuration: user.cycleDuration,
+          email: loginEmail,
+        };
 
-          // Mettre à jour les données de l'utilisateur avec les informations locales
-          await updateUser({
-            id: userCredential.user.uid,
-            email: userCredential.user.email,
-            username: user.username,
-            profileImage: localUri || null,
-            onlineImage: profileImage ? profileImage : null, // Mettre à jour onlineImage
-          });
-          const updatedCycles = await getAllCycle();
-          updateCycleMenstruelData({ cyclesData: updatedCycles });
-          navigation.goBack();
-          setLoading(false);
-        } else {
-          console.log("ICIII", user);
-          if (user.profileImage) {
-            const blob = await new Promise((resolve, reject) => {
-              const xhr = new XMLHttpRequest();
-              xhr.onload = function () {
-                resolve(xhr.response);
-              };
-              xhr.onerror = function () {
-                reject(new TypeError("Network request failed"));
-              };
-              xhr.responseType = "blob";
-              xhr.open("GET", user.profileImage, true);
-              xhr.send(null);
-            });
+        if (user.profileImage) {
+          const blob = await fetchProfileImageBlob(user.profileImage);
+          const avatarStorageRef = storageRef(
+            storage,
+            `Avatar/${user.username}_avatar`
+          );
+          await uploadBytes(avatarStorageRef, blob);
+          const profilePhotoUrl = await getDownloadURL(avatarStorageRef);
 
-            const avatarStorageRef = storageRef(
-              storage,
-              `Avatar/${user.username}_avatar`
-            );
-            await uploadBytes(avatarStorageRef, blob);
-            const profilePhotoUrl = await getDownloadURL(avatarStorageRef);
-
-            console.log("ici");
-            const userDbRef = dbRef(realtimeDatabase, `users/${userId}`);
-            await dbSet(userDbRef, {
-              userId: userId,
-              username: user.username,
-              lastMenstruationDate: user.lastMenstruationDate,
-              durationMenstruation: user.durationMenstruation,
-              cycleDuration: user.cycleDuration,
-              email: loginEmail,
-              profileImage: profilePhotoUrl,
-            });
-
-            await updateUser({
-              id: userId,
-              username: user.username,
-              email: loginEmail,
-              profileImage: profilePhotoUrl,
-            });
-            const updatedCycles = await getAllCycle();
-            updateCycleMenstruelData({ cyclesData: updatedCycles });
-          }
+          profileData.profileImage = user.profileImage;
+          profileData.onlineImage = profilePhotoUrl;
         }
 
+        await set(userDbRef, profileData);
+
+        console.log("User profile created in the database.");
         setLoading(false);
+        console.log("Navigating back");
+        navigation.goBack();
+      } else {
+        console.log("User data retrieved from the database:", snapshot.val());
+        const data = snapshot.val();
+
+        if (emailFromCredential === user.email) {
+          console.log("Email matches. Updating Firebase auth profile.");
+          await updateProfile(auth.currentUser, {
+            displayName: data.username,
+            photoURL: data.onlineImage,
+          });
+
+          await updateUser({
+            userId: userCredential.user.uid,
+            username: user.username,
+            lastMenstruationDate: user.lastMenstruationDate,
+            durationMenstruation: user.durationMenstruation,
+            cycleDuration: user.cycleDuration,
+            email: userCredential.user.email,
+            profileImage: user.profileImage,
+            onlineImage: user.onlineImage,
+          });
+          console.log("User profile updated in Firebase auth");
+          const updatedCycles = await getAllCycle();
+          updateCycleMenstruelData({ cyclesData: updatedCycles });
+          console.log("Menstrual cycle data updated");
+        } else {
+          console.log("Email does not match. Updating Firebase auth profile.");
+          await updateUser({
+            userId: userCredential.user.uid,
+            username: data.username,
+            lastMenstruationDate: data.lastMenstruationDate,
+            durationMenstruation: data.durationMenstruation,
+            cycleDuration: data.cycleDuration,
+            email: userCredential.user.email,
+            profileImage: data.profileImage,
+            onlineImage: data.onlineImage,
+          });
+          await updateProfile(auth.currentUser, {
+            displayName: data.username,
+            photoURL: data.onlineImage,
+          });
+
+          console.log("User profile updated in Firebase auth");
+          const updatedCycles = await getAllCycle();
+          updateCycleMenstruelData({ cyclesData: updatedCycles });
+          console.log("Menstrual cycle data updated");
+        }
+
+        console.log("Navigating back");
+        navigation.goBack();
       }
     } catch (error) {
-      let errorMessage;
-      console.log(error);
-      auth.signOut();
-      switch (error.code) {
-        case "auth/user-not-found":
-          errorMessage = "Adresse e-mail non trouvée";
-          break;
-        case "auth/invalid-credential":
-          errorMessage = "Vérifier votre identifiants et votre mot de passe";
-          break;
-        case "auth/wrong-password":
-          errorMessage = "Mot de passe incorrect";
-          break;
-        case "auth/invalid-email":
-          errorMessage = "Adresse e-mail invalide";
-          break;
-        case "auth/user-disabled":
-          errorMessage = "Ce compte a été désactivé";
-          break;
-        case "auth/network-request-failed":
-          errorMessage = "Problème de connexion réseau";
-          break;
-        case "auth/too-many-requests":
-          errorMessage = "Réessayer plus tard";
-          break;
-        default:
-          errorMessage = "Erreur inconnue, veuillez réessayer";
-      }
-      setLoginError(errorMessage);
-      setModalVisible(true);
+      console.error("Login failed:", error.message);
+      handleAuthError(error);
+    } finally {
       setLoading(false);
+      console.log("Loading state set to false");
     }
   };
+
+  // Helper function to fetch profile image as a blob
+  const fetchProfileImageBlob = async (imageUrl) => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = function () {
+        resolve(xhr.response);
+      };
+      xhr.onerror = function () {
+        reject(new TypeError("Network request failed"));
+      };
+      xhr.responseType = "blob";
+      xhr.open("GET", imageUrl, true);
+      xhr.send(null);
+    });
+  };
+
+  const handleAuthError = (error) => {
+    let errorMessage;
+    auth.signOut();
+    switch (error.code) {
+      case "auth/user-not-found":
+        errorMessage = "Adresse e-mail non trouvée";
+        break;
+      case "auth/invalid-credential":
+        errorMessage = "Vérifier vos identifiants et votre mot de passe";
+        break;
+      case "auth/wrong-password":
+        errorMessage = "Mot de passe incorrect";
+        break;
+      case "auth/invalid-email":
+        errorMessage = "Adresse e-mail invalide";
+        break;
+      case "auth/user-disabled":
+        errorMessage = "Ce compte a été désactivé";
+        break;
+      case "auth/network-request-failed":
+        errorMessage = "Problème de connexion réseau";
+        break;
+      case "auth/too-many-requests":
+        errorMessage = "Réessayez plus tard";
+        break;
+      default:
+        errorMessage = "Erreur inconnue, veuillez réessayer";
+    }
+    setLoginError(errorMessage);
+    setModalVisible(true);
+  };
+
+  // const handleLogin = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const userCredential = await signInWithEmailAndPassword(
+  //       auth,
+  //       loginEmail,
+  //       loginPassword
+  //     );
+
+  //     if (!userCredential.user.emailVerified) {
+  //       await sendEmailVerification(userCredential.user);
+  //       setVerificationModalVisible(true);
+  //     } else {
+  //       const userId = userCredential.user.uid;
+
+  //       if (user) {
+  //         const { username, email, profileImage, onlineImage } = user;
+
+  //         let localUri;
+
+  //         if (profileImage.startsWith("file://")) {
+  //           localUri = profileImage;
+  //         } else if (profileImage) {
+  //           localUri = `${FileSystem.documentDirectory}${username}_avatar.jpg`;
+  //           try {
+  //             await FileSystem.downloadAsync(profileImage, localUri);
+  //             await MediaLibrary.saveToLibraryAsync(localUri);
+  //           } catch (error) {
+  //             console.error("Error downloading image:", error);
+  //             throw new Error("Erreur lors du téléchargement de l'image.");
+  //           }
+  //         }
+
+  //         await updateUser({
+  //           id: userId,
+  //           email: userCredential.user.email,
+  //           username: user.username,
+  //           profileImage: localUri || null,
+  //           // onlineImage: profileImage ? profileImage : null,
+  //         });
+
+  //         // Update the display name of the auth current user
+  //         await updateProfile(auth.currentUser, {
+  //           displayName: user.username,
+  //           photoURL: user.onlineImage,
+  //         });
+
+  //         const updatedCycles = await getAllCycle();
+  //         updateCycleMenstruelData({ cyclesData: updatedCycles });
+  //         navigation.goBack();
+  //       } else {
+  //         if (user.profileImage) {
+  //           const blob = await new Promise((resolve, reject) => {
+  //             const xhr = new XMLHttpRequest();
+  //             xhr.onload = function () {
+  //               resolve(xhr.response);
+  //             };
+  //             xhr.onerror = function () {
+  //               reject(new TypeError("Network request failed"));
+  //             };
+  //             xhr.responseType = "blob";
+  //             xhr.open("GET", user.profileImage, true);
+  //             xhr.send(null);
+  //           });
+
+  //           const avatarStorageRef = storageRef(
+  //             storage,
+  //             `Avatar/${user.username}_avatar`
+  //           );
+  //           await uploadBytes(avatarStorageRef, blob);
+  //           const profilePhotoUrl = await getDownloadURL(avatarStorageRef);
+
+  //           const userDbRef = dbRef(database, `users/${userId}`);
+  //           await dbSet(userDbRef, {
+  //             userId: userId,
+  //             username: user.username,
+  //             lastMenstruationDate: user.lastMenstruationDate,
+  //             durationMenstruation: user.durationMenstruation,
+  //             cycleDuration: user.cycleDuration,
+  //             email: loginEmail,
+  //             profileImage: profilePhotoUrl,
+  //           });
+
+  //           console.log("dans deuxieme if");
+  //           await updateUser({
+  //             id: userId,
+  //             username: user.username,
+  //             email: loginEmail,
+  //             photoURL: profilePhotoUrl,
+  //           });
+
+  //           // Update the display name of the auth current user
+  //           await updateProfile(auth.currentUser, {
+  //             displayName: user.username,
+  //             avatar: profilePhotoUrl,
+  //           });
+
+  //           const updatedCycles = await getAllCycle();
+  //           updateCycleMenstruelData({ cyclesData: updatedCycles });
+  //         }
+  //       }
+
+  //       setLoading(false);
+  //     }
+  //   } catch (error) {
+  //     let errorMessage;
+  //     auth.signOut();
+  //     switch (error.code) {
+  //       case "auth/user-not-found":
+  //         errorMessage = "Adresse e-mail non trouvée";
+  //         break;
+  //       case "auth/invalid-credential":
+  //         errorMessage = "Vérifier votre identifiants et votre mot de passe";
+  //         break;
+  //       case "auth/wrong-password":
+  //         errorMessage = "Mot de passe incorrect";
+  //         break;
+  //       case "auth/invalid-email":
+  //         errorMessage = "Adresse e-mail invalide";
+  //         break;
+  //       case "auth/user-disabled":
+  //         errorMessage = "Ce compte a été désactivé";
+  //         break;
+  //       case "auth/network-request-failed":
+  //         errorMessage = "Problème de connexion réseau";
+  //         break;
+  //       case "auth/too-many-requests":
+  //         errorMessage = "Réessayer plus tard";
+  //         break;
+  //       default:
+  //         errorMessage = "Erreur inconnue, veuillez réessayer";
+  //     }
+  //     setLoginError(errorMessage);
+  //     setModalVisible(true);
+  //     setLoading(false);
+  //   }
+  // };
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -245,11 +560,11 @@ const Login = () => {
           connecter ou créer un compte.
         </Text>
       </View>
-      {/* <Image
+      <Image
         source={images.otp1}
         style={{ width: SIZES.width, height: SIZES.height * 0.2 }}
         contentFit="contain"
-      /> */}
+      />
       <View style={styles.pageContainer}>
         <View style={[styles.inputContainer, { flexDirection: "column" }]}>
           <TextInput

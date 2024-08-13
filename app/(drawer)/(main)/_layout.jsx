@@ -146,7 +146,7 @@ const TabLayout = () => {
           }}
         />
       </Tabs>
-      {/* <MenuDraggable /> */}
+   
     </SafeAreaView>
   );
 };

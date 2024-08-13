@@ -144,7 +144,7 @@ const DrawerComponent = observer(() => {
                     >
                       {user.username || "Utilisateur"}
                     </Text>
-                    {/* <Text>{user.email || "Ampela user"}</Text> */}
+                    <Text>{user.email || "Ampela user"}</Text>
                   </View>
                   <Text
                     style={{

@@ -1,9 +1,8 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import {
   View,
   Text,
   TextInput,
-  Button,
   Image,
   StyleSheet,
   TouchableOpacity,
@@ -12,22 +11,46 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useNavigation } from "expo-router";
-
-import { collection, addDoc, updateDoc } from "firebase/firestore";
+import { useLocalSearchParams } from "expo-router";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { auth, database } from "@/services/firebaseConfig";
 import { AuthContext } from "@/hooks/AuthContext";
 import { COLORS } from "@/constants";
 import { useSelector } from "@legendapp/state/react";
 import { preferenceState } from "@/legendstate/AmpelaStates";
 
-const AddPost = () => {
+const EditPost = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [photos, setPhotos] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
+  const params = useLocalSearchParams();
+  const { postId } = params;
   const { userProfile } = useContext(AuthContext);
   const { theme } = useSelector(() => preferenceState.get());
+
+  useEffect(() => {
+    const fetchPost = async () => {
+      if (postId) {
+        try {
+          const docRef = doc(database, "posts", postId);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            const post = docSnap.data();
+            setTitle(post.title || "");
+            setDescription(post.description || "");
+            setPhotos(post.photos || null);
+          }
+        } catch (error) {
+          console.error("Error fetching post:", error);
+        }
+      }
+    };
+
+    fetchPost();
+  }, [postId]);
 
   const selectPhotos = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -50,19 +73,13 @@ const AddPost = () => {
         description,
         photos,
         authorId: auth.currentUser.uid,
-        // authorName: userProfile.username,
-        // authorAvatar:auth.currentUser.photoURL,
-        like: 0,
-        createdAt: new Date(),
+        authorName: userProfile.username,
+        authorAvatar: auth.currentUser.photoURL,
         updatedAt: new Date(),
       };
 
-      const docRef = await addDoc(collection(database, "posts"), data);
-
-      const postId = docRef.id;
-
-
-      await updateDoc(docRef, { postId });
+      const docRef = doc(database, "posts", postId);
+      await updateDoc(docRef, data);
 
       setTitle("");
       setDescription("");
@@ -70,7 +87,7 @@ const AddPost = () => {
 
       navigation.goBack();
     } catch (error) {
-      console.error("Error adding document: ", error);
+      console.error("Error updating document: ", error);
     } finally {
       setLoading(false);
     }
@@ -85,7 +102,7 @@ const AddPost = () => {
         style={styles.input}
         value={title}
         onChangeText={setTitle}
-        placeholder=" cycle menstruel..."
+        placeholder="cycle menstruel..."
         editable={!loading}
       />
       <Text style={styles.label}>Description</Text>
@@ -93,7 +110,7 @@ const AddPost = () => {
         style={styles.input}
         value={description}
         onChangeText={setDescription}
-        placeholder="Quel est la durée mormanl d'un cycle menstruel ..?"
+        placeholder="Quel est la durée normale d'un cycle menstruel ..?"
         multiline
         editable={!loading}
       />
@@ -113,7 +130,7 @@ const AddPost = () => {
         {loading ? (
           <ActivityIndicator size="small" color="#fff" />
         ) : (
-          <Text style={styles.submitButtonText}>Publier </Text>
+          <Text style={styles.submitButtonText}>Mettre à jour</Text>
         )}
       </TouchableOpacity>
     </ScrollView>
@@ -156,4 +173,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddPost;
+export default EditPost;
