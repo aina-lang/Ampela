@@ -27,7 +27,7 @@ async function fetchInitialData(
     }
 
     setInitialRouteName(
-      isFirstTimeLaunch ? "(discovery)" : "(drawer)/(settings)/reminder"
+      isFirstTimeLaunch ? "(drawer)/settings/reminder" : "(drawer)/settings/reminder"
     );
   } catch (error) {
     console.log(error);
