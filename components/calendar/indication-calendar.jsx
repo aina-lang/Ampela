@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from "react-native";
 import { COLORS } from "../../constants";
 import i18n from "@/constants/i18n";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 
 
 const IndicationCalendar = ({ title }) => {

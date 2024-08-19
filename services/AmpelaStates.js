@@ -18,13 +18,11 @@ import {
   deleteObject,
 } from "firebase/storage";
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
 
-// Configure persistence plugins
 configureObservablePersistence({
   pluginLocal: ObservablePersistAsyncStorage,
   localOptions: {
@@ -68,7 +66,6 @@ const configurePersistenceForUser = (userId) => {
       pluginRemote: ObservablePersistFirebase,
       remote: userId
         ? {
-            onSetError: (err) => console.error(err),
             firebase: {
               refPath: () => refPath,
               mode: "realtime",
@@ -77,7 +74,6 @@ const configurePersistenceForUser = (userId) => {
         : null,
     });
   };
-  
 
   configurePersist(
     cycleMenstruelState,
@@ -88,22 +84,18 @@ const configurePersistenceForUser = (userId) => {
   configurePersist(userState, "user", `users/${userId}/user`);
 };
 
-// Listen for authentication state changes
 onAuthStateChanged(auth, (user) => {
-  console.log("Auth state changed. User:", user);
   if (user) {
     configurePersistenceForUser(user.uid);
-    // fetchUserData(user.uid); // Fetch and synchronize user data from database
+    // fetchUserData(user.uid);
   } else {
     configurePersistenceForUser(null);
-    console.log("No authenticated user. Using local storage.");
   }
 });
 
-// Functions to update the states
 export const updateCycleMenstruelData = (data) => {
   // if (!auth.currentUser) {
-  //   console.warn("User is not authenticated. Skipping updateUser.");
+  //
   //   return;
   // }
   cycleMenstruelState.set((prevState) => ({
@@ -114,7 +106,7 @@ export const updateCycleMenstruelData = (data) => {
 
 export const updatePreference = (data) => {
   // if (!auth.currentUser) {
-  //   console.warn("User is not authenticated. Skipping updateUser.");
+  //
   //   return;
   // }
   preferenceState.set((prevState) => ({
@@ -125,7 +117,7 @@ export const updatePreference = (data) => {
 
 export const updateUser = async (data) => {
   // if (!auth.currentUser) {
-  //   console.warn("User is not authenticated. Skipping updateUser.");
+  //
   //   return;
   // }
 
@@ -145,38 +137,28 @@ export const updateUser = async (data) => {
       await uploadBytes(imageRef, blob);
       const newImageUrl = await getDownloadURL(imageRef);
 
-      console.log("New image URL:", newImageUrl);
-
-      // Update user state with the new image URL
+      //
       userState.set((prevState) => ({
         ...prevState,
         profileImage: data.profileImage,
         onlineImage: newImageUrl,
       }));
 
-      // Update user data in Firebase Realtime Database
       const userRef = ref(database, `users/${auth.currentUser.uid}/user`);
       await set(userRef, { ...userState.get(), onlineImage: newImageUrl });
 
-      // Optionally delete the old image
       if (oldImageUrl) {
         const oldImageRef = storageRef(storage, oldImageUrl);
         await deleteObject(oldImageRef);
       }
-    } catch (error) {
-      console.error("Error updating profile image:", error.message);
-    }
+    } catch (error) {}
   }
 };
 
-// Function to clear AsyncStorage
 export const clearAsyncStorage = async () => {
   try {
     await AsyncStorage.clear();
-    console.log("AsyncStorage cleared");
-  } catch (error) {
-    console.error("Failed to clear AsyncStorage:", error.message);
-  }
+  } catch (error) {}
 };
 
 export const fetchUserData = async (userId) => {
@@ -187,12 +169,9 @@ export const fetchUserData = async (userId) => {
       if (snapshot.exists()) {
         userState.set(snapshot.val());
       } else {
-        console.log("No user data available");
       }
     }
-  } catch (error) {
-    console.error("Error fetching user data:", error.message);
-  }
+  } catch (error) {}
 };
 
 export const fetchDoctorsData = async () => {
@@ -200,27 +179,10 @@ export const fetchDoctorsData = async () => {
     const querySnapshot = await getDocs(collection(firestore, "doctors"));
     const doctors = querySnapshot.docs.map((doc) => doc.data());
     doctorsState.set(doctors);
-  } catch (error) {
-    console.error("Error fetching doctors data:", error.message);
-  }
+  } catch (error) {}
 };
 
-// Export states
 export { cycleMenstruelState, preferenceState, userState, doctorsState };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import { observable } from "@legendapp/state";
 // import {
@@ -291,9 +253,9 @@ export { cycleMenstruelState, preferenceState, userState, doctorsState };
 //   try {
 //     const userRef = ref(database, `users/${userId}/user`);
 //     await set(userRef, data);
-//     console.log("User data updated in Firebase Realtime Database");
+//
 //   } catch (error) {
-//     console.error("Error updating user data:", error.message);
+//
 //   }
 // }, 1000); // Adjust the debounce delay as needed
 
@@ -304,7 +266,7 @@ export { cycleMenstruelState, preferenceState, userState, doctorsState };
 //       pluginRemote: ObservablePersistFirebase,
 //       remote: userId
 //         ? {
-//             onSetError: (err) => console.error(err),
+//             onSetError: (err) =>
 //             firebase: {
 //               refPath: () => refPath,
 //               mode: "realtime",
@@ -325,13 +287,13 @@ export { cycleMenstruelState, preferenceState, userState, doctorsState };
 
 // // Listen for authentication state changes
 // onAuthStateChanged(auth, (user) => {
-//   console.log("Auth state changed. User:", user);
+//
 //   if (user) {
 //     configurePersistenceForUser(user.uid);
 //     fetchUserData(user.uid); // Fetch and synchronize user data from the database
 //   } else {
 //     configurePersistenceForUser(null);
-//     console.log("No authenticated user. Using local storage.");
+//
 //   }
 // });
 
@@ -369,7 +331,7 @@ export { cycleMenstruelState, preferenceState, userState, doctorsState };
 //       await uploadBytes(imageRef, blob);
 //       const newImageUrl = await getDownloadURL(imageRef);
 
-//       console.log("New image URL:", newImageUrl);
+//
 
 //       // Update user state with the new image URL
 //       userState.set((prevState) => ({
@@ -390,7 +352,7 @@ export { cycleMenstruelState, preferenceState, userState, doctorsState };
 //         await deleteObject(oldImageRef);
 //       }
 //     } catch (error) {
-//       console.error("Error updating profile image:", error.message);
+//
 //     }
 //   } else {
 //     debounceUpdate(auth.currentUser?.uid, userState.get());
@@ -401,9 +363,9 @@ export { cycleMenstruelState, preferenceState, userState, doctorsState };
 // export const clearAsyncStorage = async () => {
 //   try {
 //     await AsyncStorage.clear();
-//     console.log("AsyncStorage cleared");
+//
 //   } catch (error) {
-//     console.error("Failed to clear AsyncStorage:", error.message);
+//
 //   }
 // };
 
@@ -415,11 +377,11 @@ export { cycleMenstruelState, preferenceState, userState, doctorsState };
 //       if (snapshot.exists()) {
 //         userState.set(snapshot.val());
 //       } else {
-//         console.log("No user data available");
+//
 //       }
 //     }
 //   } catch (error) {
-//     console.error("Error fetching user data:", error.message);
+//
 //   }
 // };
 
@@ -429,7 +391,7 @@ export { cycleMenstruelState, preferenceState, userState, doctorsState };
 //     const doctors = querySnapshot.docs.map((doc) => doc.data());
 //     doctorsState.set(doctors);
 //   } catch (error) {
-//     console.error("Error fetching doctors data:", error.message);
+//
 //   }
 // };
 

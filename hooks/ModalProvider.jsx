@@ -6,18 +6,18 @@ import { COLORS, SIZES } from "@/constants";
 const ModalContext = createContext();
 
 export const ModalProvider = ({ children }) => {
-  const modalRef = useRef(null); // Create a ref for the Modal component
-  const [isVisible, setIsVisible] = useState(false); // State for modal visibility
-  const [content, setContent] = useState(null); // State for modal content
+  const modalRef = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [content, setContent] = useState(null);
 
   const openModal = (component) => {
     setContent(component);
-    setIsVisible(true); // Set modal to visible
+    setIsVisible(true);
   };
 
   const closeModal = () => {
-    setIsVisible(false); // Set modal to hidden
-    setContent(null); // Clear content on close
+    setIsVisible(false);
+    setContent(null);
   };
 
   return (
@@ -26,10 +26,10 @@ export const ModalProvider = ({ children }) => {
       <Modal
         visible={isVisible}
         ref={modalRef}
-        animationType="slide" // Optional: Set animation type (slide, fade, etc.)
-        transparent={true} // Allow background interaction
-        hardwareAccelerated={true} // Improve performance on some devices
-        onRequestClose={closeModal} // Handle close button or outside tap
+        animationType="slide"
+        transparent={true}
+        hardwareAccelerated={true}
+        onRequestClose={closeModal}
       >
         <View
           style={{

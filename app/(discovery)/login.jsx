@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
 } from "react-native";
-import { COLORS, images, SIZES } from "@/constants";
+import { COLORS, FONT, images, SIZES } from "@/constants";
 import { auth, database, realtimeDatabase } from "@/services/firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { collection } from "firebase/firestore";
@@ -16,7 +16,7 @@ import {
   preferenceState,
   updateCycleMenstruelData,
   updateUser,
-} from "@/legendstate/AmpelaStates";
+} from "@/services/AmpelaStates";
 import i18n from "@/constants/i18n";
 import { router, useNavigation } from "expo-router";
 import {
@@ -33,6 +33,7 @@ import CustomAlert from "@/components/CustomAlert";
 import { Image } from "expo-image";
 import { get, ref } from "firebase/database";
 import * as FileSystem from "expo-file-system";
+import { Feather } from "@expo/vector-icons";
 
 const Login = () => {
   const [loginEmail, setLoginEmail] = useState("");
@@ -45,6 +46,7 @@ const Login = () => {
   const navigation = useNavigation();
   const { theme } = useSelector(() => preferenceState.get());
   const [loading, setLoading] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
   const handleLoginEmailChange = (text) => {
     setLoginEmail(text);
     if (!text) {
@@ -68,32 +70,22 @@ const Login = () => {
   const handleLogin = async () => {
     setLoading(true);
     try {
-      console.log("Attempting to sign in with email and password");
       const userCredential = await signInWithEmailAndPassword(
         auth,
         loginEmail,
         loginPassword
       );
-      console.log("User signed in successfully:", userCredential.user.uid);
 
       if (!userCredential.user.emailVerified) {
-        console.log("Email not verified, sending verification email");
         await sendEmailVerification(userCredential.user);
         setVerificationModalVisible(true);
-        console.log("Verification email sent");
         setLoading(false);
         return;
       }
 
       const userId = userCredential.user.uid;
-      console.log(
-        `Fetching user data from Realtime Database for userId: ${userId}`
-      );
-      const userDbRef = ref(realtimeDatabase, `users/${userId}/user`);
 
-      console.log(
-        `Fetching user data from Realtime Database for userId: ${userId}`
-      );
+      const userDbRef = ref(realtimeDatabase, `users/${userId}/user`);
 
       const snapshot = await get(userDbRef);
 
@@ -104,7 +96,6 @@ const Login = () => {
       const data = snapshot.val();
 
       if (data.onlineImage) {
-        console.log("Downloading online image");
         const localUri = `${FileSystem.documentDirectory}${userId}_profile.jpg`;
 
         const downloadResult = await FileSystem.downloadAsync(
@@ -113,7 +104,6 @@ const Login = () => {
         );
 
         if (downloadResult.status === 200) {
-          console.log("Image downloaded successfully");
           await updateUser({
             userId: userCredential.user.uid,
             username: data.username,
@@ -129,13 +119,9 @@ const Login = () => {
             displayName: data.username,
             photoURL: data.onlineImage,
           });
-
-          console.log("User profile updated in Firebase auth");
         } else {
-          console.error("Failed to download image");
         }
       } else {
-        console.log("No online image to download");
         await updateUser({
           userId: userCredential.user.uid,
           username: data.username,
@@ -150,16 +136,12 @@ const Login = () => {
 
       const updatedCycles = await getAllCycle();
       updateCycleMenstruelData({ cyclesData: updatedCycles });
-      console.log("Menstrual cycle data updated");
 
-      console.log("Navigating back");
       router.navigate("(drawer)/(main)");
     } catch (error) {
-      console.error("Login failed:", error.message);
       handleAuthError(error);
     } finally {
       setLoading(false);
-      console.log("Loading state set to false");
     }
   };
 
@@ -243,7 +225,7 @@ const Login = () => {
         contentFit="contain"
       />
       <View style={styles.pageContainer}>
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { flexDirection: "column" }]}>
           <TextInput
             style={styles.input}
             placeholder="Email"
@@ -254,14 +236,29 @@ const Login = () => {
         {loginEmailError && (
           <Text style={{ color: "red" }}>{loginEmailError}</Text>
         )}
-        <View style={styles.inputContainer}>
+
+        <View style={[styles.inputContainer]}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { width: "90%" }]}
             placeholder="Password"
-            secureTextEntry
+            secureTextEntry={isHidden}
             onChangeText={handleLoginPasswordChange}
           />
+
+          <TouchableOpacity
+            className="items-center justify-center"
+            onPress={() => {
+              setIsHidden(!isHidden);
+            }}
+          >
+            <Feather
+              name={isHidden ? "eye" : "eye-off"}
+              size={20}
+              color={"gray"}
+            />
+          </TouchableOpacity>
         </View>
+
         <View className="mt-0 mb-2 flex-row justify-end">
           <TouchableOpacity
             style={styles.forgotPasswordButton}
@@ -297,7 +294,7 @@ const Login = () => {
           onPress={handleLogin}
           disabled={loginErrorPresent || loading}
         >
-          <Text style={styles.buttonText}>
+          <Text style={[styles.buttonText, { fontSize: FONT.button }]}>
             {loading ? i18n.t("chargement") : i18n.t("connection")}
           </Text>
         </TouchableOpacity>
@@ -315,7 +312,10 @@ const Login = () => {
           <Text className="text-center">
             Je suis un nouveau utilisatrice {"  "}
             <Text
-              style={[styles.switchButtonText, { color: COLORS.accent500 }]}
+              style={[
+                styles.switchButtonText,
+                { color: COLORS.accent500, fontSize: FONT.button },
+              ]}
             >
               {i18n.t("inscription")}
             </Text>
@@ -351,9 +351,10 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginVertical: 10,
     width: SIZES.width - 40,
-    backgroundColor: COLORS.bg200,
+    backgroundColor: COLORS.bg100,
     borderWidth: 1,
     borderColor: "#c0bdbd",
+    flexDirection: "row",
   },
   button: {
     padding: 15,

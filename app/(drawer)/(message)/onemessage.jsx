@@ -1,8 +1,8 @@
-import OptionMenu from "@/components/OptionMenu";
+import OptionMenu from "@/components/navigation/OptionMenu";
 import { COLORS, SIZES, images } from "@/constants";
 import i18n from "@/constants/i18n";
 import { useAuth } from "@/hooks/AuthContext";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 import { database } from "@/services/firebaseConfig";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
@@ -119,14 +119,12 @@ export default function OneMessageScreen() {
   };
 
   const handleSend = useCallback(async (newMessages = []) => {
-    console.log("yes", user);
     try {
       const roomId = getRoomId(user?.uid, target?.id);
       const docRef = doc(database, "rooms", roomId);
       const messagesRef = collection(docRef, "messages");
       let message = newMessages[0];
 
-      // console.log({... userProfile});
       let myMsg = {
         ...message,
         id: user?.uid,
@@ -141,7 +139,7 @@ export default function OneMessageScreen() {
       //   GiftedChat.append(...previousMessages, myMsg)
       // );
     } catch (error) {
-      console.error(error);
+      
     }
   }, []);
 

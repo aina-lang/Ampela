@@ -1,7 +1,7 @@
 import { ImageBackground, KeyboardAvoidingView, Platform } from "react-native";
 import { images } from "@/constants";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 
 const BackgroundContainer = ({
   children,

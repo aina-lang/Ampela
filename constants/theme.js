@@ -1,7 +1,16 @@
-import { Dimensions } from "react-native";
+import { Dimensions, StyleSheet } from "react-native";
 
-const height = Dimensions.get("window").height;
-const width = Dimensions.get("window").width;
+const { width, height } = Dimensions.get("window");
+
+const guidelineBaseWidth = 350;
+const guidelineBaseHeight = 680;
+
+const scale = (size) => (width / guidelineBaseWidth) * size;
+const verticalScale = (size) => (height / guidelineBaseHeight) * size;
+const moderateScale = (size, factor = 0.5) =>
+  size + (scale(size) - size) * factor;
+const fontSize = (size) => moderateScale(size, 1);
+const number = (n) => moderateScale(n, 1);
 
 const COLORS = {
   primary: "#333333",
@@ -14,8 +23,8 @@ const COLORS = {
   neutral100: "#FFFFFF",
 
   bg100: "#f3f4f6",
-  bg200:"#e5e7eb",
-  text100: "",
+  bg200: "#e5e7eb",
+  text100: "#000000",
   text700: "rgba(0,0,0,0.7)",
 
   accent800: "#FE8729",
@@ -44,21 +53,46 @@ const COLORS = {
 };
 
 const FONT = {
-  medium: "Medium",
-  semiBold: "SBold",
-  bold: "Bold",
+  tiny: fontSize(10),
+  xSmall: fontSize(12),
+  small: fontSize(14),
+  medium: fontSize(16),
+  large: fontSize(18),
+  xLarge: fontSize(20),
+  xxLarge: fontSize(24),
+  xxxLarge: fontSize(30),
+  huge: fontSize(36),
+  xHuge: fontSize(42),
+  xxHuge: fontSize(48),
+  xxxHuge: fontSize(54),
+
+  title: fontSize(24),
+  subtitle: fontSize(20),
+  body: fontSize(16),
+  caption: fontSize(12),
+  button: fontSize(14),
+  header: fontSize(18),
+
+  medium: fontSize(16),
+  semiBold: fontSize(18),
+  bold: fontSize(20),
 };
 
 const SIZES = {
-  xSmall: 10,
-  small: 13,
-  medium: 15,
-  xmedium: 17,
-  large: 20,
-  xLarge: 24,
-  xxLarge: 34,
+  xSmall: scale(10),
+  small: scale(13),
+  medium: scale(15),
+  xmedium: scale(17),
+  large: scale(20),
+  xLarge: scale(24),
+  xxLarge: scale(34),
   height: height,
   width: width,
+  fontSize,
+  scale,
+  verticalScale,
+  moderateScale,
+  number,
 };
 
 const SHADOWS = {
@@ -66,22 +100,63 @@ const SHADOWS = {
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: verticalScale(2),
     },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 2,
+    shadowRadius: moderateScale(3.84),
+    elevation: scale(2),
   },
   medium: {
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: verticalScale(2),
     },
     shadowOpacity: 0.25,
-    shadowRadius: 5.84,
-    elevation: 5,
+    shadowRadius: moderateScale(5.84),
+    elevation: scale(5),
   },
 };
 
-export { COLORS, FONT, SIZES, SHADOWS };
+const GLOBAL_STYLES = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: SIZES.medium,
+    backgroundColor: COLORS.bg100,
+  },
+  titleText: {
+    fontSize: SIZES.large,
+    fontFamily: FONT.bold,
+    color: COLORS.primary,
+  },
+  shadowStyle: {
+    ...SHADOWS.small,
+  },
+});
+
+// import { useEffect, useState } from "react";
+
+// const useResponsive = () => {
+//   const [dimensions, setDimensions] = useState({ width, height });
+
+//   useEffect(() => {
+//     const onChange = ({ window: { width, height } }) => {
+//       setDimensions({ width, height });
+//     };
+//     Dimensions.addEventListener("change", onChange);
+//     return () => {
+//       Dimensions.removeEventListener("change", onChange);
+//     };
+//   }, []);
+
+//   return dimensions;
+// };
+
+export {
+  COLORS,
+  FONT,
+  SIZES,
+  SHADOWS,
+  GLOBAL_STYLES,
+  // useResponsive
+};

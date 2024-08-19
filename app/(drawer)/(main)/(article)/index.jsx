@@ -10,10 +10,10 @@ import {
   Platform,
 } from "react-native";
 
-import SearchArticles from "@/components/search-articles";
+import SearchArticles from "@/components/article/search-articles";
 import { SIZES } from "@/constants";
-import ArticleCategory from "@/components/article-category";
-import ArticleContent from "@/components/article-content";
+import ArticleCategory from "@/components/article/article-category";
+import ArticleContent from "@/components/article/article-content";
 import BackgroundContainer from "@/components/background-container";
 import { useNavigation } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";

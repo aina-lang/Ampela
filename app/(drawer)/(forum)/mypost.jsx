@@ -15,7 +15,7 @@ import { COLORS } from "@/constants";
 import BackgroundContainer from "@/components/background-container";
 import { auth, database } from "@/services/firebaseConfig";
 import { Link, router, useNavigation } from "expo-router";
-import SearchForum from "@/components/SearchForum";
+import SearchForum from "@/components/forum/SearchForum";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useModal } from "@/hooks/ModalProvider";
 import {
@@ -30,7 +30,7 @@ import {
 } from "firebase/firestore";
 import { useNetInfo } from "@react-native-community/netinfo";
 import AuthContent from "@/components/AuthContentFromSetting";
-import Myforumitem from "@/components/myforumitem";
+import Myforumitem from "@/components/forum/myforumitem";
 
 const PAGE_SIZE = 10;
 
@@ -121,7 +121,7 @@ const MyPosts = () => {
           setFilteredPosts([]);
         }
       } catch (error) {
-        console.error("Error searching posts:", error);
+        
       } finally {
         setIsLoading(false);
       }
@@ -167,7 +167,7 @@ const MyPosts = () => {
           setIsFetchingMore(false);
         })
         .catch((error) => {
-          console.error("Error fetching more posts:", error);
+          
           setIsFetchingMore(false);
         });
     }

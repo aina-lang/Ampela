@@ -1,7 +1,7 @@
 import { I18n } from "i18n-js";
 import mgTranslation from "./locales/mg.json";
 import frTranslation from "./locales/fr.json";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 
 const i18n = new I18n();
@@ -26,7 +26,7 @@ export const loadLocale = async () => {
     // };
     // updatePreference(preferenceData);
   } catch (error) {
-    console.error("Failed to load locale from AsyncStorage:", error);
+    
     i18n.locale = i18n.defaultLocale;
   }
 };

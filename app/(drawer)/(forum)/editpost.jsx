@@ -17,7 +17,7 @@ import { auth, database } from "@/services/firebaseConfig";
 import { AuthContext } from "@/hooks/AuthContext";
 import { COLORS } from "@/constants";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 
 const EditPost = () => {
   const [title, setTitle] = useState("");
@@ -44,7 +44,7 @@ const EditPost = () => {
             setPhotos(post.photos || null);
           }
         } catch (error) {
-          console.error("Error fetching post:", error);
+          
         }
       }
     };
@@ -87,7 +87,7 @@ const EditPost = () => {
 
       navigation.goBack();
     } catch (error) {
-      console.error("Error updating document: ", error);
+      
     } finally {
       setLoading(false);
     }

@@ -2,7 +2,7 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import HeaderWithGoBack from "@/components/header-with-go-back";
 import { SIZES, COLORS, images } from "@/constants";
 import { useNavigation } from "expo-router";
-import { preferenceState, updatePreference } from "@/legendstate/AmpelaStates";
+import { preferenceState, updatePreference } from "@/services/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 import i18n from "@/constants/i18n";
 

@@ -49,7 +49,7 @@ export async function registerForPushNotificationsAsync() {
           projectId,
         })
       ).data;
-      console.log(token);
+      
     } catch (e) {
       token = `${e}`;
     }
@@ -132,7 +132,7 @@ export async function scheduleCycleNotifications(
 
 TaskManager.defineTask("BACKGROUND_FETCH_TASK", async () => {
   try {
-    console.log("data");
+    
     return BackgroundFetch.Result.NewData;
   } catch (error) {
     return BackgroundFetch.Result.Failed;

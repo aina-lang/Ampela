@@ -27,7 +27,7 @@ import i18n from "@/constants/i18n";
 import { doc, getDoc, increment, updateDoc } from "firebase/firestore";
 import { database } from "@/services/firebaseConfig";
 import { Swipeable } from "react-native-gesture-handler";
-import CustomAlert from "./CustomAlert";
+import CustomAlert from "../CustomAlert";
 
 const truncateText = (text, maxLength) => {
   if (!text || typeof text !== "string") return "";
@@ -57,10 +57,10 @@ const Myforumitem = ({ post, refToCommentItem }) => {
     const fetchUser = async () => {
       try {
         const userData = await fetchUserDataFromRealtimeDB(post.authorId);
-        console.log(userData.user);
+        
         setUserPosteur(userData.user);
       } catch (error) {
-        console.error("Error fetching user data: ", error);
+        
       }
     };
 
@@ -110,10 +110,10 @@ const Myforumitem = ({ post, refToCommentItem }) => {
           await updateDoc(postRef, { like: currentLikes + 1 });
         }
       } else {
-        console.error("Post does not exist");
+        
       }
     } catch (error) {
-      console.error("Error updating like count: ", error);
+      
     } finally {
       setIsDisabled(false);
     }
@@ -135,9 +135,9 @@ const Myforumitem = ({ post, refToCommentItem }) => {
     try {
       const response = await addNewComment(commentData);
       if (response && response.msg === "no-auth") {
-        console.log("User is not authenticated.");
+        
       } else {
-        console.log("Comment added successfully.");
+        
         setCommentValue("");
 
         // const postRef = doc(database, "posts", post.postId);
@@ -146,7 +146,7 @@ const Myforumitem = ({ post, refToCommentItem }) => {
         // });
       }
     } catch (error) {
-      console.error("Error adding comment: ", error);
+      
     } finally {
       setIsSubmitting(false);
     }

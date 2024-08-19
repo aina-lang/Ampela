@@ -11,7 +11,7 @@ import {
 import { COLORS, images, SIZES } from "@/constants";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 import { Image } from "expo-image";
 
 const OTPScreen = () => {
@@ -32,7 +32,7 @@ const OTPScreen = () => {
       // Navigate to the next screen or show success message
     } catch (error) {
       setLoading(false);
-      console.error(error);
+      
     }
   };
 
@@ -44,7 +44,7 @@ const OTPScreen = () => {
       setLoading(false);
     } catch (error) {
       setLoading(false);
-      console.error(error);
+      
     }
   };
 

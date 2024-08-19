@@ -2,11 +2,11 @@ import { useState, useContext, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { SIZES, COLORS } from "@/constants";
 import HeaderWithGoBack from "@/components/header-with-go-back";
-import Link from "@/components/link";
+import Link from "@/components/navigation/link";
 import { useNavigation } from "expo-router";
 import i18n from "@/constants/i18n";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 
 const contentData = [
   {

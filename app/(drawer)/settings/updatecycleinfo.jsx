@@ -18,7 +18,7 @@ import {
   preferenceState,
   userState,
   cycleMenstruelState,
-} from "@/legendstate/AmpelaStates";
+} from "@/services/AmpelaStates";
 import {
   deleteCycleById,
   addCycleMenstruel,
@@ -150,7 +150,7 @@ const UpdateCycleInfo = () => {
         "Erreur",
         "Une erreur est survenue lors de la mise à jour des informations du cycle."
       );
-      console.error(error);
+      
     } finally {
       setIsLoading(false);
     }

@@ -17,7 +17,7 @@ import {
   preferenceState,
   updateUser,
   userState,
-} from "@/legendstate/AmpelaStates";
+} from "@/services/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 import { AntDesign, FontAwesome } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -56,7 +56,7 @@ const AccountScreen = () => {
       await updateUser({ username });
       setIsModalVisible(false);
     } catch (error) {
-      console.error("Error updating user: ", error);
+      
     }
   };
 
@@ -85,7 +85,7 @@ const AccountScreen = () => {
         setProfileImage(profileImage);
       }
     } catch (error) {
-      console.error("Error picking image: ", error);
+      
     }
   };
 

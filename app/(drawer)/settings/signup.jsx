@@ -14,7 +14,7 @@ import {
   sendEmailVerification,
 } from "firebase/auth";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 import i18n from "@/constants/i18n";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomAlert from "@/components/CustomAlert";
@@ -83,7 +83,6 @@ const login = ({ closeModal }) => {
 
         if (!emailVerified) {
           await sendEmailVerification(userCredential.user).then((response) => {
-            console.log(response);
           });
           handleScrollToIndex(0);
           setSignupEmail("");
@@ -183,7 +182,7 @@ const login = ({ closeModal }) => {
           ]}
           className="rounded-b-xl pt-20 text-white"
         >
-          {i18n.t("connecter")}
+          {i18n.t("inscription")}
         </Text>
         <Text style={styles.infoText}>
           Si vous voulez participer au message privée et forum, veuillez vous
@@ -274,7 +273,7 @@ const login = ({ closeModal }) => {
           className="mt-10"
         >
           <Text className="text-center">
-            Je suis un nouveau utilisatrice {"  "}
+            J'ai déja un compte {"  "}
             <Text
               style={[
                 styles.switchButtonText,
@@ -283,7 +282,7 @@ const login = ({ closeModal }) => {
                 },
               ]}
             >
-              {i18n.t("inscription")}
+              {i18n.t("connecter")}
             </Text>
           </Text>
         </TouchableOpacity>
@@ -366,7 +365,7 @@ const styles = StyleSheet.create({
   },
   switchButtonText: {
     textAlign: "center",
-    fontSize: 16,
+    fontSize: 14,
   },
   modalBackdrop: {
     flex: 1,

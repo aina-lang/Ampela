@@ -11,7 +11,7 @@ import {
 import { COLORS } from "@/constants";
 import i18n from "@/constants/i18n";
 import { useRouter } from "expo-router";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 
 const ArticleItem = ({

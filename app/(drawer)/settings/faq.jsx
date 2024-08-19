@@ -7,7 +7,7 @@ import faqdata from "@/constants/faqdata";
 import { useNavigation } from "expo-router";
 import i18n from "@/constants/i18n";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 
 const FaqScreen = () => {
   const [data, setData] = useState([]);

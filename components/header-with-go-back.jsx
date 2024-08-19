@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { SIZES, icons, COLORS } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 
 const HeaderWithGoBack = ({ navigation, title, iconLeft, onIconLeftPress }) => {
   const { theme } = useSelector(() => preferenceState.get());

@@ -4,7 +4,7 @@ import { Stack, useNavigation } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { COLORS, SIZES } from "@/constants";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 
 const _layout = () => {
   const navigation = useNavigation();

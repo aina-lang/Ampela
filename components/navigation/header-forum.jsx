@@ -5,7 +5,7 @@ import { COLORS, images, icons } from "@/constants";
 
 const HeaderForum = ({navigation, isDoctor,screen}) => {
   // const {theme} = useContext(ThemeContext);
-console.log(screen);
+
   return (
     <View style={styles.container}>
       <Pressable onPress={() => navigation.openDrawer()}>

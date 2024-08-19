@@ -6,11 +6,11 @@ import {
   TouchableOpacity,
   SafeAreaView,
 } from "react-native";
-import { COLORS, SIZES } from "../../constants";
+import { COLORS, FONT, SIZES } from "../../constants";
 import { Calendar } from "react-native-calendars";
 import { useNavigation } from "@react-navigation/native";
 import { useSelector } from "@legendapp/state/react";
-import { updateUser, userState } from "@/legendstate/AmpelaStates";
+import { updateUser, userState } from "@/services/AmpelaStates";
 
 const LastMenstrualCycleStartAge = () => {
   const today = new Date();
@@ -40,7 +40,6 @@ const LastMenstrualCycleStartAge = () => {
   }, [selected]);
 
   const handleNextBtnPress = () => {
-    console.log(user);
     navigation.navigate("questionsSeries");
   };
 
@@ -49,9 +48,6 @@ const LastMenstrualCycleStartAge = () => {
     if (new Date(selectedDate) <= today) {
       setSelected(selectedDate);
     } else {
-      console.warn(
-        "La date sélectionnée doit être aujourd'hui ou dans le passé."
-      );
     }
   };
 
@@ -66,7 +62,7 @@ const LastMenstrualCycleStartAge = () => {
           style={[styles.confidentialityTitle, { color: COLORS.accent500 }]}
           className="rounded-b-xl pt-20 text-white"
         >
-           date de vos dernières règles
+          date de vos dernières règles
         </Text>
         <Text style={styles.infoText}>
           Si vous voulez participer au message privée et forum, veuillez vous
@@ -125,7 +121,9 @@ const LastMenstrualCycleStartAge = () => {
           className="p-3 items-center rounded-md px-5"
           onPress={() => navigation.goBack()}
         >
-          <Text className="text-[#8a8888]">Précédent</Text>
+          <Text className="text-[#8a8888]" style={{ fontSize: FONT.button }}>
+            Précédent
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           className="p-3 items-center rounded-md px-5 shadow-sm shadow-black"
@@ -135,7 +133,9 @@ const LastMenstrualCycleStartAge = () => {
             backgroundColor: isNextBtnDisabled ? "#e7e5e5" : "#FF7575",
           }}
         >
-          <Text className="text-white">Suivant</Text>
+          <Text className="text-white" style={{ fontSize: FONT.button }}>
+            Suivant
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

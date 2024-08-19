@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { getAllCycle, getUser, setFirstLaunchFalse } from "@/services/database";
 import { Tabs, useNavigation } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import MyTabBar from "@/components/MyTabBar";
+import MyTabBar from "@/components/navigation/MyTabBar";
 import {
   Text,
   TouchableOpacity,
@@ -19,30 +19,26 @@ import {
   updateUser,
   updateCycleMenstruelData,
   preferenceState,
-} from "@/legendstate/AmpelaStates";
+} from "@/services/AmpelaStates";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MenuDraggable from "@/components/MenuDraggable";
 
 const TabLayout = () => {
   const user = useSelector(() => userState.get());
   const navigation = useNavigation();
-  const { theme } = useSelector(() => preferenceState.get());
+  const { theme, language } = useSelector(() => preferenceState.get());
 
-  console.log("USER ", user);
   useEffect(() => {
     async function fetchData() {
       try {
-        const userFromSqlite = await getUser();
         await setFirstLaunchFalse();
-
-        const cyclesFromSqlite = await getAllCycle();
-        // console.log(cyclesFromSqlite);
-        updateCycleMenstruelData(cyclesFromSqlite);
-      } catch (error) {
-        console.error("Error:", error);
-      }
+        // const cyclesFromSqlite = await getAllCycle();
+        // updateCycleMenstruelData(cyclesFromSqlite);
+        const preferenceData = { theme: theme, language: language };
+        updatePreference(preferenceData);
+        i18n.defaultLocale = language;
+      } catch (error) {}
     }
-
     fetchData();
   }, []);
 
@@ -98,15 +94,17 @@ const TabLayout = () => {
               </View>
               <View className="flex-row">
                 <TouchableOpacity
-                  className="p-2 pl-0"
+                  className="p-2 pl-0 relative"
                   onPress={() => navigation.navigate("(message)")}
                 >
+                  <Text className="absolute text-white">1</Text>
                   <Ionicons name="chatbubble" color={"white"} size={24} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  className="p-2 pl-0"
+                  className="p-2 pl-0 relative"
                   onPress={() => navigation.navigate("(message)")}
                 >
+                  <Text className="absolute text-white">1</Text>
                   <Ionicons
                     name="notifications-circle"
                     color={"white"}
@@ -146,7 +144,6 @@ const TabLayout = () => {
           }}
         />
       </Tabs>
-   
     </SafeAreaView>
   );
 };

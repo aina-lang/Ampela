@@ -11,12 +11,12 @@ import {
   RefreshControl,
   TouchableOpacity,
 } from "react-native";
-import ForumItem from "@/components/forum-item";
+import ForumItem from "@/components/forum/forum-item";
 import { COLORS, SIZES } from "@/constants";
 import BackgroundContainer from "@/components/background-container";
 import { auth, database } from "@/services/firebaseConfig";
 import { Link, router, useNavigation } from "expo-router";
-import SearchForum from "@/components/SearchForum";
+import SearchForum from "@/components/forum/SearchForum";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useModal } from "@/hooks/ModalProvider";
 import {
@@ -118,7 +118,7 @@ const Index = () => {
           setFilteredPosts([]);
         }
       } catch (error) {
-        console.error("Error searching posts:", error);
+        
       } finally {
         setIsLoading(false);
       }
@@ -163,7 +163,7 @@ const Index = () => {
           setIsFetchingMore(false);
         })
         .catch((error) => {
-          console.error("Error fetching more posts:", error);
+          
           setIsFetchingMore(false);
         });
     }

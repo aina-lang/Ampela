@@ -28,7 +28,7 @@ import { Image } from "expo-image";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { COLORS, icons, images } from "@/constants";
 import i18n from "@/constants/i18n";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 import { database } from "@/services/firebaseConfig";
 import {
   addNewComment,
@@ -55,7 +55,6 @@ const OneForum = () => {
   const { theme } = useSelector(() => preferenceState.get());
   const params = useLocalSearchParams();
   const { postId, username, onlineImage } = params;
-  console.log(onlineImage);
   const router = useRouter();
   const auth = getAuth();
   useEffect(() => {
@@ -85,7 +84,6 @@ const OneForum = () => {
         setPostData(postData);
         getLikeNumber(postId, setLikes);
       } else {
-        console.log("No such document!");
       }
       setLoading(false);
     });
@@ -194,7 +192,7 @@ const OneForum = () => {
       setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
       setHasMore(snapshot.docs.length === PAGE_SIZE);
     } catch (error) {
-      console.error("Error refreshing comments:", error);
+      
     } finally {
       setRefreshing(false);
     }
@@ -216,14 +214,12 @@ const OneForum = () => {
     try {
       const response = await addNewComment(commentData);
       if (response?.msg === "no-auth") {
-        console.log("L'utilisateur n'est pas authentifié.");
       } else {
-        console.log("Commentaire ajouté avec succès.");
         setCommentValue("");
         handleRefresh();
       }
     } catch (error) {
-      console.error("Erreur lors de l'ajout du commentaire : ", error);
+      
     }
   };
 
@@ -248,10 +244,10 @@ const OneForum = () => {
           await updateDoc(postRef, { like: currentLikes + 1 });
         }
       } else {
-        console.error("Post does not exist");
+        
       }
     } catch (error) {
-      console.error("Error updating like count: ", error);
+      
     } finally {
       setIsDisabled(false);
     }

@@ -18,7 +18,7 @@ import {
   clearAsyncStorage,
   cycleMenstruelState,
   preferenceState,
-} from "@/legendstate/AmpelaStates";
+} from "@/services/AmpelaStates";
 import i18n from "@/constants/i18n";
 import { useNavigation } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -29,8 +29,6 @@ const Index = () => {
   const [howmanytimeReminder3, setHowmanytimeReminder3] = useState("quotidien");
   const [scrollDisabled, setScrollDisabled] = useState(true);
   const { theme, language } = useSelector(() => preferenceState.get());
-
-  console.log(preferenceState.get());
 
   const [time1, setTime1] = useState({
     hour: 0,
@@ -134,7 +132,6 @@ const Index = () => {
 
   LocaleConfig.defaultLocale = language;
 
-  const [clicked, setIsClicked] = useState(false);
   const handleReminderBtnOnePress = () => {
     setReminderInfo({ as: "Début des règles" });
     setReminderModalIsVisible(true);
@@ -152,8 +149,8 @@ const Index = () => {
 
   const { cyclesData } = useSelector(() => cycleMenstruelState.get());
   const cycles = cyclesData?.cyclesData ? cyclesData?.cyclesData : cyclesData;
+
   const markedDates = {};
-  // console.log(cycles);
   const generateMarkedDates = () => {
     cycles.forEach((cycle) => {
       // FECONDITY
@@ -214,81 +211,84 @@ const Index = () => {
   generateMarkedDates();
 
   return (
-    <SafeAreaView className="flex-1">
-      <ScrollView
-        scrollEnabled={scrollDisabled}
-        style={styles.container}
-        showsVerticalScrollIndicator={false}
-      >
-        <BackgroundContainer paddingBottom={10}>
-          <View style={styles.calendar}>
-            <Calendar
-              disableAllTouchEventsForDisabledDays={true}
-              style={{
-                height: 380,
-                borderRadius: 8,
-              }}
-              theme={{
-                textSectionTitleColor: COLORS.neutral400,
-                todayTextColor: COLORS.primary,
-                dayTextColor: "#2d4150",
-                textDisabledColor: COLORS.neutral400,
-                arrowColor: COLORS.primary,
-                monthTextColor: COLORS.primary,
-                textDayFontFamily: "Regular",
-                textMonthFontFamily: "SBold",
-                textDayHeaderFontFamily: "Regular",
-                textDayFontSize: SIZES.medium,
-                textMonthFontSize: SIZES.large,
-                textDayHeaderFontSize: SIZES.medium,
-              }}
-              markedDates={markedDates}
-              enableSwipeMonths={true}
-              markingType="custom"
-            />
-          </View>
-          <View style={styles.indications}>
-            <IndicationCalendar title="Jours des règles" />
-            <IndicationCalendar title="Ovulation" />
-            <IndicationCalendar title="Période de fécondité" />
-          </View>
-          <View
-            style={[
-              styles.reminder,
-              {
-                backgroundColor:
-                  theme === "pink"
-                    ? "rgba(255, 255, 255, .5)"
-                    : "rgba(238, 220, 174, .5)",
-              },
-            ]}
-            className="p-2"
-          >
-            <Text style={styles.reminderTitle}>Rappels</Text>
-            <View style={{ gap: 10 }}>
-              <ReminderItem
+    // <SafeAreaView className="flex-1">
+    <ScrollView
+      scrollEnabled={scrollDisabled}
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
+      <BackgroundContainer paddingBottom={10}>
+        <View style={styles.calendar}>
+          <Calendar
+            disableAllTouchEventsForDisabledDays={true}
+            style={{
+              height: 380,
+              borderRadius: 8,
+            }}
+            theme={{
+              textSectionTitleColor: COLORS.neutral400,
+              todayTextColor: COLORS.primary,
+              dayTextColor: "#2d4150",
+              textDisabledColor: COLORS.neutral400,
+              arrowColor: COLORS.primary,
+              monthTextColor: COLORS.primary,
+              textDayFontFamily: "Regular",
+              textMonthFontFamily: "SBold",
+              textDayHeaderFontFamily: "Regular",
+              textDayFontSize: SIZES.medium,
+              textMonthFontSize: SIZES.large,
+              textDayHeaderFontSize: SIZES.medium,
+            }}
+            markedDates={markedDates}
+            enableSwipeMonths={true}
+            markingType="custom"
+          />
+        </View>
+        <View style={styles.indications}>
+          <IndicationCalendar title="Jours des règles" />
+          <IndicationCalendar title="Ovulation" />
+          <IndicationCalendar title="Période de fécondité" />
+        </View>
+        <View
+          style={[
+            styles.reminder,
+            {
+              backgroundColor:
+                theme === "pink"
+                  ? "rgba(255, 255, 255, .5)"
+                  : "rgba(238, 220, 174, .5)",
+            },
+          ]}
+          className="p-2"
+        >
+          <Text style={styles.reminderTitle}>Rappels</Text>
+          <View style={{ gap: 10 }}>
+            <ReminderItem
                 as="Début des règles"
                 onPress={handleReminderBtnOnePress}
                 time={time1}
                 howmanytimeReminder={howmanytimeReminder1}
+                action={setHowmanytimeReminder1}
               />
               <ReminderItem
                 as="Jour d'ovulation"
                 onPress={handleReminderBtnTwoPress}
                 time={time2}
                 howmanytimeReminder={howmanytimeReminder2}
+                action={setHowmanytimeReminder2}
               />
               <ReminderItem
                 as="Prise de pilule"
                 onPress={handleReminderBtnThreePress}
                 time={time3}
                 howmanytimeReminder={howmanytimeReminder3}
+                action={setHowmanytimeReminder3}
               />
-            </View>
           </View>
-        </BackgroundContainer>
-      </ScrollView>
-    </SafeAreaView>
+        </View>
+      </BackgroundContainer>
+    </ScrollView>
+    // </SafeAreaView>
   );
 };
 

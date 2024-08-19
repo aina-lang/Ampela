@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import React, { useState } from "react";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState, userState } from "@/legendstate/AmpelaStates";
+import { preferenceState, userState } from "@/services/AmpelaStates";
 import { COLORS } from "@/constants";
 import HeaderWithGoBack from "@/components/header-with-go-back";
 import { useNavigation } from "expo-router";

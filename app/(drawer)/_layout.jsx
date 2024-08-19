@@ -17,7 +17,7 @@ import {
 } from "react-native";
 import { observer, useSelector } from "@legendapp/state/react";
 import { AuthContextProvider } from "@/hooks/AuthContext";
-import { preferenceState, userState } from "@/legendstate/AmpelaStates";
+import { preferenceState, userState } from "@/services/AmpelaStates";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ModalProvider } from "@/hooks/ModalProvider";
 import { auth } from "@/services/firebaseConfig";
@@ -58,14 +58,10 @@ const DrawerComponent = observer(() => {
     auth.currentUser ? toggleModal() : router.push("settings/login");
 
   const confirmLogout = () => {
-    auth
-      .signOut()
-      .then(() => {
-        toggleModal();
-        toggleAuthModal();
-        console.log("User signed out!");
-      })
-      .catch((error) => console.error("Sign out error", error));
+    auth.signOut().then(() => {
+      toggleModal();
+      toggleAuthModal();
+    });
   };
 
   const urlAmpela = "https://ampela.mg";
@@ -75,9 +71,7 @@ const DrawerComponent = observer(() => {
       await Share.share({
         message: `Inviter vos amis à utiliser Ampela \n ${urlAmpela}`,
       });
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) {}
   };
 
   const handleItemPress = (item) => {
@@ -188,22 +182,24 @@ const DrawerComponent = observer(() => {
                         />
                       )}
                     />
-                    <DrawerItem
-                      label={
-                        auth.currentUser
-                          ? i18n.t("deconnexion")
-                          : i18n.t("connecter")
-                      }
-                      onPress={handleAuth}
-                      labelStyle={{ color: COLORS.text700 }}
-                      icon={({ color, size }) => (
-                        <AntDesign
-                          name={auth.currentUser ? "logout" : "login"}
-                          color={COLORS.text700}
-                          size={size}
-                        />
-                      )}
-                    />
+                    {!auth.currentUser && (
+                      <DrawerItem
+                        label={
+                          auth.currentUser
+                            ? i18n.t("deconnexion")
+                            : i18n.t("connecter")
+                        }
+                        onPress={handleAuth}
+                        labelStyle={{ color: COLORS.text700 }}
+                        icon={({ color, size }) => (
+                          <AntDesign
+                            name={auth.currentUser ? "logout" : "login"}
+                            color={COLORS.text700}
+                            size={size}
+                          />
+                        )}
+                      />
+                    )}
                   </View>
                   <Text
                     style={{

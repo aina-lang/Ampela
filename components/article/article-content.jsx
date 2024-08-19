@@ -22,7 +22,7 @@ const showActiveCategoryContent = (activeCategory) => {
       content = data[4].content;
       break;
     default:
-      console.log("This category doesn't exist");
+      
   }
   return content;
 };

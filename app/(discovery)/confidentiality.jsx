@@ -17,7 +17,7 @@ import { Link } from "expo-router";
 import { COLORS, FONT, SIZES } from "@/constants";
 import { useNavigation } from "@react-navigation/native";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 import { I18n } from "i18n-js";
 import i18n from "@/constants/i18n";
 
@@ -41,22 +41,22 @@ const confidentiality = () => {
     }
   };
 
-  useEffect(() => {
-    const onBackPress = () => {
-      return true;
-    };
+  // useEffect(() => {
+  //   const onBackPress = () => {
+  //     return true;
+  //   };
 
-    const backHandler = BackHandler.addEventListener(
-      "hardwareBackPress",
-      onBackPress
-    );
+  //   const backHandler = BackHandler.addEventListener(
+  //     "hardwareBackPress",
+  //     onBackPress
+  //   );
 
-    navigation.addListener("beforeRemove", (e) => {
-      e.preventDefault();
-    });
+  //   navigation.addListener("beforeRemove", (e) => {
+  //     e.preventDefault();
+  //   });
 
-    return () => backHandler.remove();
-  }, [navigation]);
+  //   return () => backHandler.remove();
+  // }, [navigation]);
 
   useEffect(() => {
     if (checkbox2 === true) {
@@ -160,7 +160,7 @@ const confidentiality = () => {
         className="flex items-center  justify-between flex-row  p-5"
       >
         <TouchableOpacity onPress={prevHandled} className="p-3 rounded-md ">
-          <Text className="text-[#8a8888]">Retour</Text>
+          <Text className="text-[#8a8888]" style={{ fontSize: FONT.button }}>Retour</Text>
         </TouchableOpacity>
         <TouchableOpacity
           className="p-3  items-center rounded-md px-5 shadow-sm shadow-black"
@@ -170,7 +170,9 @@ const confidentiality = () => {
             backgroundColor: isNextBtnDisabled ? "#e7e5e5" : "#FF7575",
           }}
         >
-          <Text className="text-white">Suivant</Text>
+          <Text className="text-white" style={{ fontSize: FONT.button }}>
+            Suivant
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

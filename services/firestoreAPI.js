@@ -40,12 +40,12 @@ export async function addNewComment(data) {
       await updateDoc(postRef, {
         comment: increment(1),
       });
-      console.log("Comment doc written with ID: ", docRef.id);
+      
     } else {
       return { msg: "no-auth" };
     }
   } catch (err) {
-    console.log("Error adding new comment: ", err);
+    
   }
 }
 
@@ -62,9 +62,9 @@ export async function addNewLike(data) {
       createdAt: serverTimestamp(),
     });
 
-    console.log("Like added successfully. Like ID:", docRef.id);
+    
   } catch (err) {
-    console.error("Error adding like: ", err);
+    
   }
 }
 
@@ -84,7 +84,7 @@ export async function getAllPosts(callback) {
 
     return unsubscribe;
   } catch (err) {
-    console.error("Error retrieving posts: ", err);
+    
     throw err;
   }
 }
@@ -105,7 +105,7 @@ export async function getAllComments(postId, callback) {
 
     return unsubscribe;
   } catch (err) {
-    console.log("Error retrieving comments: ", err);
+    
     throw err;
   }
 }
@@ -125,7 +125,7 @@ export async function getAllComments(postId, callback) {
 
 //     return unsubscribe;
 //   } catch (err) {
-//     console.error("Error retrieving likes count: ", err);
+//     
 //     throw err;
 //   }
 // }
@@ -142,7 +142,7 @@ export async function getLikeNumber(postId, callback) {
           callback(likesCount);
         }
       } else {
-        console.warn("Post does not exist!");
+        
         if (callback) {
           callback(0);
         }
@@ -151,7 +151,7 @@ export async function getLikeNumber(postId, callback) {
 
     return unsubscribe;
   } catch (err) {
-    console.error("Error retrieving likes count: ", err);
+    
     throw err;
   }
 }
@@ -172,12 +172,12 @@ export async function addNewPost(data) {
       });
 
       const postId = docRef.id;
-      console.log("New post added successfully. Post ID:", postId);
+      
     } else {
       return { msg: "no-auth" };
     }
   } catch (err) {
-    console.log("Error adding new post: ", err);
+    
   }
 }
 
@@ -217,7 +217,7 @@ export async function addUserCollection(
       "Your account has been created successfully."
     );
   } catch (error) {
-    console.error("Error during registration:", error.message);
+    
     Alert.alert("Registration Error", error.message);
   }
 }
@@ -230,16 +230,16 @@ export async function removeLike(userId, postId) {
     const likesSnapshot = await getDocs(likesQuery);
 
     if (likesSnapshot.empty) {
-      console.log("No like found for this user on this post.");
+      
       return;
     }
 
     const likeDoc = likesSnapshot.docs[0];
     await deleteDoc(doc(database, "posts", postId, "likes", likeDoc.id));
 
-    console.log("Like removed successfully.");
+    
   } catch (err) {
-    console.error("Error removing like: ", err);
+    
   }
 }
 
@@ -258,7 +258,7 @@ export const checkUserLikedPost = (userId, postId, callback) => {
       callback(isLiked); // Invoke the callback with the isLiked value
     },
     (error) => {
-      console.error("Error fetching likes:", error); // Handle potential errors
+      
     }
   );
 
@@ -277,7 +277,7 @@ export const checkUserLikedPost = (userId, postId, callback) => {
 
 //     return unsubscribe; // Return the unsubscribe function to allow stopping the listener
 //   } catch (err) {
-//     console.error("Error retrieving number of comments: ", err);
+//     
 //     throw err; // Ensure error is thrown to be handled by the caller
 //   }
 // }
@@ -294,7 +294,7 @@ export async function getCommentNumber(postId, callback) {
           callback(commentsCount);
         }
       } else {
-        console.warn("Post does not exist!");
+        
         if (callback) {
           callback(0);
         }
@@ -303,7 +303,7 @@ export async function getCommentNumber(postId, callback) {
 
     return unsubscribe;
   } catch (err) {
-    console.error("Error retrieving comments count: ", err);
+    
     throw err;
   }
 }
@@ -317,14 +317,14 @@ export const fetchUserDataFromRealtimeDB = async (userId) => {
     const snapshot = await get(userRef);
     if (snapshot.exists()) {
       const userData = snapshot.val();
-      // console.log("User data from Realtime Database:", userData);
+      // 
       return userData;
     } else {
-      console.log("No user data available");
+      
       return null;
     }
   } catch (error) {
-    console.error("Error fetching user data from Realtime Database:", error);
+    
     return null;
   }
 };
@@ -340,24 +340,24 @@ export const fetchCyclesFromFirebase = async (userId) => {
     const snapshot = await get(cyclesRef);
     if (snapshot.exists()) {
       const cycles = snapshot.val();
-      console.log("Cycles data:", cycles);
+      
       return cycles;
     } else {
-      console.log("No data available");
+      
       return [];
     }
   } catch (error) {
-    console.error("Error fetching cycles:", error);
+    
     return [];
   }
 };
 
 export const handleDeletePost = async (postId) => {
-  console.log(postId);
+  
   try {
     await deleteDoc(doc(database, "posts", postId));
   } catch (error) {
-    console.error("Error deleting post:", error);
+    
   }
 };
 

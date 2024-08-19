@@ -25,7 +25,7 @@ import {
   preferenceState,
   userState,
   doctorsState,
-} from "@/legendstate/AmpelaStates";
+} from "@/services/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 import NetInfo, { useNetInfo } from "@react-native-community/netinfo";
 import AuthContent from "@/components/AuthContentFromSetting";
@@ -64,7 +64,7 @@ const index = () => {
       doctorsState.set(doctors);
       return doctors;
     } catch (error) {
-      console.error("Error fetching doctors data: ", error);
+      
       return [];
     }
   };

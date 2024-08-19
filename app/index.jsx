@@ -1,18 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Text, View } from "react-native";
-import {
-  Redirect,
-  SplashScreen,
-  router,
-  useNavigationContainerRef,
-} from "expo-router";
+import { SplashScreen, router, useNavigationContainerRef } from "expo-router";
 import { useFonts } from "expo-font";
 import { isFirstLaunch, initializeDatabase } from "@/services/database";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import LoadingScreen from "@/components/Splash";
-import { updatePreference } from "@/legendstate/AmpelaStates";
+import { updatePreference } from "@/services/AmpelaStates";
 import i18n from "@/constants/i18n";
-import { auth } from "@/services/firebaseConfig";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -26,18 +18,19 @@ async function fetchInitialData(
     const isFirstTimeLaunch = firstLaunch?.status ?? 1;
     setIsFirstTime(isFirstTimeLaunch);
 
+    console.log(isFirstTimeLaunch);
     if (isFirstTimeLaunch) {
       await initializeDatabase();
       const preferenceData = { theme: "pink", language: "fr" };
-      updatePreference(preferenceData);
+      await updatePreference(preferenceData);
       i18n.defaultLocale = "fr";
     }
 
     setInitialRouteName(
-      isFirstTimeLaunch ? "(discovery)" : "(drawer)/(forum)/"
+      isFirstTimeLaunch ? "(discovery)" : "(drawer)/(settings)/reminder"
     );
   } catch (error) {
-    console.error("Error:", error);
+    console.log(error);
   } finally {
     setLoaded(true);
   }
@@ -45,12 +38,15 @@ async function fetchInitialData(
 
 SplashScreen.preventAutoHideAsync();
 
-export default function index() {
+export default function Index() {
   const navigation = useNavigationContainerRef();
   const [isFirstTime, setIsFirstTime] = useState(null);
   const [initialRouteName, setInitialRouteName] = useState("(discovery)");
   const [loaded, setLoaded] = useState(false);
-  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    fetchInitialData(setIsFirstTime, setInitialRouteName, setLoaded);
+  }, []);
 
   const [fontsLoaded, error] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
@@ -59,8 +55,6 @@ export default function index() {
     Medium: require("../assets/fonts/WorkSans-Medium.ttf"),
     SBold: require("../assets/fonts/WorkSans-SemiBold.ttf"),
   });
-
-  fetchInitialData(setIsFirstTime, setInitialRouteName, setLoaded);
 
   useEffect(() => {
     if (error) throw error;

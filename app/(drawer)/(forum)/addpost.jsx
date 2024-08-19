@@ -18,7 +18,7 @@ import { auth, database } from "@/services/firebaseConfig";
 import { AuthContext } from "@/hooks/AuthContext";
 import { COLORS } from "@/constants";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 
 const AddPost = () => {
   const [title, setTitle] = useState("");
@@ -70,7 +70,7 @@ const AddPost = () => {
 
       navigation.goBack();
     } catch (error) {
-      console.error("Error adding document: ", error);
+      
     } finally {
       setLoading(false);
     }

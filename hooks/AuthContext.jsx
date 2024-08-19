@@ -25,14 +25,14 @@ export const AuthContextProvider = ({ children }) => {
       if (user) {
         setIsAuthenticated(true);
         if (isConnected && isInternetReachable) {
-          // console.log(user);
+          // 
           try {
             const userRef = ref( realtimeDatabase, `users/${user.uid}`);
             onValue(
               userRef,
               (snapshot) => {
                 const data = snapshot.val();
-                console.log(data);
+                
                 if (data) {
                   setUserProfile(data.user);
                 }
@@ -42,7 +42,7 @@ export const AuthContextProvider = ({ children }) => {
               }
             );
           } catch (error) {
-            console.error("Error fetching user data: ", error);
+            
           }
         }
         setUser(user);

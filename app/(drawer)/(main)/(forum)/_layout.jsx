@@ -5,7 +5,7 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import { COLORS, SIZES } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 
 const _layout = () => {
   const navigation = useNavigation();
@@ -39,22 +39,24 @@ const _layout = () => {
               </Text>
             </View>
             <View className="flex-row">
-              <TouchableOpacity
-                className="p-2 pl-0 "
-                onPress={() => navigation.navigate("(message)")}
-              >
-                <Ionicons name="chatbubble" color={"white"} size={24} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="p-2 pl-0 "
-                onPress={() => navigation.navigate("(message)")}
-              >
-                <Ionicons
-                  name="notifications-circle"
-                  color={"white"}
-                  size={24}
-                />
-              </TouchableOpacity>
+            <TouchableOpacity
+                  className="p-2 pl-0 relative"
+                  onPress={() => navigation.navigate("(message)")}
+                >
+                  <Text className="absolute text-white">1</Text>
+                  <Ionicons name="chatbubble" color={"white"} size={24} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className="p-2 pl-0 relative"
+                  onPress={() => navigation.navigate("(message)")}
+                >
+                  <Text className="absolute text-white">1</Text>
+                  <Ionicons
+                    name="notifications-circle"
+                    color={"white"}
+                    size={24}
+                  />
+                </TouchableOpacity>
             </View>
           </View>
         ),

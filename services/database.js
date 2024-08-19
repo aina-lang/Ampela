@@ -1,6 +1,6 @@
 import * as SQLite from "expo-sqlite";
 import * as FileSystem from "expo-file-system";
-import { clearAsyncStorage } from "@/legendstate/AmpelaStates";
+import { clearAsyncStorage } from "@/services/AmpelaStates";
 import { auth } from "./firebaseConfig";
 
 export const db = SQLite.openDatabaseSync("ampela.db");
@@ -35,7 +35,7 @@ export const addUser = async (
       email,
       photoUri,
     ]);
-    console.log("User added:", result);
+    
     return result;
   } finally {
     await statement.finalizeAsync();
@@ -77,7 +77,7 @@ export const updateUserSqlite = async (
       profileImage,
       id,
     ]);
-    console.log("User updated:", result);
+    
     return result;
   } finally {
     await statement.finalizeAsync();
@@ -89,7 +89,7 @@ export const getUser = async () => {
     const result = await db.getFirstAsync("SELECT * FROM users where id=1");
     return result;
   } catch (error) {
-    console.error("Error getting user info", error);
+    
     throw error;
   }
 };
@@ -129,10 +129,10 @@ export const initializeDatabase = async () => {
       );
     `);
 
-    console.log("Database initialized:", result);
+    
     return result;
   } catch (error) {
-    console.error("Error initializing database:", error);
+    
     throw error;
   }
 };
@@ -141,7 +141,7 @@ export const isFirstLaunch = async () => {
   try {
     let result = await db.getFirstAsync("SELECT * FROM first_time");
 
-    // console.log(result);
+    // 
     if (!result) {
       await db.runAsync("INSERT INTO first_time (status) VALUES (1);");
       result = { status: 1 };
@@ -160,10 +160,10 @@ export const setFirstLaunchFalse = async () => {
     const result = await db.runAsync(`
       UPDATE first_time SET status = 0 WHERE id = 1;
     `);
-    // console.log("First launch flag set:", result);
+    // 
     return result;
   } catch (error) {
-    console.error("Error setting first launch flag:", error);
+    
     throw error;
   }
 };
@@ -196,10 +196,10 @@ export const addCycleMenstruel = async (
         cycleDuration, // Added value
       ]
     );
-    console.log("Cycle menstruel ajouté :", result);
+    
     return result;
   } catch (error) {
-    console.error("Error adding cycle menstruel:", error);
+    
     throw error;
   }
 };
@@ -217,10 +217,10 @@ export const deleteCycleById = async (id) => {
       "DELETE FROM cycles_menstruels WHERE id = ?",
       [id]
     );
-    console.log("Cycle deleted:", result);
+    
     return result;
   } catch (error) {
-    console.error("Error deleting cycle:", error);
+    
     throw error;
   }
 };
@@ -229,10 +229,10 @@ export const deleteCycleById = async (id) => {
 export const getCycleByMonth = async (month) => {
   try {
     const result = await db.getFirstAsync("SELECT * FROM cycles_menstruels WHERE month = ?", [month]);
-    console.log("Cycle fetched:", result);
+    
     return result;
   } catch (error) {
-    console.error("Error fetching cycle by month:", error);
+    
     throw error;
   }
 };
@@ -241,10 +241,10 @@ export const getCycleByMonth = async (month) => {
 export const deleteAllCycles = async () => {
   try {
     const result = await db.runAsync("DELETE FROM cycles_menstruels");
-    console.log("All cycles deleted:", result);
+    
     return result;
   } catch (error) {
-    console.error("Error deleting all cycles:", error);
+    
     throw error;
   }
 };

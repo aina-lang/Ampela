@@ -10,7 +10,7 @@ import {
 import { COLORS, images, SIZES } from "@/constants";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomAlert from "@/components/CustomAlert"; // Assurez-vous que le chemin est correct
@@ -46,7 +46,7 @@ const OTPScreen = () => {
     } catch (error) {
       setLoading(false);
       setAlertVisible(false); // Masquer l'alerte en cas d'erreur
-      console.error(error);
+      
       setAlertMessage("Erreur de vérification OTP");
       setAlertVisible(true);
     }
@@ -64,7 +64,7 @@ const OTPScreen = () => {
     } catch (error) {
       setLoading(false);
       setAlertVisible(false); // Masquer l'alerte en cas d'erreur
-      console.error(error);
+      
       setAlertMessage("Erreur lors de l'envoi du code OTP");
       setAlertVisible(true);
     }

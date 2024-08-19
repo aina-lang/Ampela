@@ -19,7 +19,7 @@ import Animated, {
   useScrollViewOffset,
 } from "react-native-reanimated";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 import { useEffect } from "react";
 
 const onearticle = () => {
@@ -72,12 +72,10 @@ const onearticle = () => {
   });
 
   useEffect(() => {
-    console.log(content2);
   }, []);
   const routeName = useNavigationState(
     (state) => state.routes[state.index]?.name
   );
-  console.log(routeName);
   return (
     <Animated.ScrollView
       ref={scrollRef}

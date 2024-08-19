@@ -83,7 +83,7 @@
 //       setResetEmailSentModalVisible(true);
 //     } catch (error) {
 //       let errorMessage;
-//       console.log(error);
+//       
 //       switch (error.code) {
 //         case "auth/invalid-email":
 //           errorMessage = "Adresse e-mail invalide";
@@ -168,7 +168,7 @@
 
 //         if (!emailVerified) {
 //           await sendEmailVerification(userCredential.user).then((response) => {
-//             console.log(response);
+//             
 //           });
 //           handleScrollToIndex(0);
 //           setSignupEmail("");
@@ -223,10 +223,10 @@
 //       } else {
 //         const userId = userCredential.user.uid;
 //         // const userData = await fetchUserDataFromRealtimeDB(userId);
-//         console.log("USER DATA ", user);
+//         
 
 //         if (user) {
-//           console.log("JE SUIS ICI");
+//           
 //           const { username, email, profileImage } = user;
 
 //           let localUri;
@@ -238,12 +238,12 @@
 //             localUri = `${FileSystem.documentDirectory}${username}_avatar.jpg`;
 //             try {
 //               await FileSystem.downloadAsync(profileImage, localUri);
-//               console.log("Finished downloading to ", localUri);
+//               
 
 //               // Sauvegarder l'image dans la bibliothèque de médias
 //               await MediaLibrary.saveToLibraryAsync(localUri);
 //             } catch (error) {
-//               console.error("Error downloading image:", error);
+//               
 //               throw new Error("Erreur lors du téléchargement de l'image.");
 //             }
 //           }
@@ -261,7 +261,7 @@
 //           closeModal();
 //           setLoading(false);
 //         } else {
-//           console.log("ICIII", user);
+//           
 //           // Télécharger l'image en ligne et la téléverser sur Firebase Storage
 //           if (user.profileImage) {
 //             const blob = await new Promise((resolve, reject) => {
@@ -284,7 +284,7 @@
 //             await uploadBytes(avatarStorageRef, blob);
 //             const profilePhotoUrl = await getDownloadURL(avatarStorageRef);
 
-//             console.log("ici");
+//             
 //             const userDbRef = dbRef(realtimeDatabase, `users/${userId}`);
 //             await dbSet(userDbRef, {
 //               userId: userId,
@@ -311,7 +311,7 @@
 //       }
 //     } catch (error) {
 //       let errorMessage;
-//       console.log(error);
+//       
 //       auth.signOut();
 //       switch (error.code) {
 //         case "auth/user-not-found":
@@ -796,7 +796,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import React from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 import { COLORS } from "@/constants";
 import { router } from "expo-router";
 

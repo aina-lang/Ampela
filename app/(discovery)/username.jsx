@@ -12,11 +12,11 @@ import {
 } from "react-native";
 import * as MediaLibrary from "expo-media-library";
 import * as ImagePicker from "expo-image-picker";
-import { COLORS, SIZES } from "../../constants";
+import { COLORS, FONT, SIZES } from "../../constants";
 import { useNavigation } from "@react-navigation/native";
 import Feather from "@expo/vector-icons/Feather";
 
-import { updateUser } from "@/legendstate/AmpelaStates";
+import { updateUser } from "@/services/AmpelaStates";
 import i18n from "@/constants/i18n";
 
 const UsernameAndPasswordScreen = () => {
@@ -68,7 +68,6 @@ const UsernameAndPasswordScreen = () => {
       quality: 1,
     });
 
-    console.log(result);
     if (!result.canceled) {
       setProfileImage(result.assets[0].uri);
     }
@@ -125,7 +124,9 @@ const UsernameAndPasswordScreen = () => {
           className="p-3 items-center rounded-md px-5"
           onPress={() => navigation.goBack()}
         >
-          <Text className="text-[#8a8888]">Précédent</Text>
+          <Text className="text-[#8a8888]" style={{ fontSize: FONT.button }}>
+            Précédent
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           className="p-3 items-center rounded-md px-5 shadow-sm shadow-black"
@@ -135,7 +136,9 @@ const UsernameAndPasswordScreen = () => {
             backgroundColor: isNextBtnDisabled ? "#e7e5e5" : "#FF7575",
           }}
         >
-          <Text className="text-white">Suivant</Text>
+          <Text className="text-white" style={{ fontSize: FONT.button }}>
+            Suivant
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

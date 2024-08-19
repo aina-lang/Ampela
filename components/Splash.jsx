@@ -1,5 +1,5 @@
 import { COLORS } from "@/constants";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 import React, { useEffect } from "react";
 import { Text, SafeAreaView, View } from "react-native";

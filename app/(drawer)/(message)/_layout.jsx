@@ -3,7 +3,7 @@ import React, { useContext } from "react";
 import { Stack, useNavigation } from "expo-router";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { COLORS, SIZES } from "@/constants";
-import { preferenceState, userState } from "@/legendstate/AmpelaStates";
+import { preferenceState, userState } from "@/services/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 import { Ionicons } from "@expo/vector-icons";
 

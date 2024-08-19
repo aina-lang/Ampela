@@ -1,9 +1,9 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { SIZES, COLORS, images } from "@/constants";
+import { SIZES, COLORS, images, FONT } from "@/constants";
 import HeaderWithGoBack from "@/components/header-with-go-back";
 import { useNavigation } from "expo-router";
 import i18n from "@/constants/i18n";
-import { preferenceState, updatePreference } from "@/legendstate/AmpelaStates";
+import { preferenceState, updatePreference } from "@/services/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 import { useCallback } from "react";
 import { Image } from "expo-image";
@@ -18,9 +18,7 @@ const selectlanguage = () => {
         language: lang,
       };
       await updatePreference(preferenceData);
-    } catch (error) {
-      console.error("Failed to save locale to AsyncStorage:", error);
-    }
+    } catch (error) {}
   };
 
   const handleNextBtnPress = useCallback(() => {
@@ -30,7 +28,6 @@ const selectlanguage = () => {
   return (
     <>
       <View style={[styles.container, {}]}>
-        
         <View className="p-5" style={[]}>
           <Text
             style={[styles.confidentialityTitle, { color: COLORS.accent500 }]}
@@ -99,7 +96,9 @@ const selectlanguage = () => {
               backgroundColor: "#FF7575",
             }}
           >
-            <Text className="text-white">Suivant</Text>
+            <Text className="text-white" style={{ fontSize: FONT.button }}>
+              Suivant
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Text, View, StyleSheet, Pressable, Image } from "react-native";
 import { COLORS, SIZES, icons } from "@/constants";
 import i18n from "@/constants/i18n";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 
 const FaqItem = ({ question, response, list }) => {

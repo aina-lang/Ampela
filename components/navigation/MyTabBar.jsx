@@ -11,7 +11,7 @@ import {
   Easing,
 } from "react-native";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 
 function MyTabBar({ state, descriptors, navigation }) {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
@@ -64,7 +64,7 @@ function MyTabBar({ state, descriptors, navigation }) {
           const label = options.tabBarLabel ?? options.title ?? route.name;
           const icon = options.tabBarIcon;
           const isFocused = state.index === index;
-          // console.log(route.name);
+          // 
           const onPress = () => {
             const event = navigation.emit({
               type: "tabPress",

@@ -2,7 +2,7 @@ import { useContext } from "react";
 import { View, Text, Pressable, StyleSheet, Image } from "react-native";
 import { SIZES, COLORS } from "@/constants"; 
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 // import { ThemeContext } from "@/theme-context";
 
 export const StateItem1 = ({ text, active, urlImg, onPress }) => {

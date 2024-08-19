@@ -14,6 +14,7 @@ export function getOvulationDate(lastMenstruationDate, cycleDurations) {
   return { ovulationDate: formattedDate };
 }
 
+
 export function getFecundityPeriod(lastMenstruationDate, cycleDurations) {
   const j1 = parseInt(cycleDurations) - 18;
   const j2 = parseInt(cycleDurations) - 12;
@@ -55,7 +56,7 @@ export function getMenstruationPeriod(
 //   cycleDuration,
 //   menstruationDuration
 // ) {
-//   // console.log(startDate, cycleDuration, menstruationDuration);
+//   // 
 //   // Tableau pour stocker les données de chaque mois
 //   const cyclesData = [];
 
@@ -66,7 +67,7 @@ export function getMenstruationPeriod(
 //     // Calcule les informations pour le cycle menstruel de ce mois
 
 //     let currentMonth = moment(temp);
-//     // console.log(currentMonth);
+//     // 
 //     const ovulationDate = getOvulationDate(
 //       currentMonth.format("YYYY-MM-DD"),
 //       cycleDuration
@@ -95,7 +96,7 @@ export function getMenstruationPeriod(
 //       nextMenstruationEndDate: menstruationPeriod.nextMenstruationEndDate,
 //     });
 
-//     // console.log(ovulationDate.ovulationDate);
+//     // 
 //     // Passage au mois suivant
 
 //     currentMonth.add(1, "month");
@@ -103,7 +104,7 @@ export function getMenstruationPeriod(
 //       (temp = menstruationPeriod.nextMenstruationDate);
 //   }
 
-//   console.log(cyclesData);
+//   
 //   return cyclesData;
 // }
 
@@ -152,6 +153,11 @@ export function generateCycleMenstrualData(
     temp = menstruationPeriod.nextMenstruationDate;
   }
 
-  console.log(cyclesData);
+  
   return cyclesData;
 }
+
+
+
+
+

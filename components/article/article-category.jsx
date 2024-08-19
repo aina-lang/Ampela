@@ -2,7 +2,7 @@ import { Pressable, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { COLORS, SIZES } from "@/constants";
 import i18n from "@/constants/i18n";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 
 const ArticleCategory = ({ active, onPress, children }) => {
   const { theme } = useSelector(() => preferenceState.get());

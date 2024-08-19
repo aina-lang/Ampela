@@ -51,14 +51,14 @@ const ForumItem = ({ post, refToCommentItem }) => {
     // if (!auth.currentUser) {
     //   setIsDisabled(true);
     // }
-    console.log(post);
+    
     const fetchUser = async () => {
       try {
         const userData = await fetchUserDataFromRealtimeDB(post?.authorId);
-        console.log(userData?.user);
+        
         setUserPosteur(userData?.user);
       } catch (error) {
-        console.error("Error fetching user data: ", error);
+        
       }
     };
 
@@ -108,10 +108,10 @@ const ForumItem = ({ post, refToCommentItem }) => {
           await updateDoc(postRef, { like: currentLikes + 1 });
         }
       } else {
-        console.error("Post does not exist");
+        
       }
     } catch (error) {
-      console.error("Error updating like count: ", error);
+      
     } finally {
       setIsDisabled(false);
     }
@@ -133,9 +133,9 @@ const ForumItem = ({ post, refToCommentItem }) => {
     try {
       const response = await addNewComment(commentData);
       if (response && response.msg === "no-auth") {
-        console.log("User is not authenticated.");
+        
       } else {
-        console.log("Comment added successfully.");
+        
         setCommentValue("");
 
         // const postRef = doc(database, "posts", post.postId);
@@ -144,7 +144,7 @@ const ForumItem = ({ post, refToCommentItem }) => {
         // });
       }
     } catch (error) {
-      console.error("Error adding comment: ", error);
+      
     } finally {
       setIsSubmitting(false);
     }

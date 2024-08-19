@@ -11,7 +11,7 @@ import { COLORS } from "@/constants";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
+import { preferenceState } from "@/services/AmpelaStates";
 
 const MenuDraggable = () => {
   const insets = useSafeAreaInsets();
@@ -30,7 +30,7 @@ const MenuDraggable = () => {
     onActive: (event, context) => {
       const newX = context.startX + event.translationX;
       const newY = context.startY + event.translationY;
-      // console.log(insets, context.startX + event.translationX);
+      // 
       if (newX >= insets.left && newX <= width - 165) {
         left.value = newX;
       }

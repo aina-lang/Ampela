@@ -9,19 +9,20 @@ import {
   Modal,
   ActivityIndicator,
 } from "react-native";
-import { COLORS, SIZES } from "../../constants";
+import { COLORS, FONT, SIZES } from "../../constants";
 import { useNavigation } from "@react-navigation/native";
 import {
   ResponseOfQuestion0,
   ResponseOfQuestion1,
 } from "@/components/response-of-question";
-import { addCycleMenstruel, addUser } from "@/services/database";
+import { addCycleMenstruel, addUser, getAllCycle } from "@/services/database";
 import { generateCycleMenstrualData } from "@/utils/menstruationUtils";
 import {
+  cycleMenstruelState,
   updateCycleMenstruelData,
   updateUser,
   userState,
-} from "@/legendstate/AmpelaStates";
+} from "@/services/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 
 const durationMenstruations = [];
@@ -97,8 +98,6 @@ const QuestionsSeries = () => {
       user.profileImage
     );
 
-    updateCycleMenstruelData({ cyclesData: cycleData });
-
     for (let i = 0; i < cycleData.length; i++) {
       const cycle = cycleData[i];
 
@@ -117,6 +116,9 @@ const QuestionsSeries = () => {
         cycleDuration
       );
     }
+
+    const updatedCycles = await getAllCycle();
+    cycleMenstruelState.set({ cyclesData: updatedCycles });
 
     await updateUser({
       ...user,
@@ -248,21 +250,22 @@ const QuestionsSeries = () => {
           className="p-3 items-center rounded-md px-5"
           onPress={() => navigation.goBack()}
         >
-          <Text className="text-[#8a8888]">Précedent</Text>
+          <Text className="text-[#8a8888]" style={{ fontSize: FONT.button }}>Précedent</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          className="p-3 items-center rounded-md px-5 shadow-sm shadow-black" 
+          className="p-3 items-center rounded-md px-5 shadow-sm shadow-black"
           onPress={handleNextBtnPress}
           disabled={isNextBtnDisabled}
           style={{
             backgroundColor: isNextBtnDisabled ? "#e7e5e5" : "#FF7575",
           }}
         >
-          <Text className="text-white">Terminer</Text>
+          <Text className="text-white" style={{ fontSize: FONT.button }}>
+            Terminer
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Modal de chargement */}
       <Modal transparent={true} visible={isLoading} animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
