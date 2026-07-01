@@ -24,7 +24,7 @@
     "@react-navigation/drawer": "^7.3.9",
     "@react-navigation/native": "^7.1.6",
     "@reduxjs/toolkit": "^2.2.5",
-    "expo": "^53.0.27",
+    "expo": "^57.0.1",
     "expo-background-fetch": "~13.1.6",
     "expo-background-task": "^0.2.8",
     "expo-calendar": "~14.1.4",
