@@ -74,7 +74,7 @@ const ArticleItem = ({
   return (
     <TouchableOpacity onPress={handleContainerPress} className="shadow-md shadow-black">
       <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-        <Text style={styles.title}>{i18n.t(title)}</Text>
+        <Text style={[styles.title,{    color: theme === "pink" ? COLORS.accent600 : COLORS.accent800,}]}>{i18n.t(title)}</Text>
         <View
           style={[
             styles.category,
@@ -86,7 +86,9 @@ const ArticleItem = ({
           className="w-7"
         >
         </View>
-        <View style={styles.img}>
+        <View style={[styles.img, {
+          backgroundColor: theme === "pink" ? COLORS.neutral200 : COLORS.neutral280,
+        }]}>
           <Image
             source={img}
             style={{ height: 280, width: 280 }}
@@ -121,6 +123,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: "SBold",
+    fontSize: 17,
+
   },
   category: {
     paddingVertical: 2,
@@ -136,7 +140,7 @@ const styles = StyleSheet.create({
   img: {
     marginVertical: 10,
     height: 300,
-    backgroundColor: COLORS.neutral280,
+    // 
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 10,

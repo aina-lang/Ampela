@@ -15,7 +15,7 @@ const _layout = () => {
         headerShown: true,
         header: () => (
           <View
-            className=" w-full flex-row items-center rounded-b-lg justify-between  shadow-md shadow-black pt-8"
+            className=" w-full flex-row items-center rounded-b-lg justify-between  shadow-md shadow-black pt-20"
             style={{
               backgroundColor:
                 theme === "orange" ? COLORS.accent800 : COLORS.accent500,
@@ -43,7 +43,7 @@ const _layout = () => {
                 className="p-2 pl-0 "
                 onPress={() => navigation.navigate("(message)")}
               >
-                <Ionicons name="chatbubble" color={"white"} size={24} />
+                <Ionicons name="chatbubble" color={"white"} size={30} />
               </TouchableOpacity>
               <TouchableOpacity
                 className="p-2 pl-0 "
@@ -52,7 +52,7 @@ const _layout = () => {
                 <Ionicons
                   name="notifications-circle"
                   color={"white"}
-                  size={24}
+                  size={30}
                 />
               </TouchableOpacity>
             </View>

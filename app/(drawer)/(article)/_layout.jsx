@@ -15,7 +15,7 @@ const _layout = () => {
         headerShown: true,
         header: () => (
           <View
-            className=" w-full flex-row items-center  justify-between  pt-8"
+            className=" w-full flex-row items-center  justify-between  pt-20"
             style={{
               backgroundColor:
                 theme === "pink" ? COLORS.accent400 : COLORS.neutral280,
