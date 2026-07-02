@@ -1,218 +1,306 @@
-import { View, Text, TouchableOpacity } from "react-native";
 import React, { useRef, useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Animated from "react-native-reanimated";
+import { StatusBar } from "expo-status-bar";
+import Animated, {
+  useSharedValue,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  interpolate,
+  Extrapolation,
+  runOnJS,
+} from "react-native-reanimated";
 import { COLORS, SIZES, images } from "@/constants";
 import { AntDesign } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { Image } from "expo-image";
-const OnBoarding = [
+
+const OnBoardingData = [
   {
-    title: "  Bienvenue sur Ampela",
-    description:
-      " Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut rem",
+    title: "Bienvenue sur Ampela",
+    description: "Prenez le contrôle de votre santé menstruelle avec un suivi simple, intuitif et adapté à votre corps.",
     img: images.abscenceDeRegles,
   },
-
   {
     title: "Enregistrer vos données",
-    description:
-      " Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut rem",
+    description: "Notez vos symptômes, vos humeurs et l'historique de vos règles pour obtenir des prédictions ultra-précises.",
     img: images.culotteMenstruelle,
   },
   {
     title: "Chatter avec les docteurs",
-    description:
-      " Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut rem",
+    description: "Bénéficiez d'une écoute attentive et posez toutes vos questions de santé à des professionnels agréés.",
     img: images.cycleMenstruel,
   },
   {
-    title: "Dscuter avec le monde",
-    description:
-      " Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut rem",
+    title: "Discuter avec le monde",
+    description: "Rejoignez une communauté bienveillante pour échanger, partager vos expériences et briser les tabous.",
     img: images.alimentationPendantLesRegles,
   },
 ];
 
-const index = () => {
-  const [currentBoard, setCurrentBoard] = useState(0);
-
-  const scrollViewRef = useRef(null);
-  const navigation = useNavigation();
-  const nextHandled = () => {
-    setCurrentBoard((prevBoard) => {
-      const nextBoard = prevBoard + 1;
-      if (nextBoard < OnBoarding.length) {
-        scrollViewRef.current?.scrollTo({
-          x: SIZES.width * nextBoard,
-          animated: true,
-        });
-        return nextBoard;
-      } else {
-        return prevBoard;
-      }
-    });
-  };
-
-  const prevHandled = () => {
-    setCurrentBoard((prevBoard) => {
-      const nextBoard = prevBoard - 1;
-      if (nextBoard >= 0) {
-        scrollViewRef.current?.scrollTo({
-          x: SIZES.width * nextBoard,
-          animated: true,
-        });
-        return nextBoard;
-      } else {
-        return prevBoard;
-      }
-    });
-  };
-
-  const onScrollHandler = (event) => {
-    const offsetX = event.nativeEvent.contentOffset.x;
-    const pageWidth = SIZES.width;
-    const pageNumber = Math.floor(offsetX / pageWidth);
-    if (pageNumber === 0 && offsetX < 0) {
-      return;
-    }
-    setCurrentBoard(pageNumber);
-  };
-
-  const skipHandler = () => {
-    navigation.navigate("selectlanguage");
-  };
-
-  const getStartedHandler = () => {
-    navigation.navigate("selectlanguage");
-  };
-
-  const RenderDots = () => {
-    // const dotPosition = Animated.divide(scrollX, SIZES.width);
-
-    return (
-      <View
-        style={{
-          bottom: SIZES.height > 700 ? "20%" : "13%",
-        }}
-        className="absolute w-full flex items-center flex-row justify-center my-10"
-      >
-        {OnBoarding.map((item, index) => (
-          <View
-            key={index}
-            className={`${
-              currentBoard == index
-                ? "bg-[#FF7575] w-3 p-1"
-                : "bg-[#FFADAD] w-2"
-            }  h-2 rounded-full mx-2 flex items-center flex-row justify-center `}
-          ></View>
-        ))}
-      </View>
+const AnimatedPageImage = ({ item, index, scrollX }) => {
+  const animatedImageStyle = useAnimatedStyle(() => {
+    const scale = interpolate(
+      scrollX.value,
+      [(index - 1) * SIZES.width, index * SIZES.width, (index + 1) * SIZES.width],
+      [0.8, 1, 0.8],
+      Extrapolation.CLAMP
     );
+    const opacity = interpolate(
+      scrollX.value,
+      [(index - 1) * SIZES.width, index * SIZES.width, (index + 1) * SIZES.width],
+      [0.4, 1, 0.4],
+      Extrapolation.CLAMP
+    );
+    return {
+      transform: [{ scale }],
+      opacity,
+    };
+  });
+
+  return (
+    <Animated.View style={[styles.imageContainer, animatedImageStyle]}>
+      <Image source={item.img} contentFit="contain" style={styles.image} />
+    </Animated.View>
+  );
+};
+
+const AnimatedDot = ({ index, scrollX }) => {
+  const animatedDotStyle = useAnimatedStyle(() => {
+    const width = interpolate(
+      scrollX.value,
+      [(index - 1) * SIZES.width, index * SIZES.width, (index + 1) * SIZES.width],
+
+      Extrapolation.CLAMP
+    );
+
+    const backgroundColor = interpolate(
+      scrollX.value,
+      [(index - 1) * SIZES.width, index * SIZES.width, (index + 1) * SIZES.width],
+      [0.4, 1, 0.4],
+      Extrapolation.CLAMP
+    );
+
+    return {
+      width,
+      backgroundColor: backgroundColor > 0.7 ? "#FF7575" : "#FFADAD",
+    };
+  });
+
+  return <Animated.View style={[styles.dot, animatedDotStyle]} />;
+};
+
+const OnboardingIndex = () => {
+  const scrollX = useSharedValue(0);
+  const scrollViewRef = useRef(null);
+  const router = useRouter();
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollX.value = event.contentOffset.x;
+      const index = Math.round(event.contentOffset.x / SIZES.width);
+      runOnJS(setCurrentIndex)(index);
+    },
+  });
+
+  const handleNext = () => {
+    const nextIndex = currentIndex + 1;
+    if (nextIndex < OnBoardingData.length) {
+      scrollViewRef.current?.scrollTo({ x: nextIndex * SIZES.width, animated: true });
+    } else {
+      handleFinish();
+    }
   };
 
-  // const scrollX = new Animated.Value(0);
+  const handlePrev = () => {
+    const prevIndex = currentIndex - 1;
+    if (prevIndex >= 0) {
+      scrollViewRef.current?.scrollTo({ x: prevIndex * SIZES.width, animated: true });
+    }
+  };
 
-  const renderContent = () => {
-    return (
+  const handleFinish = () => {
+    router.replace("(discovery)/selectlanguage");
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Configuration de la Status Bar en mode sombre (icônes noires) */}
+      <StatusBar style="dark" animated={true} />
+
+      {/* Bouton Ignorer abaissé et aligné */}
+      <View style={styles.skipContainer}>
+        <TouchableOpacity onPress={handleFinish} activeOpacity={0.7} style={styles.skipButton}>
+          <Text style={styles.skipText}>Ignorer</Text>
+          <AntDesign name="arrow-right" size={14} color="#666" style={{ marginLeft: 4 }} />
+        </TouchableOpacity>
+      </View>
+
       <Animated.ScrollView
+        ref={scrollViewRef}
         horizontal
         pagingEnabled
-        scrollEnabled
-        snapToAlignment={"center"}
         showsHorizontalScrollIndicator={false}
-        onScroll={onScrollHandler}
-        ref={scrollViewRef}
-        style={{ width: SIZES.width, height: SIZES.height }}
-        className="h-full"
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        decelerationRate="fast"
       >
-        {OnBoarding.map((item, index) => (
-          <View
-            key={index}
-            style={{ width: SIZES.width, height: SIZES.height }}
-            className={`bg-white `}
-          >
-            <View
-              className={"p-4"}
-              style={{ height: SIZES.height * 0.6, width: SIZES.width }}
-            >
-              <Image
-                source={item.img}
-                contentFit="contain"
-                style={{ width: "100%", height: "100%" }}
-              />
-            </View>
-            <View className="flex items-center justify-center p-5">
-              <Text
-                className="text-2xl font-bold mb-3 "
-                style={{ color: COLORS.accent600 }}
-              >
+        {OnBoardingData.map((item, index) => (
+          <View key={index} style={styles.page}>
+            <AnimatedPageImage item={item} index={index} scrollX={scrollX} />
+
+            <View style={styles.textContainer}>
+              <Text style={[styles.title, { color: COLORS.accent600 || "#FF7575" }]}>
                 {item.title}
               </Text>
-              <Text className="text-[18px] text-center  text-gray-600">
+              <Text style={styles.description}>
                 {item.description}
               </Text>
             </View>
           </View>
         ))}
       </Animated.ScrollView>
-    );
-  };
 
-  return (
-    <SafeAreaView className={`flex-1 bg-white justify-center items-center`}>
-      {renderContent()}
-      {RenderDots()}
-      <View
-        style={{
-          justifyContent: currentBoard === 0 ? "flex-end" : "space-between",
-        }}
-        className="flex flex-row items-center justify-between  w-full absolute bottom-0 p-5"
-      >
-        {currentBoard !== 0 && (
-          <TouchableOpacity onPress={prevHandled} className="p-3 rounded-md ">
-            <Text>Retour</Text>
-          </TouchableOpacity>
-        )}
+      {/* Points indicateurs animés */}
+      <View style={styles.dotsContainer}>
+        {OnBoardingData.map((_, index) => (
+          <AnimatedDot key={index} index={index} scrollX={scrollX} />
+        ))}
+      </View>
 
-        {currentBoard != OnBoarding.length - 1 ? (
-          <TouchableOpacity
-            style={{ backgroundColor: COLORS.accent500 }}
-            onPress={nextHandled}
-            className="p-3 rounded-md shadow-md shadow-black"
-          >
-            <Text className="text-white"> Suivant </Text>
-            {/* <AntDesign
-                    name="right"
-                    size={20}
-                    color="white"
-                    className="ml-3"
-                  /> */}
+      {/* Barre de navigation inférieure */}
+      <View style={styles.bottomBar}>
+        {currentIndex > 0 ? (
+          <TouchableOpacity onPress={handlePrev} activeOpacity={0.7} style={styles.backButton}>
+            <Text style={styles.backButtonText}>Retour</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity
-            style={{ backgroundColor: COLORS.accent500 }}
-            onPress={getStartedHandler}
-            className="p-3 rounded-md shadow-md shadow-black"
-          >
-            <Text className="text-white"> Commencer </Text>
-            {/* <AntDesign
-                    name="right"
-                    size={20}
-                    color="white"
-                    className="ml-3"
-                  /> */}
-          </TouchableOpacity>
+          <View style={{ width: 60 }} />
         )}
-      </View>
-      <View className="absolute top-10 right-5">
-        <TouchableOpacity onPress={skipHandler}>
-          <Text className="text-[16px]"> Ignorer</Text>
-          <AntDesign name="" />
+
+        <TouchableOpacity
+          style={[styles.nextButton, { backgroundColor: COLORS.accent500 || "#FF7575" }]}
+          onPress={handleNext}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.nextButtonText}>
+            {currentIndex === OnBoardingData.length - 1 ? "Commencer" : "Suivant"}
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 };
 
-export default index;
+export default OnboardingIndex;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  skipContainer: {
+    position: "absolute",
+    top: 80,
+    right: 20,
+    zIndex: 10,
+  },
+  skipButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    backgroundColor: "#F5F5F5",
+  },
+  skipText: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "600",
+  },
+  page: {
+    width: SIZES.width,
+    height: SIZES.height,
+    alignItems: "center",
+  },
+  imageContainer: {
+    width: SIZES.width,
+    height: SIZES.height * 0.52,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+    marginTop: 40,
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+  },
+  textContainer: {
+    width: SIZES.width,
+    paddingHorizontal: 30,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 12,
+    letterSpacing: 0.5,
+  },
+  description: {
+    fontSize: 16,
+    textAlign: "center",
+    color: "#626262",
+    lineHeight: 24,
+    paddingHorizontal: 10,
+  },
+  dotsContainer: {
+    position: "absolute",
+    bottom: SIZES.height * 0.16,
+    flexDirection: "row",
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  dot: {
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
+  },
+  bottomBar: {
+    position: "absolute",
+    bottom: 40,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 30,
+  },
+  backButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  backButtonText: {
+    color: "#9E9E9E",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  nextButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 14,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+  },
+  nextButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+});

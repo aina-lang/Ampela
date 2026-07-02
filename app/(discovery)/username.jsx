@@ -5,15 +5,16 @@ import {
   StyleSheet,
   TextInput,
   Alert,
-  Dimensions,
   TouchableOpacity,
-  SafeAreaView,
   Image,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
-import * as MediaLibrary from "expo-media-library";
-import { COLORS, SIZES } from "../../constants";
-import { useNavigation } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS, SIZES } from "@/constants";
+import { useNavigation } from "expo-router";
 import Feather from "@expo/vector-icons/Feather";
+import { AntDesign } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { updateUser } from "@/legendstate/AmpelaStates";
 
@@ -21,16 +22,11 @@ const UsernameAndPasswordScreen = () => {
   const navigation = useNavigation();
 
   const [nameText, setNameText] = useState("");
+  const [profileImage, setProfileImage] = useState(null);
   const [isNextBtnDisabled, setIsNextBtnDisabled] = useState(true);
 
-  const [profileImage, setProfileImage] = useState(null);
-
   useEffect(() => {
-    if (nameText !== "") {
-      setIsNextBtnDisabled(false);
-    } else {
-      setIsNextBtnDisabled(true);
-    }
+    setIsNextBtnDisabled(nameText.trim() === "");
   }, [nameText]);
 
   const handleUsernameChange = (text) => {
@@ -38,13 +34,11 @@ const UsernameAndPasswordScreen = () => {
   };
 
   const handleNextBtnPress = async () => {
+    if (isNextBtnDisabled) return;
     const userData = {
-      username: nameText,
+      username: nameText.trim(),
       profileImage,
     };
-    if (profileImage != null) {
-      await MediaLibrary.saveToLibraryAsync(profileImage);
-    }
     updateUser(userData);
     navigation.navigate("lastMenstrualCycleStart");
   };
@@ -54,82 +48,102 @@ const UsernameAndPasswordScreen = () => {
     if (status !== "granted") {
       Alert.alert(
         "Permission refusée",
-        "Désolé, nous avons besoin des permissions pour accéder aux images!"
+        "Désolé, nous avons besoin des permissions pour accéder aux images !"
       );
       return;
     }
 
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
     });
 
-    console.log(result);
     if (!result.canceled) {
       setProfileImage(result.assets[0].uri);
     }
   };
 
+  const prevHandled = () => {
+    navigation.goBack();
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <Text
-        style={styles.title}
-        className="bg-[#FF7575] text-white rounded-br-[150px] pt-20 px-2 shadow-lg shadow-black"
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
       >
-        Quel est votre nom d'utilisateur
-      </Text>
-      <View className=" " style={{ height: SIZES.height * 0.6 }}>
-        <View style={styles.inputBoxDeeper}>
-          <Text>Pseudo pour utiliser l'application</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              cursorColor={COLORS.accent400}
-              placeholder="Nom d'utilisateur"
-              value={nameText}
-              onChangeText={handleUsernameChange}
-              style={styles.input}
-              className=""
-            />
-          </View>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.eyebrow}>Faisons connaissance</Text>
+          <Text style={styles.title}>Quel est votre nom d'utilisateur ?</Text>
+          <Text style={styles.subtitle}>
+            Ce pseudo sera visible par les autres membres de la communauté.
+          </Text>
         </View>
-        <View className="  justify-center items-center">
-          <TouchableOpacity onPress={pickImage}>
+
+        {/* Avatar */}
+        <View style={styles.avatarSection}>
+          <TouchableOpacity onPress={pickImage} activeOpacity={0.85}>
             <View style={styles.imagePicker}>
               {profileImage ? (
                 <Image source={{ uri: profileImage }} style={styles.image} />
               ) : (
-                <>
-                  <Text>Photo de profil</Text>
-                  <Feather name="camera" size={40} color={COLORS.neutral400} />
-                </>
+                <Feather name="camera" size={32} color="#B0B0B0" />
               )}
+              <View style={styles.editBadge}>
+                <Feather name="edit-2" size={14} color="#FFFFFF" />
+              </View>
             </View>
           </TouchableOpacity>
+          <Text style={styles.avatarLabel}>Photo de profil (optionnel)</Text>
         </View>
-      </View>
-      <View
-        style={styles.btnBox}
-        className="flex items-center justify-between flex-row p-5"
-      >
-        <TouchableOpacity
-          className="p-3 items-center rounded-md px-5"
-          onPress={() => navigation.goBack()}
-        >
-          <Text className="text-[#8a8888]">Précédent</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          className="p-3 items-center rounded-md px-5 shadow-md shadow-black"
-          onPress={handleNextBtnPress}
-          disabled={isNextBtnDisabled}
-          style={{
-            backgroundColor: isNextBtnDisabled ? "#e7e5e5" : "#FF7575",
-          }}
-        >
-          <Text className="text-white">Suivant</Text>
-        </TouchableOpacity>
-      </View>
+
+        {/* Formulaire */}
+        <View style={styles.form}>
+          <Text style={styles.inputLabel}>Nom d'utilisateur</Text>
+          <View style={styles.inputContainer}>
+            <TextInput
+              cursorColor="#FF7575"
+              placeholder="Ex : Sarah_M"
+              placeholderTextColor="#A0A0A0"
+              value={nameText}
+              onChangeText={handleUsernameChange}
+              style={styles.input}
+              autoCapitalize="none"
+            />
+          </View>
+        </View>
+
+        {/* Navigation basse — identique aux autres écrans */}
+        <View style={styles.btnBox}>
+          <TouchableOpacity onPress={prevHandled} style={styles.backButton}>
+            <AntDesign name="arrow-left" size={16} color="#9E9E9E" />
+            <Text style={styles.backButtonText}>Retour</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleNextBtnPress}
+            disabled={isNextBtnDisabled}
+            activeOpacity={0.85}
+            style={[
+              styles.nextBtn,
+              { backgroundColor: isNextBtnDisabled ? "#EFEFEF" : "#FF7575" },
+            ]}
+          >
+            <Text
+              style={[
+                styles.nextBtnText,
+                { color: isNextBtnDisabled ? "#B0B0B0" : COLORS.neutral100 },
+              ]}
+            >
+              Suivant
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -138,51 +152,123 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.neutral100,
+    paddingHorizontal: 20,
+  },
+  header: {
+    paddingTop: 12,
+    paddingBottom: 24,
+  },
+  eyebrow: {
+    color: "#FF7575",
+    fontFamily: "SBold",
+    fontSize: SIZES.small,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginBottom: 6,
   },
   title: {
-    fontSize: SIZES.width * 0.08,
     fontFamily: "Bold",
-    textAlign: "center",
-    height: SIZES.height * 0.3,
+    fontSize: SIZES.width * 0.07,
+    color: "#1A1A1A",
+    marginBottom: 8,
   },
-  inputBoxDeeper: {
-    marginTop: 70,
-    marginLeft: 20,
-    gap: 10,
+  subtitle: {
+    fontFamily: "Regular",
+    fontSize: SIZES.small,
+    color: "#8A8A8A",
+    lineHeight: 20,
   },
-  inputContainer: {
-    borderWidth: 1,
-    borderColor: "#c0bdbd",
-    borderRadius: 15,
-    fontFamily: "Medium",
-    marginVertical: 10,
-    width: Math.floor(Dimensions.get("window").width) - 40,
-    overflow: "hidden",
-    backgroundColor: "rgb(243 244 246)",
-  },
-  input: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    fontFamily: "Medium",
-  },
-  btnBox: {
-    height: SIZES.height * 0.15,
-    width: SIZES.width,
+  avatarSection: {
+    alignItems: "center",
+    marginBottom: 28,
   },
   imagePicker: {
-    width: SIZES.width - 70,
-    height: SIZES.width - 70,
-    borderRadius: 200,
-    backgroundColor: "rgb(243 244 246)",
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "#FAFAFA",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#c0bdbd",
+    borderColor: "#F0F0F0",
+    overflow: "hidden",
   },
   image: {
-    width: SIZES.width - 70,
-    height: SIZES.width - 70,
-    borderRadius: 200,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+  },
+  editBadge: {
+    position: "absolute",
+    bottom: 2,
+    right: 2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#FF7575",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: COLORS.neutral100,
+  },
+  avatarLabel: {
+    marginTop: 10,
+    fontFamily: "Regular",
+    fontSize: SIZES.small - 1,
+    color: "#A0A0A0",
+  },
+  form: {
+    flex: 1,
+  },
+  inputLabel: {
+    fontFamily: "SBold",
+    fontSize: SIZES.small,
+    color: "#3A3A3A",
+    marginBottom: 8,
+  },
+  inputContainer: {
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+    borderRadius: 14,
+    backgroundColor: "#FAFAFA",
+  },
+  input: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontFamily: "Regular",
+    fontSize: SIZES.medium,
+    color: "#1A1A1A",
+  },
+  btnBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 20,
+  },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+  },
+  backButtonText: {
+    color: "#9E9E9E",
+    fontSize: 15,
+    fontFamily: "SBold",
+    marginLeft: 6,
+  },
+  nextBtn: {
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 14,
+    shadowColor: "#FF7575",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  nextBtnText: {
+    fontFamily: "SBold",
+    fontSize: SIZES.medium,
   },
 });
 

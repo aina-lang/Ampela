@@ -1,37 +1,35 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   TextInput,
   StyleSheet,
-  Dimensions,
   TouchableOpacity,
-  FlatList,
-  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  ScrollView,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, SIZES } from "@/constants";
-import { auth, database, storage } from "@/services/firebaseConfig";
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-} from "firebase/auth";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { addDoc, collection, doc, getDoc, setDoc } from "firebase/firestore";
-import { useSelector } from "@legendapp/state/react";
-import { userState } from "@/legendstate/AmpelaStates";
-import i18n from "@/constants/i18n";
+import { auth, database } from "@/services/firebaseConfig";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import { useNavigation } from "expo-router";
-const { width } = Dimensions.get("window");
+import { Ionicons } from "@expo/vector-icons";
 
 const login = () => {
-  const user = useSelector(() => userState.get());
+  const navigation = useNavigation();
+
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [loginError, setLoginError] = useState("");
   const [loginEmailError, setLoginEmailError] = useState("");
   const [loginPasswordError, setLoginPasswordError] = useState("");
-  const [loginErrorPresent, setLoginErrorPresent] = useState(false);
-const navigation=useNavigation()
+  const [loginError, setLoginError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleLoginEmailChange = (text) => {
     setLoginEmail(text);
@@ -53,118 +51,142 @@ const navigation=useNavigation()
     }
   };
 
-  const handleLogin = async () => {
-    try {
-      // showProgress("Logging In...");
+  const isFormValid =
+    loginEmail.length > 0 &&
+    loginPassword.length > 0 &&
+    !loginEmailError &&
+    !loginPasswordError;
 
+  const handleLogin = async () => {
+    if (!isFormValid) return;
+    setLoginError("");
+    setIsLoading(true);
+    try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
         loginEmail,
         loginPassword
       );
-
       const userDocRef = doc(database, "users", userCredential.user.uid);
       const userDoc = await getDoc(userDocRef);
 
       if (userDoc.exists()) {
-        const userData = userDoc.data();
-        console.log("User data:", userData);
-        hideProgress();
-        // dispatch(setUser(userData));
+        // navigation vers l'écran principal à ajouter ici
       } else {
-        console.error("No such user document!");
+        setLoginError("Compte introuvable. Veuillez réessayer.");
       }
-
-      // hideProgress();
     } catch (error) {
       console.error("Erreur lors de la connexion:", error.message);
-      // hideProgress();
-      // setLoginError(true);
+      setLoginError("Email ou mot de passe incorrect");
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const flatListRef = useRef(null);
-
-  const handleScrollToIndex = (index) => {
-    flatListRef.current.scrollToIndex({ index });
-  };
-
-  useEffect(() => {
-    if (!loginEmail || !loginPassword) {
-      setLoginErrorPresent(true);
-    } else {
-      setLoginErrorPresent(false);
-    }
-  }, [loginEmail, loginPassword]);
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text
-        style={styles.confidentialityTitle}
-        className="bg-[#FF7575] text-white rounded-br-[150px] pt-20 shadow-lg shadow-black"
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
       >
-        {i18n.t("confidentialite")}
-      </Text>
- 
-      <View style={styles.pageContainer}>
-        <Text style={styles.infoText}>
-          Si vous voulez poser des questions, commenter ou réagir, et envoyer
-          des messages (forum, message privé), veuillez vous connecter ou créer
-          un compte. Cela synchronisera également vos données.
-        </Text>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            keyboardType="email-address"
-            onChangeText={handleLoginEmailChange}
-          />
-        </View>
-        {loginEmailError && (
-          <Text style={{ color: "red" }}>{loginEmailError}</Text>
-        )}
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            secureTextEntry
-            onChangeText={handleLoginPasswordChange}
-          />
-        </View>
-        {loginPasswordError && (
-          <Text style={{ color: "red" }}>{loginPasswordError}</Text>
-        )}
-        <TouchableOpacity
-          style={[
-            styles.button,
-            { backgroundColor: loginErrorPresent ? "#e7e5e5" : "#FF7575" },
-          ]}
-          onPress={handleLogin}
-          disabled={loginErrorPresent}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.buttonText}>Se connecter</Text>
-        </TouchableOpacity>
-        {loginError && <Text style={{ color: "red" }}>{loginError}</Text>}
-        <Text className="text-center py-2">Ou</Text>
-        <TouchableOpacity
-          style={{
-            padding: 15,
-            borderRadius: 15,
-            backgroundColor: "white",
-          }}
-          className="shadow-sm shadow-black mb-5"
-          onPress={()=>navigation.navigate("username")}
-        >
-          <Text className="text-center" style={{ color: COLORS.accent500 }} >
-            S'inscrire
-          </Text>
-        </TouchableOpacity>
-      </View>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.eyebrow}>Bon retour</Text>
+            <Text style={styles.title}>Connexion</Text>
+            <Text style={styles.subtitle}>
+              Connectez-vous pour poser des questions, échanger sur le forum
+              et synchroniser vos données.
+            </Text>
+          </View>
+
+          {/* Formulaire */}
+          <View style={styles.form}>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor="#A0A0A0"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={loginEmail}
+                onChangeText={handleLoginEmailChange}
+              />
+            </View>
+            {!!loginEmailError && (
+              <Text style={styles.fieldError}>{loginEmailError}</Text>
+            )}
+
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="Mot de passe"
+                placeholderTextColor="#A0A0A0"
+                secureTextEntry={!showPassword}
+                value={loginPassword}
+                onChangeText={handleLoginPasswordChange}
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeButton}
+              >
+                <Ionicons
+                  name={showPassword ? "eye-off" : "eye"}
+                  size={20}
+                  color="#A0A0A0"
+                />
+              </TouchableOpacity>
+            </View>
+            {!!loginPasswordError && (
+              <Text style={styles.fieldError}>{loginPasswordError}</Text>
+            )}
+
+            {!!loginError && (
+              <Text style={styles.formError}>{loginError}</Text>
+            )}
+
+            {/* Bouton de connexion — juste sous le formulaire */}
+            <TouchableOpacity
+              onPress={handleLogin}
+              disabled={!isFormValid || isLoading}
+              activeOpacity={0.85}
+              style={[
+                styles.loginBtn,
+                { backgroundColor: isFormValid ? "#FF7575" : "#EFEFEF" },
+              ]}
+            >
+              {isLoading ? (
+                <ActivityIndicator
+                  color={isFormValid ? "#FFFFFF" : "#B0B0B0"}
+                />
+              ) : (
+                <Text
+                  style={[
+                    styles.loginBtnText,
+                    { color: isFormValid ? COLORS.neutral100 : "#B0B0B0" },
+                  ]}
+                >
+                  Se connecter
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Lien inscription — en bas, séparé */}
+          <View style={styles.signupRow}>
+            <Text style={styles.signupText}>Pas de compte ?</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("username")}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.signupLink}> Créer un compte</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -174,66 +196,101 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.neutral100,
   },
-  confidentialityContainer: {
-    width: SIZES.width,
-    height: SIZES.height * 0.6,
-  },
-  confidentialityTitle: {
-    fontSize: SIZES.width * 0.08,
-    fontFamily: "Bold",
-    textAlign: "center",
-    height: SIZES.height * 0.3,
-  },
-  confidentialityItem: {
-    marginTop: 20,
-  },
-  confidentialityText: {
-    fontFamily: "Regular",
-    fontSize: SIZES.width * 0.05,
-    lineHeight: 24,
-    paddingRight: 20,
-  },
-  btnBox: {
-    height: SIZES.height * 0.15,
-    width: SIZES.width,
-  },
-  pageContainer: {
-    width,
-    padding: 20,
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
     justifyContent: "center",
+    paddingVertical: 40,
+  },
+  header: {
+    marginBottom: 32,
+  },
+  eyebrow: {
+    color: "#FF7575",
+    fontFamily: "SBold",
+    fontSize: SIZES.small,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginBottom: 6,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 20,
+    fontFamily: "Bold",
+    fontSize: SIZES.width * 0.09,
+    color: "#1A1A1A",
+    marginBottom: 8,
   },
-  infoText: {
-    marginBottom: 20,
-    textAlign: "center",
+  subtitle: {
+    fontFamily: "Regular",
+    fontSize: SIZES.small,
+    color: "#8A8A8A",
+    lineHeight: 20,
   },
-  input: {
-    padding: 10,
-    borderRadius: 15,
-    overflow: "hidden",
+  form: {
+    width: "100%",
   },
   inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: "#c0bdbd",
-    borderRadius: 15,
-    marginVertical: 10,
-    width: Math.floor(Dimensions.get("window").width) - 40,
-    backgroundColor: "rgb(243 244 246)",
+    borderColor: "#F0F0F0",
+    borderRadius: 14,
+    marginBottom: 10,
+    backgroundColor: "#FAFAFA",
+    paddingHorizontal: 16,
   },
-  button: {
-    padding: 15,
-    borderRadius: 15,
-    marginTop: 20,
+  input: {
+    flex: 1,
+    paddingVertical: 14,
+    fontFamily: "Regular",
+    fontSize: SIZES.medium,
+    color: "#1A1A1A",
   },
-  buttonText: {
-    color: "white",
+  eyeButton: {
+    padding: 6,
+  },
+  fieldError: {
+    color: "#E24C4C",
+    fontSize: SIZES.small - 1,
+    marginBottom: 8,
+    marginLeft: 4,
+    fontFamily: "Regular",
+  },
+  formError: {
+    color: "#E24C4C",
+    fontSize: SIZES.small,
     textAlign: "center",
-    fontSize: 16,
+    marginBottom: 10,
+    fontFamily: "SBold",
+  },
+  loginBtn: {
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: "center",
+    marginTop: 12,
+    shadowColor: "#FF7575",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  loginBtnText: {
+    fontFamily: "SBold",
+    fontSize: SIZES.medium,
+  },
+  signupRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 28,
+  },
+  signupText: {
+    fontFamily: "Regular",
+    fontSize: SIZES.small,
+    color: "#8A8A8A",
+  },
+  signupLink: {
+    fontFamily: "SBold",
+    fontSize: SIZES.small,
+    color: "#FF7575",
   },
 });
 

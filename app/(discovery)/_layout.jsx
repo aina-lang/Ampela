@@ -9,7 +9,7 @@ import {
 const _layout = () => {
   const insets = useSafeAreaInsets();
   return (
-    <SafeAreaView className="flex-1" style={{ marginTop: -(insets.top + 40) }}>
+    <SafeAreaView className="flex-1" style={{ marginTop: -(insets.top + 40) ,paddingTop:20}}>
       <Stack screenOptions={{ headerShown: false }} initialRouteName="index">
         <Stack.Screen name="index" />
         <Stack.Screen name="username" />

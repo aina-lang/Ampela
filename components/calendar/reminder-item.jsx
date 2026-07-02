@@ -6,15 +6,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   Modal,
-  Button,
   FlatList,
 } from "react-native";
 import { COLORS, SIZES } from "@/constants";
-import { useSelector } from "@legendapp/state/react";
-import { preferenceState } from "@/legendstate/AmpelaStates";
 import * as BackgroundFetch from "expo-background-fetch";
 import * as TaskManager from "expo-task-manager";
 import * as Notifications from "expo-notifications";
+import { AntDesign, Feather } from "@expo/vector-icons";
 
 const BACKGROUND_NOTIFICATION_TASK = "BACKGROUND_NOTIFICATION_TASK";
 
@@ -30,14 +28,9 @@ TaskManager.defineTask(
     const now = new Date();
     const notificationTime = new Date(notificationDate);
 
-    console.log(title, body);
     if (notificationTime > now) {
       await Notifications.scheduleNotificationAsync({
-        content: {
-          title: title,
-          body: body,
-          data: { someData: "goes here" },
-        },
+        content: { title, body, data: { someData: "goes here" } },
         trigger: { date: notificationTime },
       });
     }
@@ -60,9 +53,7 @@ const registerBackgroundTask = async (notificationDate, title, body) => {
     BACKGROUND_NOTIFICATION_TASK
   );
 
-  console.log(TaskManager.getRegisteredTasksAsync());
   if (!isRegistered) {
-    console.log("NOT REGISTERED");
     return BackgroundFetch.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK, {
       minimumInterval: 1 * 60,
       stopOnTerminate: false,
@@ -70,23 +61,35 @@ const registerBackgroundTask = async (notificationDate, title, body) => {
       data: { notificationDate, title, body },
     });
   } else {
-    console.log("REGISTERED");
     return BackgroundFetch.unregisterTaskAsync(BACKGROUND_NOTIFICATION_TASK);
   }
 };
 
-const ReminderItem = ({ as, time, howmanytimeReminder }) => {
+const frequencyOptions = [
+  { label: "Quotidien", value: "quotidien" },
+  { label: "Hebdomadaire", value: "hebdomadaire" },
+  { label: "Le jour même", value: "lejourmeme" },
+  { label: "Chaque deux jours", value: "chaquedeuxjours" },
+  { label: "Chaque trois jours", value: "chaquetroisjours" },
+];
+
+const pad = (n) => String(n).padStart(2, "0");
+
+const ReminderItem = ({ as, time, howmanytimeReminder, onRegister }) => {
   const [isEnabled, setIsEnabled] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const { theme } = useSelector(() => preferenceState.get());
-  const [selectedFrequency, setSelectedFrequency] = useState("quotidien");
+  const [selectedFrequency, setSelectedFrequency] = useState(
+    howmanytimeReminder || "quotidien"
+  );
+  const [hour, setHour] = useState(time?.hour ?? 8);
+  const [minute, setMinute] = useState(time?.minutes ?? 0);
 
   const toggleSwitch = async () => {
     setIsEnabled((previousState) => !previousState);
     if (!isEnabled) {
       const notificationDate = new Date();
-      notificationDate.setHours(time.hour);
-      notificationDate.setMinutes(time.minutes);
+      notificationDate.setHours(hour);
+      notificationDate.setMinutes(minute);
       await registerBackgroundTask(
         notificationDate.toISOString(),
         as,
@@ -97,22 +100,39 @@ const ReminderItem = ({ as, time, howmanytimeReminder }) => {
     }
   };
 
-  const frequencyOptions = [
-    { label: "Quotidien", value: "quotidien" },
-    { label: "Hebdomadaire", value: "hebdomadaire" },
-    { label: "Le jour même", value: "lejourmeme" },
-    { label: "Chaque deux jours", value: "chaquedeuxjours" },
-    { label: "Chaque trois jours", value: "chaquetroisjours" },
-  ];
+  const handleConfirm = () => {
+    setModalVisible(false);
+    onRegister?.(as, hour, minute, selectedFrequency);
+  };
+
+  const changeHour = (delta) => {
+    setHour((h) => (h + delta + 24) % 24);
+  };
+
+  const changeMinute = (delta) => {
+    setMinute((m) => (m + delta + 60) % 60);
+  };
 
   const renderFrequencyItem = ({ item }) => {
     const isSelected = item.value === selectedFrequency;
-    const itemStyle = isSelected
-      ? styles.selectedFrequency
-      : styles.regularFrequency;
     return (
-      <TouchableOpacity onPress={() => setSelectedFrequency(item.value)}>
-        <Text style={[itemStyle, { color: isSelected ? "white" : "black" }]}>
+      <TouchableOpacity
+        onPress={() => setSelectedFrequency(item.value)}
+        style={[
+          styles.chip,
+          {
+            backgroundColor: isSelected ? "#FF7575" : "#FAFAFA",
+            borderColor: isSelected ? "#FF7575" : "#F0F0F0",
+          },
+        ]}
+        activeOpacity={0.85}
+      >
+        <Text
+          style={[
+            styles.chipText,
+            { color: isSelected ? COLORS.neutral100 : "#3A3A3A" },
+          ]}
+        >
           {item.label}
         </Text>
       </TouchableOpacity>
@@ -124,50 +144,94 @@ const ReminderItem = ({ as, time, howmanytimeReminder }) => {
       <TouchableOpacity
         onPress={() => setModalVisible(true)}
         style={styles.container}
-        className="shadow-sm shadow-black"
+        activeOpacity={0.85}
       >
         <View style={styles.left}>
-          <Text style={styles.textRegular}>{as}</Text>
-
-          <Text style={styles.textRegular}>
-            Rappeler: {howmanytimeReminder}
+          <Text style={styles.title}>{as}</Text>
+          <Text style={styles.subtitle}>
+            {pad(hour)}:{pad(minute)} · {selectedFrequency}
           </Text>
         </View>
-        <View>
-          <Switch
-            trackColor={{
-              false: theme === "pink" ? COLORS.neutral200 : COLORS.neutral250,
-              true: theme === "pink" ? COLORS.accent600 : COLORS.accent800,
-            }}
-            thumbColor={isEnabled ? COLORS.neutral100 : COLORS.neutral100}
-            ios_backgroundColor={COLORS.neutral200}
-            onValueChange={toggleSwitch}
-            value={isEnabled}
-          />
-        </View>
+        <Switch
+          trackColor={{ false: "#E5E5E5", true: "#FF7575" }}
+          thumbColor={COLORS.neutral100}
+          ios_backgroundColor="#E5E5E5"
+          onValueChange={toggleSwitch}
+          value={isEnabled}
+        />
       </TouchableOpacity>
 
       <Modal
-        animationType="slide"
-        transparent={true}
+        animationType="fade"
+        transparent
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(!modalVisible)}
+        onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalView} className="p-3 py-5">
-            <Text className="text-[18px] text-center mb-10">{as}</Text>
-            <Text className="mb-3">Périodicité</Text>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>{as}</Text>
+
+            <Text style={styles.sectionLabel}>Heure du rappel</Text>
+            <View style={styles.stepperRow}>
+              <View style={styles.stepperGroup}>
+                <TouchableOpacity
+                  style={styles.stepperButton}
+                  onPress={() => changeHour(-1)}
+                >
+                  <AntDesign name="minus" size={16} color="#FF7575" />
+                </TouchableOpacity>
+                <Text style={styles.stepperValue}>{pad(hour)}</Text>
+                <TouchableOpacity
+                  style={styles.stepperButton}
+                  onPress={() => changeHour(1)}
+                >
+                  <AntDesign name="plus" size={16} color="#FF7575" />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.stepperColon}>:</Text>
+
+              <View style={styles.stepperGroup}>
+                <TouchableOpacity
+                  style={styles.stepperButton}
+                  onPress={() => changeMinute(-5)}
+                >
+                  <AntDesign name="minus" size={16} color="#FF7575" />
+                </TouchableOpacity>
+                <Text style={styles.stepperValue}>{pad(minute)}</Text>
+                <TouchableOpacity
+                  style={styles.stepperButton}
+                  onPress={() => changeMinute(5)}
+                >
+                  <AntDesign name="plus" size={16} color="#FF7575" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <Text style={styles.sectionLabel}>Périodicité</Text>
             <FlatList
               data={frequencyOptions}
               renderItem={renderFrequencyItem}
               keyExtractor={(item) => item.value}
-              contentContainerStyle={{ marginBottom: 20 }}
+              contentContainerStyle={styles.chipList}
+              showsVerticalScrollIndicator={false}
             />
-            <Button
-              title="Terminer"
-              onPress={() => setModalVisible(false)}
-              color={COLORS.accent500}
-            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                onPress={() => setModalVisible(false)}
+                style={styles.cancelButton}
+              >
+                <Text style={styles.cancelButtonText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleConfirm}
+                style={styles.confirmButton}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.confirmButtonText}>Terminer</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -176,58 +240,144 @@ const ReminderItem = ({ as, time, howmanytimeReminder }) => {
 };
 
 const styles = StyleSheet.create({
-  selectedFrequency: {
-    backgroundColor: COLORS.accent600,
-    color: COLORS.white,
-    padding: 10,
-    borderRadius: 5,
-  },
-  regularFrequency: {
-    backgroundColor: COLORS.neutral100,
-    color: "black",
-    padding: 10,
-    borderRadius: 5,
-  },
   container: {
-    display: "flex",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     backgroundColor: COLORS.neutral100,
-    paddingVertical: 8,
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 8,
-    marginVertical: 2,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
   },
   left: {
-    gap: 12,
-    alignItems: "flex",
+    gap: 4,
   },
-  time: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginLeft: 20,
-  },
-  textRegular: {
-    fontFamily: "Regular",
+  title: {
+    fontFamily: "SBold",
     fontSize: SIZES.medium,
+    color: "#1A1A1A",
   },
-  textMedium: {
-    fontFamily: "Medium",
-    fontSize: SIZES.large,
+  subtitle: {
+    fontFamily: "Regular",
+    fontSize: SIZES.small - 1,
+    color: "#8A8A8A",
   },
   modalContainer: {
+    flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
-    height: SIZES.height,
     alignItems: "center",
     justifyContent: "center",
   },
   modalView: {
-    backgroundColor: "white",
+    backgroundColor: COLORS.neutral100,
     width: SIZES.width - 40,
-    minHeight: SIZES.height * 0.3,
-    borderRadius: 5,
+    borderRadius: 20,
+    padding: 24,
+  },
+  modalTitle: {
+    fontFamily: "Bold",
+    fontSize: SIZES.medium + 2,
+    color: "#1A1A1A",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  sectionLabel: {
+    fontFamily: "SBold",
+    fontSize: SIZES.small,
+    color: "#3A3A3A",
+    marginBottom: 10,
+    marginTop: 6,
+  },
+  stepperRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    backgroundColor: "#FAFAFA",
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+    borderRadius: 14,
+    paddingVertical: 14,
+    marginBottom: 8,
+  },
+  stepperGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  stepperButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#FFF5F5",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#FF7575",
+  },
+  stepperValue: {
+    fontFamily: "Bold",
+    fontSize: SIZES.medium + 4,
+    color: "#1A1A1A",
+    minWidth: 34,
+    textAlign: "center",
+  },
+  stepperColon: {
+    fontFamily: "Bold",
+    fontSize: SIZES.medium + 4,
+    color: "#1A1A1A",
+  },
+  chipList: {
+    gap: 8,
+    paddingBottom: 4,
+  },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignSelf: "flex-start",
+  },
+  chipText: {
+    fontFamily: "Regular",
+    fontSize: SIZES.small,
+  },
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    backgroundColor: "#EFEFEF",
+  },
+  cancelButtonText: {
+    fontFamily: "SBold",
+    fontSize: SIZES.small,
+    color: "#7A7A7A",
+  },
+  confirmButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    backgroundColor: "#FF7575",
+    shadowColor: "#FF7575",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  confirmButtonText: {
+    fontFamily: "SBold",
+    fontSize: SIZES.small,
+    color: COLORS.neutral100,
   },
 });
 

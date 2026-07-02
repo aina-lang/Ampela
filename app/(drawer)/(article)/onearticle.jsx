@@ -1,7 +1,7 @@
 import { View, ScrollView, Text, StyleSheet, Image } from "react-native";
 import { COLORS, SIZES } from "@/constants";
 import { images } from "@/constants";
-import { useRoute } from "@react-navigation/native";
+import { useRoute } from "expo-router";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import i18n from "@/constants/i18n";
 

@@ -5,20 +5,22 @@ import { observer } from "@legendapp/state/react";
 import { StyleSheet } from "react-native";
 import { ModalProvider } from "@/hooks/ModalProvider";
 
-export const RootLayout = observer(() => {
-  // const insets = useSafeAreaInsets();
+// CORRECTION : Utilisation de "export default" pour qu'Expo Router puisse charger le composant
+const RootLayout = observer(() => {
   return (
-    // <SafeAreaView className="flex-1" style={{ marginTop: -insets.top }}>
-
+    <GestureHandlerRootView style={styles.gestureHandler}>
+      <ModalProvider>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
           <Stack.Screen name="(discovery)" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
         </Stack>
-
-    // </SafeAreaView>
+      </ModalProvider>
+    </GestureHandlerRootView>
   );
 });
+
+export default RootLayout;
 
 const styles = StyleSheet.create({
   container: {

@@ -8,25 +8,44 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
-  Button,
+  Alert,
 } from "react-native";
 import HeaderWithGoBack from "@/components/header-with-go-back";
 import { COLORS, SIZES, images } from "@/constants";
 import { useNavigation } from "expo-router";
-import {
-  preferenceState,
-  updateUser,
-  userState,
-} from "@/legendstate/AmpelaStates";
+import { updateUser, userState } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
-import { AntDesign, FontAwesome } from "@expo/vector-icons";
+import { AntDesign, Feather, FontAwesome } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import * as MediaLibrary from "expo-media-library";
 import { updateUserSqlite } from "@/services/database";
 
+const fieldConfig = {
+  username: {
+    label: "Pseudo",
+    placeholder: "Entrez votre pseudo",
+    keyboardType: "default",
+  },
+  cycleDuration: {
+    label: "Durée du cycle",
+    placeholder: "Entrez la durée du cycle",
+    keyboardType: "numeric",
+  },
+  durationMenstruation: {
+    label: "Durée des règles",
+    placeholder: "Entrez la durée des règles",
+    keyboardType: "numeric",
+  },
+  lastMenstruationDate: {
+    label: "Dernier cycle",
+    placeholder: "AAAA-MM-JJ",
+    keyboardType: "default",
+  },
+};
+
 const AccountScreen = () => {
-  const { theme } = useSelector(() => preferenceState.get());
   const user = useSelector(() => userState.get());
+  const navigation = useNavigation();
+
   const [username, setUsername] = useState(user.username);
   const [cycleDuration, setCycleDuration] = useState(user.cycleDuration);
   const [durationMenstruation, setDurationMenstruation] = useState(
@@ -38,42 +57,55 @@ const AccountScreen = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentField, setCurrentField] = useState(null);
   const [profileImage1, setProfileImage] = useState(user.profileImage);
-  const navigation = useNavigation();
 
-  const handleEditPress = async (field) => {
+  const fieldValues = {
+    username,
+    cycleDuration,
+    durationMenstruation,
+    lastMenstruationDate,
+  };
+  const fieldSetters = {
+    username: setUsername,
+    cycleDuration: (v) => setCycleDuration(Number(v)),
+    durationMenstruation: (v) => setDurationMenstruation(Number(v)),
+    lastMenstruationDate: setLastMenstruationDate,
+  };
+
+  const handleEditPress = (field) => {
     setCurrentField(field);
     setIsModalVisible(true);
   };
 
   const handleSave = () => {
-    if (currentField === "username") {
-      userState.set((prev) => ({ ...prev, username }));
-    } else if (currentField === "cycleDuration") {
-      userState.set((prev) => ({ ...prev, cycleDuration }));
-    } else if (currentField === "durationMenstruation") {
-      userState.set((prev) => ({ ...prev, durationMenstruation }));
-    } else if (currentField === "lastMenstruationDate") {
-      userState.set((prev) => ({ ...prev, lastMenstruationDate }));
-    }
+    if (!currentField) return;
+    userState.set((prev) => ({
+      ...prev,
+      [currentField]: fieldValues[currentField],
+    }));
     setIsModalVisible(false);
   };
 
   const handleProfileImageChange = async () => {
     try {
-      let result = await ImagePicker.launchImageLibraryAsync({
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission refusée",
+          "Nous avons besoin d'accéder à vos photos pour changer l'avatar."
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [4, 3],
+        aspect: [1, 1],
         quality: 1,
       });
 
       if (!result.canceled) {
         const profileImage = result.assets[0].uri;
-        await MediaLibrary.saveToLibraryAsync(profileImage);
-        updateUser({
-          ...user,
-          profileImage,
-        });
+        updateUser({ ...user, profileImage });
         await updateUserSqlite(
           user.id,
           user.username,
@@ -93,168 +125,143 @@ const AccountScreen = () => {
   };
 
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: COLORS.neutral100,
-        justifyContent: "center",
-      }}
-    >
-      <HeaderWithGoBack title="Apropos de moi" navigation={navigation} />
+    <View style={styles.container}>
+      <HeaderWithGoBack title="À propos de moi" navigation={navigation} />
+
       <ScrollView
         showsVerticalScrollIndicator={false}
-        style={[
-          styles.container,
-          {
-            backgroundColor:
-              theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
-          },
-        ]}
+        style={styles.scroll}
+        contentContainerStyle={{ paddingBottom: 40 }}
       >
+        {/* Profil */}
         <View style={styles.profil}>
           <TouchableOpacity
-            className=" w-[150] h-[150] rounded-full relative"
             onPress={handleProfileImageChange}
+            activeOpacity={0.85}
+            style={styles.avatarWrapper}
           >
             <Image
               source={profileImage1 ? { uri: profileImage1 } : images.doctor01}
-              style={{ height: 150, width: 150, borderRadius: 150 }}
+              style={styles.avatar}
             />
-
-            <AntDesign
-              name="camera"
-              size={30}
-              style={{
-                display: "absolute",
-                top: -45,
-                right: -100,
-                backgroundColor: "white",
-                borderRadius: 100,
-                padding: 10,
-                width: 50,
-              }}
-              color={COLORS.accent600}
-            />
+            <View style={styles.editBadge}>
+              <AntDesign name="camera" size={16} color={COLORS.neutral100} />
+            </View>
           </TouchableOpacity>
-          <View className="p-2 flex-row space-x-3 mt-3">
-            <Text className="font-bold text-[18px]">{user.username}</Text>
+
+          <View style={styles.usernameRow}>
+            <Text style={styles.username}>{user.username}</Text>
             <TouchableOpacity onPress={() => handleEditPress("username")}>
-              <AntDesign name="edit" size={24} color={COLORS.accent600}/>
+              <Feather name="edit-2" size={18} color="#FF7575" />
             </TouchableOpacity>
           </View>
         </View>
-        <View className=" py-5 ">
-          <View className="p-2 flex-row justify-between">
-            <View className="flex-row items-center space-x-2">
-              <FontAwesome name="calendar" color={"green"} size={30} />
-              <Text className="text-[18]">Durée du cycle :</Text>
-              <Text className="font-bold text-[18]">
-                {user.cycleDuration} jours
-              </Text>
+
+        {/* Infos cycle */}
+        <View style={styles.infoCard}>
+          <View style={styles.infoRow}>
+            <View style={styles.infoIconWrapper}>
+              <FontAwesome name="calendar" color="#FF7575" size={18} />
             </View>
+            <Text style={styles.infoLabel}>Durée du cycle</Text>
+            <Text style={styles.infoValue}>{user.cycleDuration} jours</Text>
           </View>
-          <View className="p-2 flex-row justify-between">
-            <View className="flex-row items-center space-x-2">
-              <FontAwesome name="calendar-check-o" color={"green"} size={30} />
-              <Text className="text-[18]">Durée des règles :</Text>
-              <Text className="font-bold text-[18]">
-                {user.durationMenstruation} jours
-              </Text>
+
+          <View style={styles.infoDivider} />
+
+          <View style={styles.infoRow}>
+            <View style={styles.infoIconWrapper}>
+              <FontAwesome name="calendar-check-o" color="#FF7575" size={18} />
             </View>
+            <Text style={styles.infoLabel}>Durée des règles</Text>
+            <Text style={styles.infoValue}>
+              {user.durationMenstruation} jours
+            </Text>
           </View>
-          <View className="p-2 flex-row justify-between">
-            <View className="flex-row items-center space-x-2">
-              <FontAwesome name="calendar-plus-o" color={"green"} size={30} />
-              <Text className="text-[18]">Premier jour du dernier cycle :</Text>
-              <Text className="font-bold text-[18]">
-                {user.lastMenstruationDate}
-              </Text>
+
+          <View style={styles.infoDivider} />
+
+          <View style={styles.infoRow}>
+            <View style={styles.infoIconWrapper}>
+              <FontAwesome name="calendar-plus-o" color="#FF7575" size={18} />
             </View>
+            <Text style={styles.infoLabel}>Dernier cycle</Text>
+            <Text style={styles.infoValue}>{user.lastMenstruationDate}</Text>
           </View>
         </View>
-        <View>
+
+        {/* Liens */}
+        <View style={styles.linksCard}>
           <TouchableOpacity
-      
-            onPress={() => {
-              navigation.navigate("settings/updatecycleinfo");
-            }}
-            className=" rounded-lg mx-2 mt-5 flex-row justify-between space-x-2 items-center"
+            onPress={() => navigation.navigate("settings/updatecycleinfo")}
+            style={styles.linkRow}
+            activeOpacity={0.7}
           >
-            <Text className="text-black">
-              Modifier les informations du cycles
+            <Text style={styles.linkText}>
+              Modifier les informations du cycle
             </Text>
-            <AntDesign name="right" size={18} color="black" className="ml-3" />
+            <AntDesign name="right" size={16} color="#B0B0B0" />
           </TouchableOpacity>
+
+          <View style={styles.infoDivider} />
+
           <TouchableOpacity
-          
-            onPress={() => {
-              navigation.navigate("settings/changepassword");
-            }}
-            className=" rounded-lg mx-2 mt-10  flex-row justify-between space-x-2 items-center"
+            onPress={() => navigation.navigate("settings/changepassword")}
+            style={styles.linkRow}
+            activeOpacity={0.7}
           >
-            <Text className="text-black">
-              Changer mon mot de passe
-            </Text>
-            <AntDesign name="right" size={18} color="black" className="ml-3" />
+            <Text style={styles.linkText}>Changer mon mot de passe</Text>
+            <AntDesign name="right" size={16} color="#B0B0B0" />
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Modal d'édition */}
       <Modal
         visible={isModalVisible}
-        animationType="slide"
-        transparent={true}
+        animationType="fade"
+        transparent
         onRequestClose={() => setIsModalVisible(false)}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <TextInput
-              style={styles.input}
-              value={
-                currentField === "username"
-                  ? username
-                  : currentField === "cycleDuration"
-                  ? String(cycleDuration)
-                  : currentField === "durationMenstruation"
-                  ? String(durationMenstruation)
-                  : lastMenstruationDate
-              }
-              onChangeText={(text) => {
-                if (currentField === "username") {
-                  setUsername(text);
-                } else if (currentField === "cycleDuration") {
-                  setCycleDuration(Number(text));
-                } else if (currentField === "durationMenstruation") {
-                  setDurationMenstruation(Number(text));
-                } else if (currentField === "lastMenstruationDate") {
-                  setLastMenstruationDate(text);
+            <Text style={styles.modalTitle}>
+              {currentField ? fieldConfig[currentField]?.label : ""}
+            </Text>
+
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                value={
+                  currentField
+                    ? String(fieldValues[currentField] ?? "")
+                    : ""
                 }
-              }}
-              keyboardType={
-                currentField === "cycleDuration" ||
-                currentField === "durationMenstruation"
-                  ? "numeric"
-                  : "default"
-              }
-              placeholder={
-                currentField === "username"
-                  ? "Entrez votre pseudo"
-                  : currentField === "cycleDuration"
-                  ? "Entrez la durée du cycle"
-                  : currentField === "durationMenstruation"
-                  ? "Entrez la durée de la menstruation"
-                  : "Entrez la date du dernier cycle"
-              }
-            />
-            <View className="flex-row space-x-2 justify-between w-full  mt-3">
-              <Button
-                title="Enregistrer"
-                onPress={handleSave}
-                color={COLORS.accent600}
+                onChangeText={(text) => fieldSetters[currentField]?.(text)}
+                keyboardType={
+                  currentField ? fieldConfig[currentField].keyboardType : "default"
+                }
+                placeholder={
+                  currentField ? fieldConfig[currentField].placeholder : ""
+                }
+                placeholderTextColor="#A0A0A0"
               />
-              <Button
-                title="Annuler"
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
                 onPress={() => setIsModalVisible(false)}
-              />
+                style={styles.cancelButton}
+              >
+                <Text style={styles.cancelButtonText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSave}
+                style={styles.confirmButton}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.confirmButtonText}>Enregistrer</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -266,65 +273,170 @@ const AccountScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 10,
-    paddingTop: 120,
+    backgroundColor: COLORS.neutral100,
+  },
+  scroll: {
+    flex: 1,
+    paddingHorizontal: 20,
   },
   profil: {
     alignItems: "center",
-    gap: 15,
-    paddingVertical: 30,
+    paddingVertical: 28,
+    marginTop:150
   },
-  uploadImgText: {
+  avatarWrapper: {
+    width: 120,
+    height: 120,
+  },
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 2,
+    borderColor: "#FF7575",
+  },
+  editBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#FF7575",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: COLORS.neutral100,
+  },
+  usernameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 14,
+  },
+  username: {
+    fontFamily: "Bold",
+    fontSize: SIZES.medium + 2,
+    color: "#1A1A1A",
+  },
+  infoCard: {
+    backgroundColor: "#FAFAFA",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+    paddingHorizontal: 16,
+    marginTop: 8,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+  },
+  infoIconWrapper: {
+    width: 32,
+    alignItems: "center",
+  },
+  infoLabel: {
+    flex: 1,
     fontFamily: "Regular",
     fontSize: SIZES.small,
+    color: "#7A7A7A",
+    marginLeft: 10,
   },
-  flex: {
-    display: "flex",
-    flexDirection: "row",
-    gap: 10,
-  },
-  uploadImg: {
-    width: 20,
-    height: 20,
-  },
-  inputContainer: {
-    gap: 10,
-    marginBottom: 20,
-  },
-  input: {
-    fontFamily: "Regular",
-    width: "100%",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 100,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.neutral100,
-  },
-  saveBtn: {
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 100,
-    alignSelf: "flex-end",
-  },
-  title: {
+  infoValue: {
     fontFamily: "SBold",
-    fontSize: SIZES.xLarge,
-    marginBottom: 15,
+    fontSize: SIZES.small,
+    color: "#1A1A1A",
+  },
+  infoDivider: {
+    height: 1,
+    backgroundColor: "#F0F0F0",
+  },
+  linksCard: {
+    backgroundColor: "#FAFAFA",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+    paddingHorizontal: 16,
     marginTop: 20,
+  },
+  linkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 16,
+  },
+  linkText: {
+    fontFamily: "Regular",
+    fontSize: SIZES.small,
+    color: "#1A1A1A",
   },
   modalContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0,0,0,0.5)",
+    paddingHorizontal: 24,
   },
   modalContent: {
-    width: 300,
-    padding: 20,
-    backgroundColor: "white",
-    borderRadius: 10,
+    width: "100%",
+    padding: 24,
+    backgroundColor: COLORS.neutral100,
+    borderRadius: 20,
+  },
+  modalTitle: {
+    fontFamily: "Bold",
+    fontSize: SIZES.medium,
+    color: "#1A1A1A",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  inputContainer: {
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+    borderRadius: 14,
+    backgroundColor: "#FAFAFA",
+  },
+  input: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontFamily: "Regular",
+    fontSize: SIZES.medium,
+    color: "#1A1A1A",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 20,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
     alignItems: "center",
+    backgroundColor: "#EFEFEF",
+  },
+  cancelButtonText: {
+    fontFamily: "SBold",
+    fontSize: SIZES.small,
+    color: "#7A7A7A",
+  },
+  confirmButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    backgroundColor: "#FF7575",
+    shadowColor: "#FF7575",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  confirmButtonText: {
+    fontFamily: "SBold",
+    fontSize: SIZES.small,
+    color: COLORS.neutral100,
   },
 });
 

@@ -10,7 +10,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { updateUser } from "../redux/userSlice";
 import { COLORS, SIZES } from "../constants";
 import Checkbox from "expo-checkbox";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation } from "expo-router";
 
 const PersonalHealthTestScreen = () => {
   const [checkbox1, setCheckbox1] = useState(true);

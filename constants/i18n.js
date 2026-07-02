@@ -11,6 +11,8 @@ i18n.translations = {
   fr: frTranslation,
 };
 
+i18n.defaultLocale = "fr";
+i18n.locale = "fr";
 i18n.enableFallback = true;
 
 export const loadLocale = async () => {

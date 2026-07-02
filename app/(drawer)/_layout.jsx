@@ -2,21 +2,25 @@ import React, { useState } from "react";
 import { COLORS, SIZES, images } from "@/constants";
 import i18n from "@/constants/i18n";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
-import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
+import { Drawer, DrawerContentScrollView, DrawerItem } from "expo-router/drawer";
 import { useRouter } from "expo-router";
-import { Drawer } from "expo-router/drawer";
-import { Image, Share, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  Share,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+  StyleSheet,
+  Modal,
+} from "react-native";
 import { observer, useSelector } from "@legendapp/state/react";
 import { AuthContextProvider } from "@/hooks/AuthContext";
 import { preferenceState, userState } from "@/legendstate/AmpelaStates";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ModalProvider } from "@/hooks/ModalProvider";
 import { auth } from "@/services/firebaseConfig";
-import { Modal } from "react-native";
 import Animated, {
   useSharedValue,
   withSpring,
@@ -26,29 +30,37 @@ import AuthContent from "@/components/AuthContentFromSetting";
 
 const DrawerComponent = observer(() => {
   const router = useRouter();
-  const { theme } = useSelector(() => preferenceState.get());
   const user = useSelector(() => userState.get());
-  const insets = useSafeAreaInsets();
   const [isModalVisible, setModalVisible] = useState(false);
   const [isAuthModalVisible, setAuthModalVisible] = useState(false);
-  const scale = useSharedValue(0);
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { scale: withSpring(scale.value, { damping: 10, stiffness: 200 }) },
-      ],
-    };
-  });
+  // scales séparées pour ne pas se marcher dessus si les deux modals interagissent
+  const logoutScale = useSharedValue(0);
+  const authScale = useSharedValue(0);
+
+  const logoutAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: withSpring(logoutScale.value, { damping: 10, stiffness: 200 }) },
+    ],
+  }));
+  const authAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: withSpring(authScale.value, { damping: 10, stiffness: 200 }) },
+    ],
+  }));
 
   const toggleModal = () => {
-    setModalVisible(!isModalVisible);
-    scale.value = isModalVisible ? 0 : 1;
+    setModalVisible((prev) => {
+      logoutScale.value = prev ? 0 : 1;
+      return !prev;
+    });
   };
 
   const toggleAuthModal = () => {
-    setAuthModalVisible(!isAuthModalVisible);
-    scale.value = isAuthModalVisible ? 0 : 1;
+    setAuthModalVisible((prev) => {
+      authScale.value = prev ? 0 : 1;
+      return !prev;
+    });
   };
 
   const handleAuth = () => {
@@ -64,8 +76,6 @@ const DrawerComponent = observer(() => {
       .signOut()
       .then(() => {
         toggleModal();
-        toggleAuthModal();
-        console.log("User signed out!");
       })
       .catch((error) => {
         console.error("Sign out error", error);
@@ -83,141 +93,143 @@ const DrawerComponent = observer(() => {
       console.log(error);
     }
   };
-
+  const insets = useSafeAreaInsets();
   return (
-    <SafeAreaView className="flex-1" style={{ marginTop: -(insets.top + 40) }}>
-      <GestureHandlerRootView>
+       <SafeAreaView className="flex-1" style={{ marginTop: -(insets.top + 40) }}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
         <ModalProvider>
           <AuthContextProvider>
             <Drawer
-              screenOptions={{
-                headerShown: false,
-              }}
+              screenOptions={{ headerShown: false }}
               drawerContent={(props) => (
                 <DrawerContentScrollView
                   {...props}
                   showsVerticalScrollIndicator={false}
                 >
-                  <View
-                    className="w-full -top-8 justify-center items-center space-y-2"
-                    style={{
-                      backgroundColor:
-                        theme === "pink"
-                          ? COLORS.neutral200
-                          : COLORS.neutral280,
-                      height: SIZES.height * 0.45,
-                    }}
-                  >
+                  {/* Profil */}
+                  <View style={styles.profileHeader}>
                     <TouchableOpacity
                       onPress={() => router.push("settings/accountscreen")}
+                      activeOpacity={0.85}
                     >
                       <Image
                         source={
-                          user.profileImage
+                          user?.profileImage
                             ? { uri: user.profileImage }
                             : images.doctor01
                         }
-                        height={150}
-                        width={150}
+                        style={styles.avatar}
                         resizeMode="cover"
-                        className="rounded-full mb-3"
                       />
                     </TouchableOpacity>
-
-                    <Text className="text-[16px] font-bold">
-                      {user.username || "Utilisateur"}
+                    <Text style={styles.profileName}>
+                      {user?.username || "Utilisateur"}
                     </Text>
-                    <Text>{user.email || "Ampela user"}</Text>
+                    <Text style={styles.profileEmail}>
+                      {user?.email || "Ampela user"}
+                    </Text>
                   </View>
-                  <Text className="pl-4">Mon compte</Text>
-                  <View className="pl-4">
+
+                  {/* Mon compte */}
+                  <Text style={styles.sectionLabel}>Mon compte</Text>
+                  <View style={styles.section}>
                     <DrawerItem
-                      label="Apropos de moi"
+                      label="À propos de moi"
+                      labelStyle={styles.itemLabel}
                       onPress={() => router.push("settings/account")}
-                      icon={({ color, size }) => (
-                        <AntDesign name="user" color={color} size={size} />
+                      icon={({ size }) => (
+                        <AntDesign name="user" color="#FF7575" size={size} />
                       )}
                     />
                     <DrawerItem
-                      label={
-                        auth.currentUser ? "Se déconnecter" : "Se connecter"
-                      }
+                      label={auth.currentUser ? "Se déconnecter" : "Se connecter"}
+                      labelStyle={styles.itemLabel}
                       onPress={handleAuth}
-                      icon={({ color, size }) => (
-                        <AntDesign name="logout" color={color} size={size} />
+                      icon={({ size }) => (
+                        <AntDesign name="logout" color="#FF7575" size={size} />
                       )}
                     />
                   </View>
-                  <Text className="pl-4">Général</Text>
-                  <View className="pl-4">
+
+                  {/* Général */}
+                  <Text style={styles.sectionLabel}>Général</Text>
+                  <View style={styles.section}>
                     <DrawerItem
                       label="Langues"
+                      labelStyle={styles.itemLabel}
                       onPress={() => router.push("settings/changelanguage")}
-                      icon={({ color, size }) => (
-                        <Ionicons name="language" color={color} size={size} />
+                      icon={({ size }) => (
+                        <Ionicons name="language" color="#FF7575" size={size} />
                       )}
                     />
                     <DrawerItem
                       label="Thème"
+                      labelStyle={styles.itemLabel}
                       onPress={() => router.push("settings/changetheme")}
-                      icon={({ color, size }) => (
+                      icon={({ size }) => (
                         <Ionicons
                           name="color-palette-outline"
-                          color={color}
+                          color="#FF7575"
                           size={size}
                         />
                       )}
                     />
                     <DrawerItem
                       label="FAQ"
+                      labelStyle={styles.itemLabel}
                       onPress={() => router.push("settings/faq")}
-                      icon={({ color, size }) => (
+                      icon={({ size }) => (
                         <Ionicons
                           name="help-circle-outline"
-                          color={color}
+                          color="#FF7575"
                           size={size}
                         />
                       )}
                     />
                     <DrawerItem
                       label={i18n.t("infoAmpela")}
+                      labelStyle={styles.itemLabel}
                       onPress={() => router.push("settings/aboutampela")}
-                      icon={({ color, size }) => (
+                      icon={({ size }) => (
                         <Ionicons
                           name="information-circle-outline"
-                          color={color}
+                          color="#FF7575"
                           size={size}
                         />
                       )}
                     />
                     <DrawerItem
                       label="Partager"
+                      labelStyle={styles.itemLabel}
                       onPress={onShare}
-                      icon={({ color, size }) => (
+                      icon={({ size }) => (
                         <Ionicons
                           name="share-social-outline"
-                          color={color}
-                          size={size}
-                        />
-                      )}
-                    />
-                  </View>
-                  <Text className="pl-4">Feed-back</Text>
-                  <View className="pl-4">
-                    <DrawerItem
-                      label="Envoyer des feedbacks"
-                      onPress={() => router.push("settings/feedback")}
-                      icon={({ color, size }) => (
-                        <Ionicons
-                          name="chatbox-ellipses-outline"
-                          color={color}
+                          color="#FF7575"
                           size={size}
                         />
                       )}
                     />
                   </View>
 
-                  <View className="h-5" />
+                  {/* Feedback */}
+                  <Text style={styles.sectionLabel}>Feed-back</Text>
+                  <View style={styles.section}>
+                    <DrawerItem
+                      label="Envoyer des feedbacks"
+                      labelStyle={styles.itemLabel}
+                      onPress={() => router.push("settings/feedback")}
+                      icon={({ size }) => (
+                        <Ionicons
+                          name="chatbox-ellipses-outline"
+                          color="#FF7575"
+                          size={size}
+                        />
+                      )}
+                    />
+                  </View>
+
+                  <View style={{ height: 20 }} />
                 </DrawerContentScrollView>
               )}
             />
@@ -225,94 +237,169 @@ const DrawerComponent = observer(() => {
         </ModalProvider>
       </GestureHandlerRootView>
 
-      <Modal visible={isModalVisible} onBackdropPress={toggleModal} transparent>
-        <View
-          style={{
-            backgroundColor: "rgba(0,0,0,0.5)",
-            height: SIZES.height,
-            alignItems: "center",
-            justifyContent: "center",
-            paddingHorizontal: 10,
-          }}
-        >
-          <Animated.View
-            style={[styles.modalContent, animatedStyle, { padding: 20 }]}
-          >
-            <Text style={styles.modalTitle}>Confirmer la déconnexion</Text>
-            <Text style={styles.modalMessage}>
-              Êtes-vous sûr de vouloir vous déconnecter?
-            </Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity onPress={toggleModal} style={styles.button}>
-                <Text style={styles.buttonText}>Annuler</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={confirmLogout} style={styles.button}>
-                <Text style={styles.buttonText}>Déconnecter</Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </View>
+      {/* Confirmation de déconnexion */}
+      <Modal
+        visible={isModalVisible}
+        transparent
+        animationType="none"
+        onRequestClose={toggleModal}
+      >
+        <TouchableWithoutFeedback onPress={toggleModal}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <Animated.View style={[styles.modalContent, logoutAnimatedStyle]}>
+                <Text style={styles.modalTitle}>Confirmer la déconnexion</Text>
+                <Text style={styles.modalMessage}>
+                  Êtes-vous sûr de vouloir vous déconnecter ?
+                </Text>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    onPress={toggleModal}
+                    style={styles.cancelButton}
+                  >
+                    <Text style={styles.cancelButtonText}>Annuler</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={confirmLogout}
+                    style={styles.confirmButton}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.confirmButtonText}>Déconnecter</Text>
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
       </Modal>
 
+      {/* Auth */}
       <Modal
         visible={isAuthModalVisible}
-        onBackdropPress={toggleAuthModal}
         transparent
+        animationType="none"
+        onRequestClose={toggleAuthModal}
       >
-        <View
-          style={{
-            backgroundColor: "rgba(0,0,0,0.5)",
-            height: SIZES.height,
-            alignItems: "center",
-            justifyContent: "center",
-            // paddingHorizontal: 10,
-          }}
-        >
-          <Animated.View style={[styles.modalContent, animatedStyle]}>
-            <AuthContent
-              closeModal={() => {
-                setAuthModalVisible(false);
-              }}
-            />
-          </Animated.View>
-        </View>
+        <TouchableWithoutFeedback onPress={toggleAuthModal}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <Animated.View style={[styles.modalContent, authAnimatedStyle]}>
+                <AuthContent closeModal={() => setAuthModalVisible(false)} />
+              </Animated.View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </SafeAreaView>
   );
 });
 
-const styles = {
-  modalContent: {
-    backgroundColor: "white",
+export default DrawerComponent;
 
-    justifyContent: "center",
+const styles = StyleSheet.create({
+  profileHeader: {
     alignItems: "center",
-    borderRadius: 4,
-    borderColor: "rgba(0, 0, 0, 0.1)",
+    paddingVertical: 32,
+    backgroundColor: "#FFF5F5",
+    marginBottom: 8,
+  },
+  avatar: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: "#FF7575",
+  },
+  profileName: {
+    fontFamily: "SBold",
+    fontSize: SIZES.medium,
+    color: "#1A1A1A",
+  },
+  profileEmail: {
+    fontFamily: "Regular",
+    fontSize: SIZES.small,
+    color: "#8A8A8A",
+    marginTop: 2,
+  },
+  sectionLabel: {
+    fontFamily: "SBold",
+    fontSize: SIZES.small - 1,
+    color: "#B0B0B0",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    paddingLeft: 20,
+    marginTop: 16,
+    marginBottom: 4,
+  },
+  section: {
+    paddingHorizontal: 8,
+  },
+  itemLabel: {
+    fontFamily: "Regular",
+    fontSize: SIZES.small,
+    color: "#3A3A3A",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  modalContent: {
+    width: "100%",
+    backgroundColor: COLORS.neutral100,
+    borderRadius: 20,
+    padding: 24,
+    alignItems: "center",
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
+    fontFamily: "Bold",
+    fontSize: SIZES.medium,
+    color: "#1A1A1A",
+    textAlign: "center",
+    marginBottom: 8,
   },
   modalMessage: {
-    fontSize: 16,
-    marginVertical: 10,
+    fontFamily: "Regular",
+    fontSize: SIZES.small,
+    color: "#7A7A7A",
+    textAlign: "center",
+    marginBottom: 20,
   },
   modalButtons: {
     flexDirection: "row",
-    marginTop: 20,
+    gap: 12,
+    width: "100%",
   },
-  button: {
-    marginHorizontal: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: COLORS.primary,
-    borderRadius: 4,
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    backgroundColor: "#EFEFEF",
   },
-  buttonText: {
-    color: "white",
-    fontWeight: "bold",
+  cancelButtonText: {
+    fontFamily: "SBold",
+    fontSize: SIZES.small,
+    color: "#7A7A7A",
   },
-};
-
-export default DrawerComponent;
+  confirmButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    backgroundColor: "#FF7575",
+    shadowColor: "#FF7575",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  confirmButtonText: {
+    fontFamily: "SBold",
+    fontSize: SIZES.small,
+    color: COLORS.neutral100,
+  },
+});

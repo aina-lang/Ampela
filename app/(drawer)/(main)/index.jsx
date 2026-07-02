@@ -1,21 +1,12 @@
 import { useState } from "react";
-import {
-  View,
-  ScrollView,
-  Text,
-  StyleSheet,
-  Button,
-  SafeAreaView,
-} from "react-native";
-
+import { View, ScrollView, Text, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, SIZES } from "@/constants";
 import BackgroundContainer from "@/components/background-container";
 import IndicationCalendar from "@/components/calendar/indication-calendar";
 import { Calendar, LocaleConfig } from "react-native-calendars";
 import ReminderItem from "@/components/calendar/reminder-item";
-
 import moment from "moment";
-
 import { observer, useSelector } from "@legendapp/state/react";
 import {
   cycleMenstruelState,
@@ -24,181 +15,106 @@ import {
 } from "@/legendstate/AmpelaStates";
 import i18n from "@/constants/i18n";
 
+LocaleConfig.locales["fr"] = {
+  monthNames: [
+    "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+    "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+  ],
+  monthNamesShort: [
+    "Janv.", "Févr.", "Mars", "Avril", "Mai", "Juin",
+    "Juil.", "Août", "Sept.", "Oct.", "Nov.", "Déc.",
+  ],
+  dayNames: [
+    "Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi",
+  ],
+  dayNamesShort: ["Di.", "Lu.", "Ma.", "Me.", "Je.", "Ve.", "Sa."],
+  today: "Aujourd'hui",
+};
+
+LocaleConfig.locales["mg"] = {
+  monthNames: [
+    "Janoary", "Febroary", "Martsa", "Aprily", "May", "Jona",
+    "Jolay", "Aogositra", "Septambra", "Oktobra", "Novambra", "Desambra",
+  ],
+  monthNamesShort: [
+    "Jan.", "Febr.", "Mar.", "Apr.", "May", "Jona",
+    "Jolay.", "Aogo.", "Sept.", "Oct.", "Nov.", "Des.",
+  ],
+  dayNames: [
+    "Alahady", "Alatsinainy", "Talata", "Alarobia", "Alakamisy", "Zoma", "Sabotsy",
+  ],
+  dayNamesShort: ["Alh.", "Alt.", "Tal.", "Alr.", "Alk.", "Zo.", "Sa."],
+  today: "Androany",
+};
+
 const index = () => {
   const user = useSelector(() => userState.get());
+  const { theme, language } = useSelector(() => preferenceState.get());
+  const { cyclesData } = useSelector(() => cycleMenstruelState.get());
+
   const [howmanytimeReminder1, setHowmanytimeReminder1] = useState("quotidien");
   const [howmanytimeReminder2, setHowmanytimeReminder2] = useState("quotidien");
   const [howmanytimeReminder3, setHowmanytimeReminder3] = useState("quotidien");
   const [scrollDisabled, setScrollDisabled] = useState(true);
-  const { theme, language } = useSelector(() => preferenceState.get());
-  const [time1, setTime1] = useState({
-    hour: 0,
-    minutes: 0,
-  });
-  const [time2, setTime2] = useState({
-    hour: 0,
-    minutes: 0,
-  });
-  const [time3, setTime3] = useState({
-    hour: 0,
-    minutes: 0,
-  });
+  const [time1, setTime1] = useState({ hour: 0, minutes: 0 });
+  const [time2, setTime2] = useState({ hour: 0, minutes: 0 });
+  const [time3, setTime3] = useState({ hour: 0, minutes: 0 });
 
   i18n.defaultLocale = "fr";
-  if (language) {
-    i18n.locale = language;
-  } else {
-    i18n.locale = i18n.defaultLocale;
-  }
+  i18n.locale = language || i18n.defaultLocale;
+  LocaleConfig.defaultLocale = language || "fr";
 
-  LocaleConfig.locales["fr"] = {
-    monthNames: [
-      "Janvier",
-      "Février",
-      "Mars",
-      "Avril",
-      "Mai",
-      "Juin",
-      "Juillet",
-      "Août",
-      "Septembre",
-      "Octobre",
-      "Novembre",
-      "Décembre",
-    ],
-    monthNamesShort: [
-      "Janv.",
-      "Févr.",
-      "Mars",
-      "Avril",
-      "Mai",
-      "Juin",
-      "Juil.",
-      "Août",
-      "Sept.",
-      "Oct.",
-      "Nov.",
-      "Déc.",
-    ],
-    dayNames: [
-      "Dimanche",
-      "Lundi",
-      "Mardi",
-      "Mercredi",
-      "Jeudi",
-      "Vendredi",
-      "Samedi",
-    ],
-    dayNamesShort: ["Di.", "Lu.", "Ma.", "Me.", "Je.", "Ve.", "Sa."],
-    today: "Aujourd'hui",
-  };
-
-  LocaleConfig.locales["mg"] = {
-    monthNames: [
-      "Janoary",
-      "Febroary",
-      "Martsa",
-      "Aprily",
-      "May",
-      "Jona",
-      "Jolay",
-      "Aogositra",
-      "Septambra",
-      "Oktobra",
-      "Novambra",
-      "Desambra",
-    ],
-    monthNamesShort: [
-      "Jan.",
-      "Febr.",
-      "Mar.",
-      "Apr.",
-      "May",
-      "Jona",
-      "Jolay.",
-      "Aogo.",
-      "Sept.",
-      "Oct.",
-      "Nov.",
-      "Des.",
-    ],
-    dayNames: [
-      "Alahady",
-      "Alatsinainy",
-      "Talata",
-      "Alarobia",
-      "Alakamisy",
-      "Zoma",
-      "Sabotsy",
-    ],
-    dayNamesShort: ["Alh.", "Alt.", "Tal.", "Alr.", "Alk.", "Zo.", "Sa."],
-    today: "Androany",
-  };
-
-  LocaleConfig.defaultLocale = language;
-
+  // TODO: brancher la vraie logique d'ouverture de modal de rappel
+  // (setReminderInfo / setReminderModalIsVisible n'existaient pas dans ce composant)
   const handleReminderBtnOnePress = () => {
-    setReminderInfo({ as: "Début des règles" });
-    setReminderModalIsVisible(true);
+    console.warn("Modal de rappel non branché : Début des règles");
   };
-
   const handleReminderBtnTwoPress = () => {
-    setReminderInfo({ as: "Jour d'ovulation" });
-    setReminderModalIsVisible(true);
+    console.warn("Modal de rappel non branché : Jour d'ovulation");
   };
-
   const handleReminderBtnThreePress = () => {
-    setReminderInfo({ as: "Prise de pillule" });
-    setReminderModalIsVisible(true);
+    console.warn("Modal de rappel non branché : Prise de pilule");
   };
 
+  // TODO: brancher dispatch / notifications réelles
+  // (dispatch, setTranslateYOne/Two/Three n'existaient pas dans ce composant)
   const handleRegisterButtonPress = (type, hour, minutes, active) => {
     setScrollDisabled(true);
     switch (type) {
       case "Début des règles":
-        setTime1({ ...time1, hour: hour, minutes: minutes });
+        setTime1({ hour, minutes });
         setHowmanytimeReminder1(active);
-        dispatch(scheduleMenstruationNotifications());
-        setTranslateYOne(1500);
         break;
       case "Jour d'ovulation":
-        setTime2({ ...time2, hour: hour, minutes: minutes });
+        setTime2({ hour, minutes });
         setHowmanytimeReminder2(active);
-        dispatch(scheduleOvulationNotifications());
-        setTranslateYTwo(1500);
         break;
       case "Prise de pillule":
-        setTime3({ ...time3, hour: hour, minutes: minutes });
+        setTime3({ hour, minutes });
         setHowmanytimeReminder3(active);
-        dispatch(schedulePillNotifications());
-        setTranslateYThree(1500);
         break;
       default:
-        return null;
+        return;
     }
   };
 
-  const { cyclesData } = useSelector(() => cycleMenstruelState.get());
-  cycles = cyclesData;
-
+  const cycles = cyclesData || [];
   const markedDates = {};
 
   const generateMarkedDates = () => {
     cycles.forEach((cycle) => {
-      // FECONDITY
+      // FÉCONDITÉ
       let start = moment(cycle.fecundityPeriodStart);
-      let end = moment(cycle.fecundityPeriodEnd);
+      const end = moment(cycle.fecundityPeriodEnd);
 
-      while (start <= end) {
+      while (start.isSameOrBefore(end)) {
         markedDates[start.format("YYYY-MM-DD")] = {
           customStyles: {
             container: {
               backgroundColor:
-                theme === "orange" ? COLORS.neutral250 : COLORS.accent400,
+                theme === "orange" ? COLORS.neutral250 : "#FFADAD",
             },
-            text: {
-              color: "#fff",
-            },
+            text: { color: "#fff" },
           },
         };
         start = start.add(1, "day");
@@ -209,31 +125,24 @@ const index = () => {
         customStyles: {
           container: {
             borderStyle: "solid",
-            borderColor:
-              theme === "orange" ? COLORS.accent800 : COLORS.accent500,
+            borderColor: theme === "orange" ? COLORS.accent800 : "#FF7575",
             borderWidth: 2,
           },
-          text: {
-            color: "#000",
-          },
+          text: { color: "#000" },
         },
       };
 
-      // MENSTRUATION
-      for (let i = 0; i < user.durationMenstruation; i++) {
-        markedDates[
-          moment(cycle.startMenstruationDate)
-            .add(i, "days")
-            .format("YYYY-MM-DD")
-        ] = {
+      // MENSTRUATIONS
+      for (let i = 0; i < (user?.durationMenstruation || 0); i++) {
+        const dateKey = moment(cycle.startMenstruationDate)
+          .add(i, "days")
+          .format("YYYY-MM-DD");
+        markedDates[dateKey] = {
           customStyles: {
             container: {
-              backgroundColor:
-                theme === "orange" ? COLORS.accent800 : COLORS.accent600,
+              backgroundColor: theme === "orange" ? COLORS.accent800 : "#FF7575",
             },
-            text: {
-              color: "#fff",
-            },
+            text: { color: "#fff" },
           },
         };
       }
@@ -243,115 +152,97 @@ const index = () => {
   generateMarkedDates();
 
   return (
-    <SafeAreaView className="flex-1 ">
+
       <ScrollView
         scrollEnabled={scrollDisabled}
         style={styles.container}
+        contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
-        className=""
       >
         <BackgroundContainer>
-          <View style={styles.calendar}>
+          {/* Calendrier */}
+          <View style={styles.calendarCard}>
             <Calendar
-              disableAllTouchEventsForDisabledDays={true}
-              style={{
-                height: 380,
-                borderRadius: 8,
-              }}
+              disableAllTouchEventsForDisabledDays
+              style={styles.calendar}
               theme={{
-                textSectio0nTitleColor: COLORS.neutral400,
-                todayTextColor: COLORS.primary,
-                dayTextColor: "#2d4150",
-                textDisabledColor: COLORS.neutral400,
-                arrowColor: COLORS.primary,
-                monthTextColor: COLORS.primary,
+                textSectionTitleColor: "#B0B0B0",
+                todayTextColor: "#FF7575",
+                dayTextColor: "#2D2D2D",
+                textDisabledColor: "#D8D8D8",
+                arrowColor: "#FF7575",
+                monthTextColor: "#1A1A1A",
                 textDayFontFamily: "Regular",
                 textMonthFontFamily: "SBold",
                 textDayHeaderFontFamily: "Regular",
                 textDayFontSize: SIZES.medium,
-                textMonthFontSize: SIZES.large,
-                textDayHeaderFontSize: SIZES.medium,
+                textMonthFontSize: SIZES.medium,
+                textDayHeaderFontSize: SIZES.small,
               }}
               markedDates={markedDates}
-              enableSwipeMonths={true}
+              enableSwipeMonths
               markingType="custom"
             />
           </View>
+
+          {/* Légende */}
           <View style={styles.indications}>
             <IndicationCalendar title="Jours des règles" />
             <IndicationCalendar title="Ovulation" />
             <IndicationCalendar title="Période de fécondité" />
           </View>
-          <View
-            style={[
-              styles.reminder,
-              {
-                backgroundColor:
-                  "pink" === "pink"
-                    ? "rgba(255, 255, 255, .5)"
-                    : "rgba(238, 220, 174, .5)",
-              },
-            ]}
-            className="p-2"
-          >
+
+          {/* Rappels */}
+          <View style={styles.reminderCard}>
             <Text style={styles.reminderTitle}>Rappels</Text>
-            <View
-              style={{
-                gap: 10,
-              }}
-            >
+            <View style={{ gap: 10 }}>
               <ReminderItem
-                as="Début des règles"
-                onPress={handleReminderBtnOnePress}
-                time={time1}
-                howmanytimeReminder={howmanytimeReminder1}
-              />
-              <ReminderItem
-                as="Jour d'ovulation"
-                onPress={handleReminderBtnTwoPress}
-                time={time2}
-                howmanytimeReminder={howmanytimeReminder2}
-              />
-              <ReminderItem
-                as="Prise de pillule"
-                onPress={handleReminderBtnThreePress}
-                time={time3}
-                howmanytimeReminder={howmanytimeReminder3}
-              />
+  as="Début des règles"
+  time={time1}
+  howmanytimeReminder={howmanytimeReminder1}
+  onRegister={handleRegisterButtonPress}
+/>
+<ReminderItem
+  as="Jour d'ovulation"
+  time={time2}
+  howmanytimeReminder={howmanytimeReminder2}
+  onRegister={handleRegisterButtonPress}
+/>
+<ReminderItem
+  as="Prise de pillule"
+  time={time3}
+  howmanytimeReminder={howmanytimeReminder3}
+  onRegister={handleRegisterButtonPress}
+/>
             </View>
           </View>
         </BackgroundContainer>
       </ScrollView>
-    </SafeAreaView>
+    
   );
 };
 
 const styles = StyleSheet.create({
-  contentContainer: {
-    flex: 1,
-    alignItems: "center",
-  },
   container: {
-    height: "100%",
+    flex: 1,
+    height:"100%"
   },
-  reminderContainer: {
-    position: "absolute",
-    alignItems: "center",
-    paddingTop: "50%",
-    top: 0,
-    right: -20,
-    left: -20,
-    bottom: 0,
-    zIndex: 999,
+  contentContainer: {
+    // paddingHorizontal: 20,
+    // paddingBottom: 40,
   },
-  title: {
-    fontFamily: "Bold",
-    textAlign: "center",
-    marginTop: 60,
+  calendarCard: {
+    marginTop: 160,
+    marginBottom: 20,
+    backgroundColor: "#FAFAFA",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+    padding: 8,
   },
   calendar: {
-    marginTop: 130,
-    marginBottom: 20,
+    borderRadius: 12,
+    backgroundColor: "transparent",
   },
   indications: {
     flexDirection: "row",
@@ -360,15 +251,18 @@ const styles = StyleSheet.create({
   },
   reminderTitle: {
     fontFamily: "SBold",
-    fontSize: 17,
-    marginBottom: 20,
+    fontSize: SIZES.medium,
+    color: "#1A1A1A",
+    marginBottom: 16,
   },
-  reminder: {
+  reminderCard: {
     marginTop: 20,
-    marginBottom: 100,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 8,
+    marginBottom: 140,
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: "#FAFAFA",
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
   },
 });
 

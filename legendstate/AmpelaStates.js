@@ -1,19 +1,18 @@
+// Firebase MUST be initialized before anything else.
+// This side-effect import guarantees initializeApp() runs first.
+import "@/services/firebaseConfig";
 
 import { observable } from "@legendapp/state";
 import {
   configureObservablePersistence,
   persistObservable,
 } from "@legendapp/state/persist";
-import { ObservablePersistFirebase } from "@legendapp/state/persist-plugins/firebase";
 import { ObservablePersistAsyncStorage } from "@legendapp/state/persist-plugins/async-storage";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { firebaseConfig } from "@/services/firebaseConfig";
-import { initializeApp } from "firebase/app";
-import { getDatabase } from "firebase/database";
 
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
-
+// Configure global persistence — LOCAL ONLY (AsyncStorage).
+// Do NOT add pluginRemote here: ObservablePersistFirebase calls getAuth()
+// which calls getApp() immediately, before any user is authenticated.
 configureObservablePersistence({
   pluginLocal: ObservablePersistAsyncStorage,
   localOptions: {
@@ -21,7 +20,6 @@ configureObservablePersistence({
       AsyncStorage,
     },
   },
-  pluginRemote: ObservablePersistFirebase,
 });
 
 // Define observables
@@ -50,41 +48,19 @@ const userState = observable({
   profileImage: null,
 });
 
-
+// Persistence — LOCAL ONLY at startup.
+// To add Firebase remote sync after login, call persistObservable again
+// with a pluginRemote config once you have a confirmed auth user.
 persistObservable(cycleMenstruelState, {
   local: "cycleMenstruel",
-  pluginRemote: ObservablePersistFirebase,
-  remote: {
-    onSetError: (err) => console.error(err),
-    firebase: {
-      refPath: () => `cycleMenstruel`,
-      mode: "realtime",
-    },
-  },
 });
 
 persistObservable(preferenceState, {
   local: "preference",
-  pluginRemote: ObservablePersistFirebase,
-  remote: {
-    onSetError: (err) => console.error(err),
-    firebase: {
-      refPath: () => `preference`,
-      mode: "realtime",
-    },
-  },
 });
 
 persistObservable(userState, {
   local: "user",
-  pluginRemote: ObservablePersistFirebase,
-  remote: {
-    onSetError: (err) => console.error(err),
-    firebase: {
-      refPath: () => `user`,
-      mode: "realtime",
-    },
-  },
 });
 
 // Update functions

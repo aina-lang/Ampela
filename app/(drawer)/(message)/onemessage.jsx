@@ -5,7 +5,7 @@ import { database } from "@/services/firebaseConfig";
 import { Feather } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { useSelector } from "@legendapp/state/react";
-import { useRoute } from "@react-navigation/native";
+import { useRoute } from "expo-router";
 import { useNavigation } from "expo-router";
 import {
   Timestamp,
