@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView, Text } from "react-native";
 import { SIZES, COLORS } from "@/constants";
 import HeaderWithGoBack from "@/components/header-with-go-back";
 import FaqItem from "@/components/settings/faq-item";
@@ -18,8 +18,9 @@ const FaqScreen = () => {
       <HeaderWithGoBack title="F.A.Q" navigation={navigation} />
       <ScrollView
         showsVerticalScrollIndicator={false}
-        style={{ paddingVertical: 20, paddingTop: 120, flex: 1 }}
+        contentContainerStyle={styles.scrollContent}
       >
+        <Text style={styles.sectionTitle}>Questions fréquentes</Text>
         {data.map((d) => (
           <FaqItem
             key={d.id}
@@ -35,20 +36,20 @@ const FaqScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 20,
     flex: 1,
     backgroundColor: COLORS.neutral100,
-    justifyContent: "center",
+    paddingTop: 120,
   },
-  header: {
-    marginTop: 40,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
   },
-  medium: {
-    fontFamily: "Medium",
+  sectionTitle: {
+    fontFamily: "SBold",
     fontSize: SIZES.medium,
+    color: "#1A1A1A",
+    marginBottom: 16,
+    marginTop: 20,
   },
 });
 

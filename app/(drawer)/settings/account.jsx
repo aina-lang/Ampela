@@ -13,7 +13,7 @@ import {
 import HeaderWithGoBack from "@/components/header-with-go-back";
 import { COLORS, SIZES, images } from "@/constants";
 import { useNavigation } from "expo-router";
-import { updateUser, userState } from "@/legendstate/AmpelaStates";
+import { updateUser, userState, preferenceState } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 import { AntDesign, Feather, FontAwesome } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -44,7 +44,12 @@ const fieldConfig = {
 
 const AccountScreen = () => {
   const user = useSelector(() => userState.get());
+  const { theme } = useSelector(() => preferenceState.get());
   const navigation = useNavigation();
+
+  const accentColor = theme === "pink" ? "#FF7575" : COLORS.accent800;
+  const cardBg = theme === "pink" ? COLORS.neutral100 : COLORS.neutral280;
+  const cardBorder = theme === "pink" ? "#F0C8C8" : "#E8D5C4";
 
   const [username, setUsername] = useState(user.username);
   const [cycleDuration, setCycleDuration] = useState(user.cycleDuration);
@@ -125,7 +130,7 @@ const AccountScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme === "pink" ? COLORS.neutral200 : COLORS.neutral100 }]}>
       <HeaderWithGoBack title="À propos de moi" navigation={navigation} />
 
       <ScrollView
@@ -142,76 +147,76 @@ const AccountScreen = () => {
           >
             <Image
               source={profileImage1 ? { uri: profileImage1 } : images.doctor01}
-              style={styles.avatar}
+              style={[styles.avatar, { borderColor: accentColor }]}
             />
-            <View style={styles.editBadge}>
+            <View style={[styles.editBadge, { backgroundColor: accentColor }]}>
               <AntDesign name="camera" size={16} color={COLORS.neutral100} />
             </View>
           </TouchableOpacity>
 
           <View style={styles.usernameRow}>
-            <Text style={styles.username}>{user.username}</Text>
+            <Text style={[styles.username, { color: COLORS.primary }]}>{user.username}</Text>
             <TouchableOpacity onPress={() => handleEditPress("username")}>
-              <Feather name="edit-2" size={18} color="#FF7575" />
+              <Feather name="edit-2" size={18} color={accentColor} />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Infos cycle */}
-        <View style={styles.infoCard}>
+        <View style={[styles.infoCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
           <View style={styles.infoRow}>
             <View style={styles.infoIconWrapper}>
-              <FontAwesome name="calendar" color="#FF7575" size={18} />
+              <FontAwesome name="calendar" color={accentColor} size={18} />
             </View>
-            <Text style={styles.infoLabel}>Durée du cycle</Text>
-            <Text style={styles.infoValue}>{user.cycleDuration} jours</Text>
+            <Text style={[styles.infoLabel, { color: COLORS.neutral400 }]}>Durée du cycle</Text>
+            <Text style={[styles.infoValue, { color: COLORS.primary }]}>{user.cycleDuration} jours</Text>
           </View>
 
-          <View style={styles.infoDivider} />
+          <View style={[styles.infoDivider, { backgroundColor: cardBorder }]} />
 
           <View style={styles.infoRow}>
             <View style={styles.infoIconWrapper}>
-              <FontAwesome name="calendar-check-o" color="#FF7575" size={18} />
+              <FontAwesome name="calendar-check-o" color={accentColor} size={18} />
             </View>
-            <Text style={styles.infoLabel}>Durée des règles</Text>
-            <Text style={styles.infoValue}>
+            <Text style={[styles.infoLabel, { color: COLORS.neutral400 }]}>Durée des règles</Text>
+            <Text style={[styles.infoValue, { color: COLORS.primary }]}>
               {user.durationMenstruation} jours
             </Text>
           </View>
 
-          <View style={styles.infoDivider} />
+          <View style={[styles.infoDivider, { backgroundColor: cardBorder }]} />
 
           <View style={styles.infoRow}>
             <View style={styles.infoIconWrapper}>
-              <FontAwesome name="calendar-plus-o" color="#FF7575" size={18} />
+              <FontAwesome name="calendar-plus-o" color={accentColor} size={18} />
             </View>
-            <Text style={styles.infoLabel}>Dernier cycle</Text>
-            <Text style={styles.infoValue}>{user.lastMenstruationDate}</Text>
+            <Text style={[styles.infoLabel, { color: COLORS.neutral400 }]}>Dernier cycle</Text>
+            <Text style={[styles.infoValue, { color: COLORS.primary }]}>{user.lastMenstruationDate}</Text>
           </View>
         </View>
 
         {/* Liens */}
-        <View style={styles.linksCard}>
+        <View style={[styles.linksCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
           <TouchableOpacity
             onPress={() => navigation.navigate("settings/updatecycleinfo")}
             style={styles.linkRow}
             activeOpacity={0.7}
           >
-            <Text style={styles.linkText}>
+            <Text style={[styles.linkText, { color: COLORS.primary }]}>
               Modifier les informations du cycle
             </Text>
-            <AntDesign name="right" size={16} color="#B0B0B0" />
+            <AntDesign name="right" size={16} color={COLORS.neutral400} />
           </TouchableOpacity>
 
-          <View style={styles.infoDivider} />
+          <View style={[styles.infoDivider, { backgroundColor: cardBorder }]} />
 
           <TouchableOpacity
             onPress={() => navigation.navigate("settings/changepassword")}
             style={styles.linkRow}
             activeOpacity={0.7}
           >
-            <Text style={styles.linkText}>Changer mon mot de passe</Text>
-            <AntDesign name="right" size={16} color="#B0B0B0" />
+            <Text style={[styles.linkText, { color: COLORS.primary }]}>Changer mon mot de passe</Text>
+            <AntDesign name="right" size={16} color={COLORS.neutral400} />
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -273,7 +278,6 @@ const AccountScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.neutral100,
   },
   scroll: {
     flex: 1,
@@ -320,10 +324,8 @@ const styles = StyleSheet.create({
     color: "#1A1A1A",
   },
   infoCard: {
-    backgroundColor: "#FAFAFA",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#F0F0F0",
     paddingHorizontal: 16,
     marginTop: 8,
   },
@@ -340,23 +342,18 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: "Regular",
     fontSize: SIZES.small,
-    color: "#7A7A7A",
     marginLeft: 10,
   },
   infoValue: {
     fontFamily: "SBold",
     fontSize: SIZES.small,
-    color: "#1A1A1A",
   },
   infoDivider: {
     height: 1,
-    backgroundColor: "#F0F0F0",
   },
   linksCard: {
-    backgroundColor: "#FAFAFA",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#F0F0F0",
     paddingHorizontal: 16,
     marginTop: 20,
   },
@@ -369,7 +366,6 @@ const styles = StyleSheet.create({
   linkText: {
     fontFamily: "Regular",
     fontSize: SIZES.small,
-    color: "#1A1A1A",
   },
   modalContainer: {
     flex: 1,
