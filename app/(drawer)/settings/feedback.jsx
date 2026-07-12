@@ -1,4 +1,4 @@
-import HeaderWithGoBack from "@/components/header-with-go-back";
+import AppHeader from "@/components/AppHeader";
 import { useNavigation } from "expo-router";
 import React from "react";
 import {
@@ -59,7 +59,7 @@ const feedback = () => {
         },
       ]}
     >
-      <HeaderWithGoBack title="Feed-back" navigation={navigation} />
+      <AppHeader navigation={navigation} title="Feed-back" showBack absolute />
       <View style={styles.content}>
         <Text style={[styles.title, { color: COLORS.primary }]}>Contactez les développeurs</Text>
         <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
@@ -92,7 +92,7 @@ const feedback = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 120,
+    paddingTop: 130,
   },
   content: {
     flex: 1,

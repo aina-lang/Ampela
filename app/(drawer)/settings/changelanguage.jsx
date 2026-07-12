@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { SIZES, COLORS, images } from "@/constants";
-import HeaderWithGoBack from "@/components/header-with-go-back";
+import AppHeader from "@/components/AppHeader";
 import { useNavigation } from "expo-router";
 import i18n from "@/constants/i18n";
 import { preferenceState, updatePreference } from "@/legendstate/AmpelaStates";
@@ -41,7 +41,7 @@ const ChangeLanguageScreen = () => {
         },
       ]}
     >
-      <HeaderWithGoBack title="Langues" navigation={navigation} />
+      <AppHeader navigation={navigation} title="Langues" showBack absolute />
       <View style={styles.content}>
         <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
           {languages.map((lang, index) => (
@@ -88,7 +88,7 @@ const ChangeLanguageScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 120,
+    paddingTop: 130,
   },
   content: {
     flex: 1,

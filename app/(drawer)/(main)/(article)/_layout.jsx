@@ -1,70 +1,26 @@
-import { View, Text, TouchableOpacity } from "react-native";
-import React, { useContext } from "react";
+import React from "react";
 import { Stack, useNavigation } from "expo-router";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { COLORS, SIZES } from "@/constants";
-import { preferenceState } from "@/legendstate/AmpelaStates";
-import { useSelector } from "@legendapp/state/react";
+import AppHeader from "@/components/AppHeader";
 
 const _layout = () => {
   const navigation = useNavigation();
-  const { theme } = useSelector(() => preferenceState.get());
   return (
     <Stack
       screenOptions={{
         headerShown: true,
         header: () => (
-          <View
-            className=" w-full flex-row items-center rounded-b-lg justify-between  shadow-md shadow-black pt-20"
-            style={{
-              backgroundColor:
-                theme === "orange" ? COLORS.accent800 : COLORS.accent500,
-              height: SIZES.height * 0.16,
-              paddingHorizontal: 16,
-            }}
-          >
-            <View className="flex flex-row items-center justify-center">
-              <TouchableOpacity
-                className="p-2 pl-0 mr-3 space-y-1"
-                onPress={() => navigation.openDrawer()}
-              >
-                <View className="h-[5] w-7 bg-white rounded-md" />
-                <View className="h-[5] w-8 bg-white rounded-md ml-[2px]" />
-                <View className="h-[5] w-7 bg-white rounded-md" />
-              </TouchableOpacity>
-              <Text
-                style={{ fontSize: 20, fontWeight: "bold", color: "white" }}
-              >
-                Article
-              </Text>
-            </View>
-            <View className="flex-row">
-              <TouchableOpacity
-                className="p-2 pl-0 "
-                onPress={() => navigation.navigate("(message)")}
-              >
-                <Ionicons name="chatbubble" color={"white"} size={30} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="p-2 pl-0 "
-                onPress={() => navigation.navigate("(message)")}
-              >
-                <Ionicons
-                  name="notifications-circle"
-                  color={"white"}
-                  size={30}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
+          <AppHeader
+            navigation={navigation}
+            title="Article"
+            rightIcons={[
+              { name: "chatbubble", onPress: () => navigation.navigate("(message)") },
+              { name: "notifications-circle", onPress: () => navigation.navigate("(message)") },
+            ]}
+          />
         ),
       }}
-      // initialRouteName="discovery"
     >
-      <Stack.Screen
-        name="index"
-        // options={{ headerShown: false }}
-      />
+      <Stack.Screen name="index" />
     </Stack>
   );
 };

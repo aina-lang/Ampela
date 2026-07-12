@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/AuthContext";
 import { preferenceState } from "@/legendstate/AmpelaStates";
 import { database } from "@/services/firebaseConfig";
 import { Feather } from "@expo/vector-icons";
-import AntDesign from "@expo/vector-icons/AntDesign";
+import AppHeader from "@/components/AppHeader";
 import { useSelector } from "@legendapp/state/react";
 import { useRoute } from "expo-router";
 import { useNavigation } from "expo-router";
@@ -21,7 +21,6 @@ import React, { useState, useEffect, useContext, useCallback } from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   SafeAreaView,
 } from "react-native";
@@ -154,28 +153,12 @@ export default function OneMessageScreen() {
 
   return (
     <SafeAreaView className="flex-1">
-      <View
-        className=" w-full flex-row items-center pt-8  rounded-b-lg justify-between  shadow-md shadow-black"
-        style={{
-          backgroundColor:
-            theme === "orange" ? COLORS.accent800 : COLORS.accent500,
-          height: SIZES.height * 0.16,
-          paddingHorizontal: 16,
-        }}
-      >
-        <View className="flex flex-row  items-center justify-center ">
-          <TouchableOpacity
-            className="p-2 pl-0 mr-3"
-            onPress={() => navigation.goBack()}
-          >
-            <AntDesign name="left" color={"white"} size={24} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{target?.username}</Text>
-        </View>
-        <TouchableOpacity onPress={() => navigation.navigate("Settings")}>
-          <AntDesign name="setting" color={"white"} size={24} />
-        </TouchableOpacity>
-      </View>
+      <AppHeader
+        navigation={navigation}
+        title={target?.username}
+        showBack
+        rightIcons={[{ name: "settings", onPress: () => navigation.navigate("Settings") }]}
+      />
 
       <GiftedChat
       
@@ -203,26 +186,6 @@ export default function OneMessageScreen() {
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: COLORS.accent800,
-    height: SIZES.height * 0.16,
-    paddingHorizontal: 16,
-    display: "absolute",
-  },
-  backButton: {
-    padding: 12,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "white",
-  },
-  settingsButton: {
-    padding: 12,
-  },
   inputToolbarContainer: {
     width: "95%",
     padding: 20,

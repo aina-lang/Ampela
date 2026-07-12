@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { COLORS } from "@/constants";
-import HeaderWithGoBack from "@/components/header-with-go-back";
+import AppHeader from "@/components/AppHeader";
 import { useNavigation } from "expo-router";
 import { preferenceState } from "@/legendstate/AmpelaStates";
 import {
@@ -168,7 +168,7 @@ const UpdateCycleInfo = () => {
 
   return (
     <View style={styles.container}>
-      <HeaderWithGoBack title="Modification" navigation={navigation} />
+      <AppHeader navigation={navigation} title="Modification" showBack absolute />
       <ScrollView
         style={{ padding: 20, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.neutral100,
-    paddingTop: 110,
+    paddingTop: 130,
   },
   description: {
     fontSize: 16,

@@ -11,7 +11,7 @@ import React, { useState } from "react";
 import { useSelector } from "@legendapp/state/react";
 import { preferenceState, userState } from "@/legendstate/AmpelaStates";
 import { COLORS } from "@/constants";
-import HeaderWithGoBack from "@/components/header-with-go-back";
+import AppHeader from "@/components/AppHeader";
 import { useNavigation } from "expo-router";
 import {
   getAuth,
@@ -123,9 +123,11 @@ const ChangePassword = () => {
           theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
       }}
     >
-      <HeaderWithGoBack
-        title="Changer le mot de passe"
+      <AppHeader
         navigation={navigation}
+        title="Changer le mot de passe"
+        showBack
+        absolute
       />
       <View style={styles.container}>
         <Text style={styles.description}>
@@ -195,7 +197,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 80,
+    paddingTop: 130,
     justifyContent: "center",
     alignItems: "center",
   },

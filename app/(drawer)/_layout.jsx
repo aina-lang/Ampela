@@ -31,21 +31,18 @@ import AuthContent from "@/components/AuthContentFromSetting";
 const DrawerComponent = observer(() => {
   const router = useRouter();
   const user = useSelector(() => userState.get());
+  const { theme } = useSelector(() => preferenceState.get());
   const [isModalVisible, setModalVisible] = useState(false);
   const [isAuthModalVisible, setAuthModalVisible] = useState(false);
+  const accentColor = theme === "pink" ? "#FF7575" : "#FE8729";
+  const accentColorLight = theme === "pink" ? "#FFF5F5" : "#FFF0E0";
 
   // scales séparées pour ne pas se marcher dessus si les deux modals interagissent
   const logoutScale = useSharedValue(0);
-  const authScale = useSharedValue(0);
 
   const logoutAnimatedStyle = useAnimatedStyle(() => ({
     transform: [
       { scale: withSpring(logoutScale.value, { damping: 10, stiffness: 200 }) },
-    ],
-  }));
-  const authAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: withSpring(authScale.value, { damping: 10, stiffness: 200 }) },
     ],
   }));
 
@@ -57,10 +54,7 @@ const DrawerComponent = observer(() => {
   };
 
   const toggleAuthModal = () => {
-    setAuthModalVisible((prev) => {
-      authScale.value = prev ? 0 : 1;
-      return !prev;
-    });
+    setAuthModalVisible((prev) => !prev);
   };
 
   const handleAuth = () => {
@@ -107,7 +101,7 @@ const DrawerComponent = observer(() => {
                   showsVerticalScrollIndicator={false}
                 >
                   {/* Profil */}
-                  <View style={styles.profileHeader}>
+                  <View style={[styles.profileHeader, { backgroundColor: accentColorLight }]}>
                     <TouchableOpacity
                       onPress={() => router.push("settings/accountscreen")}
                       activeOpacity={0.85}
@@ -118,7 +112,7 @@ const DrawerComponent = observer(() => {
                             ? { uri: user.profileImage }
                             : images.doctor01
                         }
-                        style={styles.avatar}
+                        style={[styles.avatar, { borderColor: accentColor }]}
                         resizeMode="cover"
                       />
                     </TouchableOpacity>
@@ -138,7 +132,7 @@ const DrawerComponent = observer(() => {
                       labelStyle={styles.itemLabel}
                       onPress={() => router.push("settings/account")}
                       icon={({ size }) => (
-                        <AntDesign name="user" color="#FF7575" size={size} />
+                        <AntDesign name="user" color={accentColor} size={size} />
                       )}
                     />
                     <DrawerItem
@@ -146,7 +140,7 @@ const DrawerComponent = observer(() => {
                       labelStyle={styles.itemLabel}
                       onPress={handleAuth}
                       icon={({ size }) => (
-                        <AntDesign name="logout" color="#FF7575" size={size} />
+                        <AntDesign name="logout" color={accentColor} size={size} />
                       )}
                     />
                   </View>
@@ -159,7 +153,7 @@ const DrawerComponent = observer(() => {
                       labelStyle={styles.itemLabel}
                       onPress={() => router.push("settings/changelanguage")}
                       icon={({ size }) => (
-                        <Ionicons name="language" color="#FF7575" size={size} />
+                        <Ionicons name="language" color={accentColor} size={size} />
                       )}
                     />
                     <DrawerItem
@@ -169,7 +163,7 @@ const DrawerComponent = observer(() => {
                       icon={({ size }) => (
                         <Ionicons
                           name="color-palette-outline"
-                          color="#FF7575"
+                          color={accentColor}
                           size={size}
                         />
                       )}
@@ -181,7 +175,7 @@ const DrawerComponent = observer(() => {
                       icon={({ size }) => (
                         <Ionicons
                           name="help-circle-outline"
-                          color="#FF7575"
+                          color={accentColor}
                           size={size}
                         />
                       )}
@@ -193,7 +187,7 @@ const DrawerComponent = observer(() => {
                       icon={({ size }) => (
                         <Ionicons
                           name="information-circle-outline"
-                          color="#FF7575"
+                          color={accentColor}
                           size={size}
                         />
                       )}
@@ -205,7 +199,7 @@ const DrawerComponent = observer(() => {
                       icon={({ size }) => (
                         <Ionicons
                           name="share-social-outline"
-                          color="#FF7575"
+                          color={accentColor}
                           size={size}
                         />
                       )}
@@ -222,7 +216,7 @@ const DrawerComponent = observer(() => {
                       icon={({ size }) => (
                         <Ionicons
                           name="chatbox-ellipses-outline"
-                          color="#FF7575"
+                          color={accentColor}
                           size={size}
                         />
                       )}
@@ -261,7 +255,7 @@ const DrawerComponent = observer(() => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={confirmLogout}
-                    style={styles.confirmButton}
+                    style={[styles.confirmButton, { backgroundColor: accentColor, shadowColor: accentColor }]}
                     activeOpacity={0.85}
                   >
                     <Text style={styles.confirmButtonText}>Déconnecter</Text>
@@ -283,9 +277,9 @@ const DrawerComponent = observer(() => {
         <TouchableWithoutFeedback onPress={toggleAuthModal}>
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
-              <Animated.View style={[styles.modalContent, authAnimatedStyle]}>
+              <View style={styles.modalContent}>
                 <AuthContent closeModal={() => setAuthModalVisible(false)} />
-              </Animated.View>
+              </View>
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
@@ -300,7 +294,6 @@ const styles = StyleSheet.create({
   profileHeader: {
     alignItems: "center",
     paddingVertical: 32,
-    backgroundColor: "#FFF5F5",
     marginBottom: 8,
   },
   avatar: {
@@ -309,7 +302,6 @@ const styles = StyleSheet.create({
     borderRadius: 48,
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: "#FF7575",
   },
   profileName: {
     fontFamily: "SBold",
@@ -343,16 +335,10 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 24,
   },
   modalContent: {
-    width: "100%",
+    flex: 1,
     backgroundColor: COLORS.neutral100,
-    borderRadius: 20,
-    padding: 24,
-    alignItems: "center",
   },
   modalTitle: {
     fontFamily: "Bold",
@@ -390,8 +376,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: "center",
-    backgroundColor: "#FF7575",
-    shadowColor: "#FF7575",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 10,

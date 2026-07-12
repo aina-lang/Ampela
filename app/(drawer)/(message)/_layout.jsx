@@ -1,11 +1,8 @@
-import { View, Text, TouchableOpacity } from "react-native";
-import React, { useContext } from "react";
+import React from "react";
 import { Stack, useNavigation } from "expo-router";
-import AntDesign from "@expo/vector-icons/AntDesign";
-import { COLORS, SIZES } from "@/constants";
 import { preferenceState, userState } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
-import { Ionicons } from "@expo/vector-icons";
+import AppHeader from "@/components/AppHeader";
 
 const _layout = () => {
   const user = useSelector(() => userState.get());
@@ -15,34 +12,11 @@ const _layout = () => {
     <Stack
       screenOptions={{
         header: () => (
-          <View
-            className=" w-full flex-row items-center pt-20  rounded-b-lg justify-between  shadow-md shadow-black"
-            style={{
-              backgroundColor:  theme === "orange" ? COLORS.accent800 : COLORS.accent500,
-              height: SIZES.height * 0.16,
-              paddingHorizontal: 16,
-            }}
-          >
-            <View className="flex flex-row  items-center justify-center ">
-              <TouchableOpacity
-                className="p-2 pl-0 mr-3"
-                onPress={() => navigation.goBack()}
-              >
-                 <Ionicons name="arrow-back" color={"white"} size={24} />
-              </TouchableOpacity>
-              <Text
-                style={{ fontSize: 20, fontWeight: "bold", color: "white" }}
-              >
-                Message
-              </Text>
-            </View>
-            {/* <TouchableOpacity
-              className="p-2 pl-0 "
-              onPress={() => navigation.navigate("(message)")}
-            >
-              <AntDesign name="chatbubble" color={"white"} size={30} />
-            </TouchableOpacity> */}
-          </View>
+          <AppHeader
+            navigation={navigation}
+            title="Message"
+            showBack
+          />
         ),
 
         tabBarShowLabel: false,

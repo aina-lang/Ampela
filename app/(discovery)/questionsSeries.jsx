@@ -1,14 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Modal,
-  ActivityIndicator,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, ActivityIndicator } from "react-native";
 import { COLORS, SIZES } from "@/constants";
 import { useNavigation } from "expo-router";
 import {
@@ -17,9 +8,11 @@ import {
 } from "@/components/response-of-question";
 import { addCycleMenstruel, addUser } from "@/services/database";
 import { generateCycleMenstrualData } from "@/utils/menstruationUtils";
-import { updateUser, userState } from "@/legendstate/AmpelaStates";
+import { updateUser, userState, preferenceState } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 import { AntDesign } from "@expo/vector-icons";
+import StepScreenWrapper from "@/components/StepScreenWrapper";
+import ModernButton from "@/components/ModernButton";
 
 const durationMenstruations = [];
 const cycleDurations = [];
@@ -43,6 +36,9 @@ const QuestionsSeries = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const user = useSelector(() => userState.get());
+  const { theme } = useSelector(() => preferenceState.get());
+  const accentColor = theme === "pink" ? "#FF7575" : "#FE8729";
+  const accentColorDisabled = theme === "pink" ? "#FFB5B5" : "#FED4A0";
 
   const handleResponsePress0 = (item) => setResponse0(item);
   const handleResponsePress1 = (item) => setResponse1(item);
@@ -111,18 +107,13 @@ const QuestionsSeries = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.eyebrow}>Dernière étape</Text>
-        <Text style={styles.title}>Vos durées menstruelles</Text>
-        <Text style={styles.subtitle}>
-          Ces informations nous permettent de calculer vos prédictions.
-        </Text>
-      </View>
-
+    <StepScreenWrapper
+      stepNumber={3}
+      eyebrow="Étape 3 sur 3"
+      title="Vos durées menstruelles"
+      subtitle="Ces informations nous permettent de calculer vos prédictions."
+    >
       <View style={styles.content}>
-        {/* Durée des règles */}
         <View style={styles.contentItem}>
           <Text style={styles.question}>Durée de vos règles</Text>
           <FlatList
@@ -133,6 +124,7 @@ const QuestionsSeries = () => {
                 text={item}
                 active={response0 === item}
                 onPress={() => handleResponsePress0(item)}
+                accentColor={accentColor}
               />
             )}
             contentContainerStyle={styles.chipList}
@@ -141,7 +133,6 @@ const QuestionsSeries = () => {
           />
         </View>
 
-        {/* Durée du cycle */}
         <View style={styles.contentItem}>
           <Text style={styles.question}>Durée du cycle</Text>
           <FlatList
@@ -152,6 +143,7 @@ const QuestionsSeries = () => {
                 text={item}
                 active={response1 === item}
                 onPress={() => handleResponsePress1(item)}
+                accentColor={accentColor}
               />
             )}
             contentContainerStyle={styles.chipList}
@@ -164,9 +156,9 @@ const QuestionsSeries = () => {
               styles.dontRememberChip,
               {
                 backgroundColor:
-                  response1 === dontRememberText ? "#FF7575" : "#FAFAFA",
+                  response1 === dontRememberText ? accentColor : "#FAFAFA",
                 borderColor:
-                  response1 === dontRememberText ? "#FF7575" : "#F0F0F0",
+                  response1 === dontRememberText ? accentColor : "#F0F0F0",
               },
             ]}
             onPress={() => handleResponsePress1(dontRememberText)}
@@ -187,86 +179,50 @@ const QuestionsSeries = () => {
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
 
-      {/* Navigation basse */}
-      <View style={styles.btnBox}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <AntDesign name="arrow-left" size={16} color="#9E9E9E" />
-          <Text style={styles.backButtonText}>Précédent</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={handleNextBtnPress}
-          disabled={isNextBtnDisabled}
-          activeOpacity={0.85}
-          style={[
-            styles.nextBtn,
-            { backgroundColor: isNextBtnDisabled ? "#EFEFEF" : "#FF7575" },
-          ]}
-        >
-          <Text
-            style={[
-              styles.nextBtnText,
-              { color: isNextBtnDisabled ? "#B0B0B0" : COLORS.neutral100 },
-            ]}
+        <View style={styles.btnBox}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
           >
-            Terminer
-          </Text>
-        </TouchableOpacity>
+            <AntDesign name="arrowleft" size={16} color="#9E9E9E" />
+            <Text style={styles.backButtonText}>Précédent</Text>
+          </TouchableOpacity>
+
+          <ModernButton
+            title="Terminer"
+            onPress={handleNextBtnPress}
+            disabled={isNextBtnDisabled}
+            accentColor={accentColor}
+            accentColorDisabled={accentColorDisabled}
+            style={{ flex: 1, marginLeft: 12 }}
+          />
+        </View>
       </View>
 
-      {/* Modal de chargement */}
       <Modal transparent visible={isLoading} animationType="fade">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <ActivityIndicator size="large" color="#FF7575" />
+            <ActivityIndicator size="large" color={accentColor} />
             <Text style={styles.modalText}>
               Préparation de vos données... {Math.round(progress)}%
             </Text>
             <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBar, { width: `${progress}%` }]} />
+              <View
+                style={[
+                  styles.progressBar,
+                  { width: `${progress}%`, backgroundColor: accentColor },
+                ]}
+              />
             </View>
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </StepScreenWrapper>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.neutral100,
-    paddingHorizontal: 20,
-  },
-  header: {
-    paddingTop: 12,
-    paddingBottom: 24,
-  },
-  eyebrow: {
-    color: "#FF7575",
-    fontFamily: "SBold",
-    fontSize: SIZES.small,
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    marginBottom: 6,
-  },
-  title: {
-    fontFamily: "Bold",
-    fontSize: SIZES.width * 0.07,
-    color: "#1A1A1A",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontFamily: "Regular",
-    fontSize: SIZES.small,
-    color: "#8A8A8A",
-    lineHeight: 20,
-  },
   content: {
     flex: 1,
   },
@@ -277,7 +233,7 @@ const styles = StyleSheet.create({
     fontFamily: "SBold",
     fontSize: SIZES.medium,
     color: "#1A1A1A",
-    marginBottom: 12,
+    marginBottom: 14,
   },
   chipList: {
     gap: 10,
@@ -285,11 +241,11 @@ const styles = StyleSheet.create({
   },
   dontRememberChip: {
     alignSelf: "flex-start",
-    marginTop: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1,
+    marginTop: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
   },
   dontRememberText: {
     fontFamily: "Regular",
@@ -299,32 +255,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 20,
+    paddingVertical: 12,
   },
   backButton: {
     flexDirection: "row",
     alignItems: "center",
     padding: 10,
+    gap: 6,
   },
   backButtonText: {
     color: "#9E9E9E",
     fontSize: 15,
     fontFamily: "SBold",
-    marginLeft: 6,
-  },
-  nextBtn: {
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 14,
-    shadowColor: "#FF7575",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  nextBtnText: {
-    fontFamily: "SBold",
-    fontSize: SIZES.medium,
   },
   modalContainer: {
     flex: 1,
@@ -334,14 +276,19 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: 260,
-    padding: 24,
+    padding: 28,
     backgroundColor: COLORS.neutral100,
-    borderRadius: 16,
+    borderRadius: 20,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 8,
   },
   modalText: {
-    marginTop: 14,
-    marginBottom: 6,
+    marginTop: 16,
+    marginBottom: 8,
     fontSize: SIZES.small,
     fontFamily: "SBold",
     color: "#1A1A1A",
@@ -353,11 +300,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#EFEFEF",
     borderRadius: 4,
     overflow: "hidden",
-    marginTop: 6,
+    marginTop: 8,
   },
   progressBar: {
     height: "100%",
-    backgroundColor: "#FF7575",
     borderRadius: 4,
   },
 });

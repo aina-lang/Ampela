@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { View, StyleSheet, ScrollView, Text } from "react-native";
 import { SIZES, COLORS } from "@/constants";
-import HeaderWithGoBack from "@/components/header-with-go-back";
+import AppHeader from "@/components/AppHeader";
 import FaqItem from "@/components/settings/faq-item";
 import faqdata from "@/constants/faqdata";
 import { useNavigation } from "expo-router";
@@ -15,7 +15,7 @@ const FaqScreen = () => {
   }, []);
   return (
     <View style={styles.container}>
-      <HeaderWithGoBack title="F.A.Q" navigation={navigation} />
+      <AppHeader navigation={navigation} title="F.A.Q" showBack absolute />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.neutral100,
-    paddingTop: 120,
+    paddingTop: 130,
   },
   scrollContent: {
     paddingHorizontal: 20,

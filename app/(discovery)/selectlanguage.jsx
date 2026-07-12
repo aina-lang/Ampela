@@ -1,15 +1,19 @@
+import React, { useCallback } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { SIZES, COLORS, images } from "@/constants";
 import { useNavigation } from "expo-router";
 import i18n from "@/constants/i18n";
 import { preferenceState, updatePreference } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
-import { useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import ModernButton from "@/components/ModernButton";
+import { StatusBar } from "expo-status-bar";
 
 const selectlanguage = () => {
   const navigation = useNavigation();
-  const { language } = useSelector(() => preferenceState.get());
+  const { language, theme } = useSelector(() => preferenceState.get());
+  const accentColor = theme === "pink" ? "#FF7575" : "#FE8729";
+  const accentColorDisabled = theme === "pink" ? "#FFB5B5" : "#FED4A0";
 
   const changeLanguage = async (lang) => {
     try {
@@ -26,6 +30,9 @@ const selectlanguage = () => {
 
   const LanguageCard = ({ code, label, flag }) => {
     const selected = language === code;
+    const { theme } = useSelector(() => preferenceState.get());
+    const accentColor = theme === "pink" ? "#FF7575" : "#FE8729";
+
     return (
       <TouchableOpacity
         activeOpacity={0.85}
@@ -33,8 +40,8 @@ const selectlanguage = () => {
         style={[
           styles.card,
           {
-            backgroundColor: selected ? "#FF7575" : "rgba(255,117,117,.08)",
-            borderColor: selected ? "#FF7575" : "rgba(255,117,117,.25)",
+            backgroundColor: selected ? accentColor : "#FFFFFF",
+            borderColor: selected ? accentColor : "#F0F0F0",
           },
         ]}
       >
@@ -43,7 +50,7 @@ const selectlanguage = () => {
           <Text
             style={[
               styles.cardLabel,
-              { color: selected ? COLORS.neutral100 : "#FF7575" },
+              { color: selected ? COLORS.neutral100 : "#1A1A1A" },
             ]}
           >
             {label}
@@ -53,11 +60,16 @@ const selectlanguage = () => {
         <View
           style={[
             styles.radioOuter,
-            { borderColor: selected ? COLORS.neutral100 : "#FF7575" },
+            {
+              borderColor: selected ? COLORS.neutral100 : "#D0D0D0",
+              backgroundColor: selected ? COLORS.neutral100 : "transparent",
+            },
           ]}
         >
           {selected && (
-            <View style={[styles.radioInner, { backgroundColor: COLORS.neutral100 }]} />
+            <View style={styles.radioInner}>
+              <Ionicons name="checkmark" size={14} color={accentColor} />
+            </View>
           )}
         </View>
       </TouchableOpacity>
@@ -66,31 +78,34 @@ const selectlanguage = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.eyebrow}>Bienvenue</Text>
-        <Text style={styles.title}>Choisissez votre langue</Text>
-        <Text style={styles.subtitle}>
-          Vous pourrez la modifier plus tard dans les paramètres
-        </Text>
+      <StatusBar style="dark" />
+      <View style={styles.meshBackground}>
+        <View style={[styles.blob, { backgroundColor: COLORS.accent500 }]} />
+        <View style={[styles.blob, styles.blob2, { backgroundColor: COLORS.accent400 }]} />
       </View>
 
-      {/* Cards */}
-      <View style={styles.cardsWrapper}>
-        <LanguageCard code="fr" label="Français" flag={images.franceImg} />
-        <LanguageCard code="mg" label="Malagasy" flag={images.madaImg} />
-      </View>
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <Text style={styles.eyebrow}>Bienvenue</Text>
+          <Text style={styles.title}>Choisissez votre langue</Text>
+          <Text style={styles.subtitle}>
+            Vous pourrez la modifier plus tard dans les paramètres
+          </Text>
+        </View>
 
-      {/* Bottom button */}
-      <View style={styles.btnBox}>
-        <TouchableOpacity
-          style={styles.nextBtn}
-          onPress={handleNextBtnPress}
-          activeOpacity={0.9}
-        >
-          <Text style={styles.nextBtnText}>Suivant</Text>
-          <Ionicons name="arrow-forward" size={18} color={COLORS.neutral100} />
-        </TouchableOpacity>
+        <View style={styles.cardsWrapper}>
+          <LanguageCard code="fr" label="Français" flag={images.franceImg} />
+          <LanguageCard code="mg" label="Malagasy" flag={images.madaImg} />
+        </View>
+
+        <View style={styles.bottomArea}>
+          <ModernButton
+            title="Continuer"
+            onPress={handleNextBtnPress}
+            accentColor={accentColor}
+            accentColorDisabled={accentColorDisabled}
+          />
+        </View>
       </View>
     </View>
   );
@@ -100,95 +115,104 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.neutral100,
+  },
+  meshBackground: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: "hidden",
+  },
+  blob: {
+    position: "absolute",
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    opacity: 0.05,
+    top: -100,
+    right: -100,
+  },
+  blob2: {
+    width: 300,
+    height: 300,
+    bottom: 150,
+    left: -100,
+    top: undefined,
+    right: undefined,
+  },
+  content: {
+    flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 70,
+    paddingTop: 60,
   },
   header: {
-    marginBottom: SIZES.height * 0.05,
+    marginBottom: 40,
   },
   eyebrow: {
-    color: "#FF7575",
     fontFamily: "SBold",
     fontSize: SIZES.small,
-    letterSpacing: 1,
+    letterSpacing: 1.5,
     textTransform: "uppercase",
-    marginBottom: 8,
+    color: COLORS.accent500,
+    marginBottom: 10,
   },
   title: {
     fontFamily: "Bold",
     fontSize: SIZES.width * 0.075,
     color: "#1A1A1A",
     lineHeight: SIZES.width * 0.09,
+    marginBottom: 12,
   },
   subtitle: {
     fontFamily: "Regular",
     fontSize: SIZES.small,
     color: "#8A8A8A",
-    marginTop: 8,
+    lineHeight: 20,
   },
   cardsWrapper: {
     gap: 16,
+    marginBottom: 40,
   },
   card: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1.5,
-    paddingVertical: 16,
-    paddingHorizontal: 18,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   cardLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 16,
   },
   flag: {
-    width: 36,
-    height: 24,
-    borderRadius: 4,
+    width: 40,
+    height: 28,
+    borderRadius: 6,
   },
   cardLabel: {
     fontFamily: "SBold",
     fontSize: SIZES.medium,
   },
   radioOuter: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
   },
   radioInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  btnBox: {
-    position: "absolute",
-    bottom: 40,
-    left: 24,
-    right: 24,
-  },
-  nextBtn: {
-    backgroundColor: "#FF7575",
-    borderRadius: 14,
-    paddingVertical: 16,
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    shadowColor: "#FF7575",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
   },
-  nextBtnText: {
-    color: COLORS.neutral100,
-    fontFamily: "SBold",
-    fontSize: SIZES.medium,
+  bottomArea: {
+    marginTop: "auto",
+    paddingBottom: 32,
   },
 });
 

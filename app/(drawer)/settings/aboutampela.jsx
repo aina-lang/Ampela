@@ -1,7 +1,7 @@
 import { useState, useContext, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { SIZES, COLORS } from "@/constants";
-import HeaderWithGoBack from "@/components/header-with-go-back";
+import AppHeader from "@/components/AppHeader";
 import Link from "@/components/link";
 import { useNavigation } from "expo-router";
 import i18n from "@/constants/i18n";
@@ -51,7 +51,7 @@ const InfoScreen = () => {
         },
       ]}
     >
-      <HeaderWithGoBack title={i18n.t("infoAmpela")} navigation={navigation} />
+      <AppHeader navigation={navigation} title={i18n.t("infoAmpela")} showBack absolute />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -120,7 +120,7 @@ const InfoScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 120,
+    paddingTop: 130,
   },
   scrollContent: {
     paddingHorizontal: 20,

@@ -2,14 +2,14 @@ import React from "react";
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
 import { COLORS, SIZES } from "@/constants";
 
-const ResponseChip = ({ text, active, onPress }) => {
+const ResponseChip = ({ text, active, onPress, accentColor = "#FF7575" }) => {
   return (
     <TouchableOpacity
       style={[
         styles.container,
         {
-          backgroundColor: active ? "#FF7575" : "#FAFAFA",
-          borderColor: active ? "#FF7575" : "#F0F0F0",
+          backgroundColor: active ? accentColor : "#FAFAFA",
+          borderColor: active ? accentColor : "#F0F0F0",
         },
       ]}
       onPress={onPress}

@@ -7,8 +7,13 @@ import {
   Dimensions,
   TouchableOpacity,
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  ScrollView,
 } from "react-native";
-import { COLORS } from "@/constants";
+import { COLORS, SIZES } from "@/constants";
+import { Ionicons } from "@expo/vector-icons";
 import { auth, database, storage } from "@/services/firebaseConfig";
 import {
   createUserWithEmailAndPassword,
@@ -17,7 +22,7 @@ import {
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { addDoc, collection, doc, getDoc } from "firebase/firestore";
 import { useSelector } from "@legendapp/state/react";
-import { userState } from "@/legendstate/AmpelaStates";
+import { userState, preferenceState } from "@/legendstate/AmpelaStates";
 import { useModal } from "@/hooks/ModalProvider";
 import { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 
@@ -25,6 +30,10 @@ const { width } = Dimensions.get("window");
 
 const AuthContent = () => {
   const user = useSelector(() => userState.get());
+  const { theme } = useSelector(() => preferenceState.get());
+  const accentColor = theme === "pink" ? "#FF7575" : "#FE8729";
+  const accentColorLight = theme === "pink" ? "#FFADAD" : "#FED39A";
+  const accentColorDisabled = theme === "pink" ? "#FFB5B5" : "#FED4A0";
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -40,6 +49,7 @@ const AuthContent = () => {
   const [signupErrorPresent, setSignupErrorPresent] = useState(false);
   const { closeModal } = useModal();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const scale = useSharedValue(0);
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -143,6 +153,8 @@ const AuthContent = () => {
         profileImage: profilePhotoUrl,
       });
 
+      await uploadCyclesToFirestore(userFromFirestoreUid);
+
       setSignupEmail("");
       setSignupPassword("");
       setConfirmPassword("");
@@ -195,12 +207,14 @@ const AuthContent = () => {
     flatListRef.current.scrollToIndex({ index });
   };
 
+  const isFormValid =
+    loginEmail.length > 0 &&
+    loginPassword.length > 0 &&
+    !loginEmailError &&
+    !loginPasswordError;
+
   useEffect(() => {
-    if (!loginEmail || !loginPassword) {
-      setLoginErrorPresent(true);
-    } else {
-      setLoginErrorPresent(false);
-    }
+    setLoginErrorPresent(!isFormValid);
 
     if (
       !signupEmail ||
@@ -216,6 +230,8 @@ const AuthContent = () => {
   }, [
     loginEmail,
     loginPassword,
+    loginEmailError,
+    loginPasswordError,
     signupEmail,
     signupPassword,
     confirmPassword,
@@ -228,62 +244,106 @@ const AuthContent = () => {
       key: "1",
       title: "Connexion",
       content: (
-        <>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              keyboardType="email-address"
-              onChangeText={handleLoginEmailChange}
-              editable={!loading}
-            />
-          </View>
-          {loginEmailError && (
-            <Text style={{ color: "red" }}>{loginEmailError}</Text>
-          )}
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              secureTextEntry
-              onChangeText={handleLoginPasswordChange}
-              editable={!loading}
-            />
-          </View>
-          {loginPasswordError && (
-            <Text style={{ color: "red" }}>{loginPasswordError}</Text>
-          )}
-          <TouchableOpacity
-            style={[
-              styles.button,
-              {
-                backgroundColor:
-                  loginErrorPresent || loading ? "#e7e5e5" : "#FF7575",
-              },
-            ]}
-            onPress={handleLogin}
-            disabled={loginErrorPresent || loading}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{ flex: 1 }}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
           >
-            <Text style={styles.buttonText}>
-              {loading ? "Chargement..." : "Se connecter"}
-            </Text>
-          </TouchableOpacity>
-          {loginError && <Text style={{ color: "red" }}>{loginError}</Text>}
-          <Text className="text-center py-2">Ou</Text>
-          <TouchableOpacity
-            style={{
-              padding: 15,
-              borderRadius: 15,
-              backgroundColor: "white",
-            }}
-            className="shadow-sm shadow-black mb-5"
-            onPress={() => handleScrollToIndex(1)}
-          >
-            <Text className="text-center" style={{ color: COLORS.accent500 }}>
-              S'inscrire
-            </Text>
-          </TouchableOpacity>
-        </>
+            <View style={styles.header}>
+              <Text style={[styles.eyebrow, { color: accentColor }]}>Bon retour</Text>
+              <Text style={styles.title}>Connexion</Text>
+              <Text style={styles.subtitle}>
+                Connectez-vous pour poser des questions, échanger sur le forum
+                et synchroniser vos données.
+              </Text>
+            </View>
+
+            <View style={styles.form}>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor="#A0A0A0"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={loginEmail}
+                  onChangeText={handleLoginEmailChange}
+                  editable={!loading}
+                />
+              </View>
+              {!!loginEmailError && (
+                <Text style={styles.fieldError}>{loginEmailError}</Text>
+              )}
+
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={[styles.input, { flex: 1 }]}
+                  placeholder="Mot de passe"
+                  placeholderTextColor="#A0A0A0"
+                  secureTextEntry={!showPassword}
+                  value={loginPassword}
+                  onChangeText={handleLoginPasswordChange}
+                  editable={!loading}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeButton}
+                >
+                  <Ionicons
+                    name={showPassword ? "eye-off" : "eye"}
+                    size={20}
+                    color="#A0A0A0"
+                  />
+                </TouchableOpacity>
+              </View>
+              {!!loginPasswordError && (
+                <Text style={styles.fieldError}>{loginPasswordError}</Text>
+              )}
+
+              {!!loginError && (
+                <Text style={styles.formError}>{loginError}</Text>
+              )}
+
+              <TouchableOpacity
+                onPress={handleLogin}
+                disabled={!isFormValid || loading}
+                activeOpacity={0.85}
+                style={[
+                  styles.loginBtn,
+                  { backgroundColor: isFormValid && !loading ? accentColor : accentColorDisabled, shadowColor: isFormValid && !loading ? accentColor : "transparent", elevation: isFormValid && !loading ? 4 : 0 },
+                ]}
+              >
+                {loading ? (
+                  <ActivityIndicator
+                    color={isFormValid ? "#FFFFFF" : "#B0B0B0"}
+                  />
+                ) : (
+                  <Text
+                    style={[
+                      styles.loginBtnText,
+                      { color: isFormValid ? COLORS.neutral100 : "#B0B0B0" },
+                    ]}
+                  >
+                    Se connecter
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.signupRow}>
+              <Text style={styles.signupText}>Pas de compte ?</Text>
+              <TouchableOpacity
+                onPress={() => handleScrollToIndex(1)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.signupLink, { color: accentColor }]}> Créer un compte</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       ),
     },
     {
@@ -291,84 +351,93 @@ const AuthContent = () => {
       title: "Inscription",
       content: (
         <>
+          <Text style={styles.title}>Inscription</Text>
+          <Text style={styles.infoText}>
+            Créez un compte pour sauvegarder vos données et échanger sur le forum.
+          </Text>
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
               placeholder="Email"
+              placeholderTextColor="#A0A0A0"
               keyboardType="email-address"
+              autoCapitalize="none"
+              value={signupEmail}
               onChangeText={handleSignupEmailChange}
               editable={!loading}
             />
           </View>
-          {signupEmailError && (
-            <Text style={{ color: "red" }}>{signupEmailError}</Text>
+          {!!signupEmailError && (
+            <Text style={styles.fieldError}>{signupEmailError}</Text>
           )}
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
-              placeholder="Password"
+              placeholder="Mot de passe"
+              placeholderTextColor="#A0A0A0"
               secureTextEntry
+              value={signupPassword}
               onChangeText={handleSignupPasswordChange}
               editable={!loading}
             />
           </View>
-          {signupPasswordError && (
-            <Text style={{ color: "red" }}>{signupPasswordError}</Text>
+          {!!signupPasswordError && (
+            <Text style={styles.fieldError}>{signupPasswordError}</Text>
           )}
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
-              placeholder="Confirm Password"
+              placeholder="Confirmer le mot de passe"
+              placeholderTextColor="#A0A0A0"
               secureTextEntry
+              value={confirmPassword}
               onChangeText={handleConfirmPasswordChange}
               editable={!loading}
             />
           </View>
-          {confirmPasswordError && (
-            <Text style={{ color: "red" }}>{confirmPasswordError}</Text>
+          {!!confirmPasswordError && (
+            <Text style={styles.fieldError}>{confirmPasswordError}</Text>
           )}
           <TouchableOpacity
-            style={[
-              styles.button,
-              {
-                backgroundColor:
-                  signupErrorPresent || loading ? "#e7e5e5" : "#FF7575",
-              },
-            ]}
             onPress={handleSignUp}
             disabled={signupErrorPresent || loading}
+            activeOpacity={0.85}
+                style={[
+                  styles.loginBtn,
+                  { backgroundColor: signupErrorPresent || loading ? accentColorDisabled : accentColor, shadowColor: signupErrorPresent || loading ? "transparent" : accentColor, elevation: signupErrorPresent || loading ? 0 : 4 },
+                ]}
           >
-            <Text style={styles.buttonText}>
-              {loading ? "Chargement..." : "S'inscrire"}
-            </Text>
+            {loading ? (
+              <ActivityIndicator
+                color={signupErrorPresent || loading ? "#B0B0B0" : "#FFFFFF"}
+              />
+            ) : (
+              <Text
+                style={[
+                  styles.loginBtnText,
+                  { color: signupErrorPresent || loading ? "#B0B0B0" : COLORS.neutral100 },
+                ]}
+              >
+                S'inscrire
+              </Text>
+            )}
           </TouchableOpacity>
-          <Text className="text-center py-2">Ou</Text>
-          <TouchableOpacity
-            style={{
-              padding: 15,
-              borderRadius: 15,
-              backgroundColor: "white",
-            }}
-            className="shadow-sm shadow-black mb-5"
-            onPress={() => handleScrollToIndex(0)}
-          >
-            <Text className="text-center" style={{ color: COLORS.accent500 }}>
-              Se connecter
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.signupRow}>
+            <Text style={styles.signupText}>Déjà un compte ?</Text>
+            <TouchableOpacity
+              onPress={() => handleScrollToIndex(0)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.signupLink, { color: accentColor }]}> Se connecter</Text>
+            </TouchableOpacity>
+          </View>
         </>
       ),
     },
   ];
 
   return (
-    <>
-      <TouchableOpacity
-        className="absolute z-50 top-5 right-5"
-        onPress={closeModal}
-      >
-        <Text>Non merci</Text>
-      </TouchableOpacity>
+    <View style={{ flex: 1 }}>
       <FlatList
         ref={flatListRef}
         data={pages}
@@ -378,61 +447,137 @@ const AuthContent = () => {
         keyExtractor={(item) => item.key}
         renderItem={({ item }) => (
           <View style={styles.pageContainer}>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.infoText}>
-              Si vous voulez poser des questions, commenter ou réagir, et
-              envoyer des messages (forum, message privé), veuillez vous
-              connecter ou créer un compte. Cela synchronisera également vos
-              données.
-            </Text>
             {item.content}
           </View>
         )}
         contentContainerStyle={{ backgroundColor: "white" }}
       />
-    </>
+      <TouchableOpacity
+        style={styles.closeButton}
+        onPress={closeModal}
+      >
+        <Text style={[styles.closeButtonText, { color: accentColor }]}>Non merci</Text>
+      </TouchableOpacity>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   pageContainer: {
     width,
-    padding: 20,
+    padding: 24,
     justifyContent: "center",
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 20,
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
   },
-
+  header: {
+    marginBottom: 32,
+  },
+  eyebrow: {
+    fontFamily: "SBold",
+    fontSize: SIZES.small,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginBottom: 6,
+  },
+  title: {
+    fontFamily: "Bold",
+    fontSize: SIZES.width * 0.09,
+    color: "#1A1A1A",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  subtitle: {
+    fontFamily: "Regular",
+    fontSize: SIZES.small,
+    color: "#8A8A8A",
+    lineHeight: 20,
+  },
   infoText: {
     marginBottom: 20,
     textAlign: "center",
+    fontFamily: "Regular",
+    fontSize: SIZES.small,
+    color: "#8A8A8A",
   },
-  input: {
-    padding: 10,
-    borderRadius: 15,
-    overflow: "hidden",
+  form: {
+    width: "100%",
   },
   inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: "#c0bdbd",
-    borderRadius: 15,
-    marginVertical: 10,
-    width: Math.floor(Dimensions.get("window").width) - 40,
-    backgroundColor: "rgb(243 244 246)",
+    borderColor: "#F0F0F0",
+    borderRadius: 14,
+    marginBottom: 10,
+    backgroundColor: "#FAFAFA",
+    paddingHorizontal: 16,
   },
-  button: {
-    padding: 15,
-    borderRadius: 15,
-    marginTop: 20,
+  input: {
+    flex: 1,
+    paddingVertical: 14,
+    fontFamily: "Regular",
+    fontSize: SIZES.medium,
+    color: "#1A1A1A",
   },
-  buttonText: {
-    color: "white",
+  eyeButton: {
+    padding: 6,
+  },
+  fieldError: {
+    color: "#E24C4C",
+    fontSize: SIZES.small - 1,
+    marginBottom: 8,
+    marginLeft: 4,
+    fontFamily: "Regular",
+  },
+  formError: {
+    color: "#E24C4C",
+    fontSize: SIZES.small,
     textAlign: "center",
-    fontSize: 16,
+    marginBottom: 10,
+    fontFamily: "SBold",
+  },
+  loginBtn: {
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: "center",
+    marginTop: 12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  loginBtnText: {
+    fontFamily: "SBold",
+    fontSize: SIZES.medium,
+  },
+  signupRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 28,
+  },
+  signupText: {
+    fontFamily: "Regular",
+    fontSize: SIZES.small,
+    color: "#8A8A8A",
+  },
+  signupLink: {
+    fontFamily: "SBold",
+    fontSize: SIZES.small,
+  },
+  closeButton: {
+    position: "absolute",
+    top: 20,
+    right: 20,
+    zIndex: 10,
+    elevation: 10,
+    padding: 8,
+  },
+  closeButtonText: {
+    fontFamily: "Regular",
+    fontSize: SIZES.small,
   },
 });
 

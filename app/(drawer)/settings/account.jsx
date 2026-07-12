@@ -10,7 +10,7 @@ import {
   Modal,
   Alert,
 } from "react-native";
-import HeaderWithGoBack from "@/components/header-with-go-back";
+import AppHeader from "@/components/AppHeader";
 import { COLORS, SIZES, images } from "@/constants";
 import { useNavigation } from "expo-router";
 import { updateUser, userState, preferenceState } from "@/legendstate/AmpelaStates";
@@ -131,12 +131,12 @@ const AccountScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme === "pink" ? COLORS.neutral200 : COLORS.neutral100 }]}>
-      <HeaderWithGoBack title="À propos de moi" navigation={navigation} />
+      <AppHeader navigation={navigation} title="À propos de moi" showBack absolute />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         style={styles.scroll}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingTop: 130, paddingBottom: 40 }}
       >
         {/* Profil */}
         <View style={styles.profil}>
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   profil: {
     alignItems: "center",
     paddingVertical: 28,
-    marginTop:150
+    marginTop: 16
   },
   avatarWrapper: {
     width: 120,

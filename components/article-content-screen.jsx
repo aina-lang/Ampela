@@ -1,6 +1,6 @@
 import { View, ScrollView, Text, StyleSheet, Image } from "react-native";
 import { COLORS, SIZES } from "@/constants";
-import HeaderWithGoBack from "@/components/header-with-go-back";
+import AppHeader from "@/components/AppHeader";
 import i18n from "@/constants/i18n";
 
 
@@ -21,7 +21,7 @@ const ArticleContentScreen = ({ route, navigation }) => {
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.cover}>
-        <HeaderWithGoBack title="" navigation={navigation} />
+        <AppHeader navigation={navigation} title="" showBack absolute />
         <View style={styles.flex}>
           <View style={{ width: "55%" }}>
             <Text style={styles.title}>{t(title)}</Text>

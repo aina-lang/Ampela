@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, SIZES } from "@/constants";
 import { Calendar } from "react-native-calendars";
+import { COLORS, SIZES } from "@/constants";
 import { useNavigation } from "expo-router";
 import { useSelector } from "@legendapp/state/react";
-import { updateUser, userState } from "@/legendstate/AmpelaStates";
+import { updateUser, userState, preferenceState } from "@/legendstate/AmpelaStates";
 import { AntDesign } from "@expo/vector-icons";
+import StepScreenWrapper from "@/components/StepScreenWrapper";
+import ModernButton from "@/components/ModernButton";
 
 const LastMenstrualCycleStartAge = () => {
   const today = new Date();
@@ -18,8 +20,11 @@ const LastMenstrualCycleStartAge = () => {
   const [selected, setSelected] = useState(todayString);
   const navigation = useNavigation();
   const user = useSelector(() => userState.get());
+  const { theme } = useSelector(() => preferenceState.get());
+  const accentColor = theme === "pink" ? "#FF7575" : "#FE8729";
+  const accentColorDisabled = theme === "pink" ? "#FFB5B5" : "#FED4A0";
 
-  const isNextBtnDisabled = false; // toujours possible d'avancer (date par défaut si oubli)
+  const isNextBtnDisabled = false;
 
   useEffect(() => {
     const dateToUpdate = selected === "" ? firstDayOfMonth : selected;
@@ -44,140 +49,103 @@ const LastMenstrualCycleStartAge = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.eyebrow}>
-          {user?.username ? `Bonjour ${user.username}` : "Bonjour"}
-        </Text>
-        <Text style={styles.title}>Date de vos dernières règles</Text>
-        <Text style={styles.subtitle}>
-          Sélectionnez le premier jour de vos dernières règles.
-        </Text>
-      </View>
+    <StepScreenWrapper
+      stepNumber={2}
+      eyebrow="Étape 2 sur 3"
+      title="Date de vos dernières règles"
+      subtitle="Sélectionnez le premier jour de vos dernières règles."
+    >
+      <View style={styles.content}>
+        <View style={styles.calendarCard}>
+          <Calendar
+            style={styles.calendar}
+            maxDate={todayString}
+            theme={{
+              textSectionTitleColor: "#B0B0B0",
+              todayTextColor: COLORS.accent500,
+              dayTextColor: "#2D2D2D",
+              textDisabledColor: "#D8D8D8",
+              arrowColor: COLORS.accent500,
+              monthTextColor: "#1A1A1A",
+              textDayFontFamily: "Regular",
+              textMonthFontFamily: "Bold",
+              textDayHeaderFontFamily: "Regular",
+              textDayFontSize: SIZES.medium,
+              textMonthFontSize: SIZES.medium,
+              textDayHeaderFontSize: SIZES.small,
+            }}
+            onDayPress={handleDateChange}
+            markedDates={{
+              [selected]: {
+                selected: true,
+                disableTouchEvent: true,
+                selectedColor: COLORS.accent500,
+                selectedTextColor: COLORS.neutral100,
+              },
+            }}
+          />
 
-      {/* Calendrier */}
-      <View style={styles.calendarCard}>
-        <Calendar
-          style={styles.calendar}
-          maxDate={todayString}
-          theme={{
-            textSectionTitleColor: "#B0B0B0",
-            todayTextColor: "#FF7575",
-            dayTextColor: "#2D2D2D",
-            textDisabledColor: "#D8D8D8",
-            arrowColor: "#FF7575",
-            monthTextColor: "#1A1A1A",
-            textDayFontFamily: "Regular",
-            textMonthFontFamily: "Bold",
-            textDayHeaderFontFamily: "Regular",
-            textDayFontSize: SIZES.medium,
-            textMonthFontSize: SIZES.medium,
-            textDayHeaderFontSize: SIZES.small,
-          }}
-          onDayPress={handleDateChange}
-          markedDates={{
-            [selected]: {
-              selected: true,
-              disableTouchEvent: true,
-              selectedColor: "#FF7575",
-              selectedTextColor: COLORS.neutral100,
-            },
-          }}
-        />
-
-        <TouchableOpacity
-          style={[
-            styles.forgetChip,
-            {
-              backgroundColor: selected === "" ? "#FF7575" : "#FAFAFA",
-              borderColor: selected === "" ? "#FF7575" : "#F0F0F0",
-            },
-          ]}
-          onPress={handleForgetDate}
-          activeOpacity={0.85}
-        >
-          <Text
+          <TouchableOpacity
             style={[
-              styles.forgetChipText,
-              { color: selected === "" ? COLORS.neutral100 : "#7A7A7A" },
+              styles.forgetChip,
+              {
+                backgroundColor: selected === "" ? COLORS.accent500 : "#FAFAFA",
+                borderColor: selected === "" ? COLORS.accent500 : "#F0F0F0",
+              },
             ]}
+            onPress={handleForgetDate}
+            activeOpacity={0.85}
           >
-            Je ne me souviens plus
-          </Text>
-        </TouchableOpacity>
-      </View>
+            <Text
+              style={[
+                styles.forgetChipText,
+                { color: selected === "" ? COLORS.neutral100 : "#7A7A7A" },
+              ]}
+            >
+              Je ne me souviens plus
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* Navigation basse */}
-      <View style={styles.btnBox}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <AntDesign name="arrow-left" size={16} color="#9E9E9E" />
-          <Text style={styles.backButtonText}>Précédent</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={handleNextBtnPress}
-          disabled={isNextBtnDisabled}
-          activeOpacity={0.85}
-          style={[
-            styles.nextBtn,
-            { backgroundColor: isNextBtnDisabled ? "#EFEFEF" : "#FF7575" },
-          ]}
-        >
-          <Text
-            style={[
-              styles.nextBtnText,
-              { color: isNextBtnDisabled ? "#B0B0B0" : COLORS.neutral100 },
-            ]}
+        <View style={styles.btnBox}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
           >
-            Suivant
-          </Text>
-        </TouchableOpacity>
+            <AntDesign name="arrowleft" size={16} color="#9E9E9E" />
+            <Text style={styles.backButtonText}>Précédent</Text>
+          </TouchableOpacity>
+
+          <ModernButton
+            title="Suivant"
+            onPress={handleNextBtnPress}
+            accentColor={accentColor}
+            accentColorDisabled={accentColorDisabled}
+            style={{ flex: 1, marginLeft: 12 }}
+          />
+        </View>
       </View>
-    </SafeAreaView>
+    </StepScreenWrapper>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  content: {
     flex: 1,
-    backgroundColor: COLORS.neutral100,
-    paddingHorizontal: 20,
-  },
-  header: {
-    paddingTop: 12,
-    paddingBottom: 20,
-  },
-  eyebrow: {
-    color: "#FF7575",
-    fontFamily: "SBold",
-    fontSize: SIZES.small,
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    marginBottom: 6,
-  },
-  title: {
-    fontFamily: "Bold",
-    fontSize: SIZES.width * 0.065,
-    color: "#1A1A1A",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontFamily: "Regular",
-    fontSize: SIZES.small,
-    color: "#8A8A8A",
-    lineHeight: 20,
   },
   calendarCard: {
     flex: 1,
-    backgroundColor: "#FAFAFA",
-    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: "#F0F0F0",
-    padding: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 3,
+    marginBottom: 20,
   },
   calendar: {
     borderRadius: 12,
@@ -185,11 +153,11 @@ const styles = StyleSheet.create({
   },
   forgetChip: {
     alignSelf: "center",
-    marginTop: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1,
+    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
   },
   forgetChipText: {
     fontFamily: "Regular",
@@ -199,32 +167,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 20,
+    paddingVertical: 12,
   },
   backButton: {
     flexDirection: "row",
     alignItems: "center",
     padding: 10,
+    gap: 6,
   },
   backButtonText: {
     color: "#9E9E9E",
     fontSize: 15,
     fontFamily: "SBold",
-    marginLeft: 6,
-  },
-  nextBtn: {
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 14,
-    shadowColor: "#FF7575",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  nextBtnText: {
-    fontFamily: "SBold",
-    fontSize: SIZES.medium,
   },
 });
 

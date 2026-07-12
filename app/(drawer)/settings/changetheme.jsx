@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { ScrollView } from "react-native";
-import HeaderWithGoBack from "@/components/header-with-go-back";
+import AppHeader from "@/components/AppHeader";
 import { SIZES, COLORS, images } from "@/constants";
 import { useNavigation } from "expo-router";
 import { preferenceState, updatePreference } from "@/legendstate/AmpelaStates";
@@ -34,10 +34,12 @@ const ThemeScreen = () => {
         },
       ]}
     >
-      <HeaderWithGoBack
-        title={"Thème"}
+      <AppHeader
         navigation={navigation}
-        onIconLeftPress={() => navigation.goBack()}
+        title="Thème"
+        showBack
+        absolute
+        rightIcons={[{ name: "arrow-back", onPress: () => navigation.goBack() }]}
       />
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -126,7 +128,7 @@ const ThemeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 120,
+    paddingTop: 130,
   },
   scrollContent: {
     paddingHorizontal: 20,
