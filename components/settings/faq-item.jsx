@@ -1,60 +1,59 @@
 import { useState} from 'react';
-import { Text, View, StyleSheet, Pressable, Image } from 'react-native';
-import { COLORS, SIZES, icons } from '@/constants';
+import { Text, View, StyleSheet, Pressable } from 'react-native';
+import { COLORS, SIZES } from '@/constants';
 import i18n from '@/constants/i18n';
-import { preferenceState } from '@/legendstate/AmpelaStates';
-import { useSelector } from '@legendapp/state/react';
+import { useDiscoveryTheme } from '@/components/discovery';
 import { Ionicons } from '@expo/vector-icons';
+import DiscoveryCard from '@/components/discovery/DiscoveryCard';
 
 
 const FaqItem = ({question, response, list}) => {
-    const { theme, language } = useSelector(() => preferenceState.get());
+    const { surface, accentColor } = useDiscoveryTheme();
     const [active, setActive] = useState(false);
 
-    const cardBg = theme === "pink" ? COLORS.neutral100 : COLORS.neutral280;
-    const cardBorder = theme === "pink" ? "#F0C8C8" : "#E8D5C4";
-   
     const handlePress = () => {
         setActive(a => !a);
     }
     
     return (
-        <Pressable onPress={handlePress} style={[styles.container, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-            <View style={styles.headerRow}>
-                <View style={styles.questionWrapper}>
-                    <Text style={[styles.question, { color: COLORS.primary }]}>{question}</Text>
-                </View>
-                <View style={{
-                    transform: [
-                        {rotateZ: active ? "180deg" : "0deg"}
-                    ]
-                }}>
-                    <Ionicons name="chevron-down" size={18} color={COLORS.neutral400} />
-                </View>
-            </View>    
-           {
-                active ?
-                (   
-                <View style={styles.answerContainer}>
-                    <View style={[styles.divider, { backgroundColor: cardBorder }]} />
-                    <Text style={[styles.response, { color: COLORS.neutral400 }]}>{response}</Text>  
-                    {list ? list.map((d,index) => <Text key={index} style={[styles.response, { color: COLORS.neutral400 }]}>- {i18n.t(d)}</Text>) : null}
-                </View>                  
-                )
-                   
-                 :
-                null
-            } 
-        </Pressable>
+        <DiscoveryCard style={styles.container}>
+            <Pressable onPress={handlePress} style={styles.pressable}>
+                <View style={styles.headerRow}>
+                    <View style={styles.questionWrapper}>
+                        <Text style={[styles.question, { color: COLORS.primary }]}>{question}</Text>
+                    </View>
+                    <View style={{
+                        transform: [
+                            {rotateZ: active ? "180deg" : "0deg"}
+                        ]
+                    }}>
+                        <Ionicons name="chevron-down" size={18} color={accentColor} />
+                    </View>
+                </View>    
+               {
+                    active ?
+                    (   
+                    <View style={styles.answerContainer}>
+                        <View style={styles.divider} />
+                        <Text style={[styles.response, { color: COLORS.neutral400 }]}>{response}</Text>  
+                        {list ? list.map((d,index) => <Text key={index} style={[styles.response, { color: COLORS.neutral400 }]}>- {i18n.t(d)}</Text>) : null}
+                    </View>                  
+                    )
+                    
+                     :
+                    null
+                } 
+            </Pressable>
+        </DiscoveryCard>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        borderRadius: 16,
-        borderWidth: 1,
-        paddingHorizontal: 16,
         marginBottom: 12,
+    },
+    pressable: {
+        flex: 1,
     },
     headerRow: {
         flexDirection: "row",
@@ -75,6 +74,7 @@ const styles = StyleSheet.create({
     },
     divider: {
         height: 1,
+        backgroundColor: "#F0F0F0",
         marginBottom: 12,
     },
     response: {

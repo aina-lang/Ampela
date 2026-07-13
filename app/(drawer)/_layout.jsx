@@ -26,19 +26,25 @@ import Animated, {
   withSpring,
   useAnimatedStyle,
 } from "react-native-reanimated";
-import AuthContent from "@/components/AuthContentFromSetting";
+import AuthContent from "@/components/AuthContent";
 import { StatusBar } from "expo-status-bar";
+import { useDiscoveryTheme } from "@/components/discovery";
+
+const MenuIcon = ({ lib, name, size, color }) => {
+  if (lib === "Ionicons") {
+    return <Ionicons name={name} size={size} color={color} />;
+  }
+  return <AntDesign name={name} size={size} color={color} />;
+};
 
 const DrawerComponent = observer(() => {
   const router = useRouter();
   const user = useSelector(() => userState.get());
   const { theme } = useSelector(() => preferenceState.get());
+  const { accentColor, accentColorDisabled, surface } = useDiscoveryTheme();
   const [isModalVisible, setModalVisible] = useState(false);
   const [isAuthModalVisible, setAuthModalVisible] = useState(false);
-  const accentColor = theme === "pink" ? "#FF7575" : "#FE8729";
-  const accentColorLight = theme === "pink" ? "#FFF5F5" : "#FFF0E0";
 
-  // scales séparées pour ne pas se marcher dessus si les deux modals interagissent
   const logoutScale = useSharedValue(0);
 
   const logoutAnimatedStyle = useAnimatedStyle(() => ({
@@ -88,9 +94,70 @@ const DrawerComponent = observer(() => {
       console.log(error);
     }
   };
+
   const insets = useSafeAreaInsets();
+
+  const menuSections = [
+    {
+      title: "Mon compte",
+      items: [
+        {
+          label: "À propos de moi",
+          icon: "user",
+          lib: "AntDesign",
+          onPress: () => router.push("settings/account"),
+        },
+        {
+          label: auth.currentUser ? "Se déconnecter" : "Synchroniser",
+          icon: "cloudupload-o",
+          lib: "AntDesign",
+          onPress: handleAuth,
+          accent: true,
+        },
+      ],
+    },
+    {
+      title: "Général",
+      items: [
+        {
+          label: "Langue et thème",
+          icon: "language",
+          onPress: () => router.push("settings/language-and-theme"),
+        },
+        {
+          label: "FAQ",
+          icon: "help-circle-outline",
+          lib: "Ionicons",
+          onPress: () => router.push("settings/faq"),
+        },
+        {
+          label: i18n.t("infoAmpela"),
+          icon: "information-circle-outline",
+          lib: "Ionicons",
+          onPress: () => router.push("settings/aboutampela"),
+        },
+        {
+          label: "Partager",
+          icon: "share-social-outline",
+          lib: "Ionicons",
+          onPress: onShare,
+        },
+      ],
+    },
+    {
+      title: "Feed-back",
+      items: [
+        {
+          label: "Envoyer des feedbacks",
+          icon: "chatbox-ellipses-outline",
+          onPress: () => router.push("settings/feedback"),
+        },
+      ],
+    },
+  ];
+
   return (
-       <SafeAreaView className="flex-1" style={{ marginTop: -(insets.top + 40) }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: surface }} edges={["left", "right", "bottom"]}>
       <StatusBar style="light" />
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ModalProvider>
@@ -101,11 +168,12 @@ const DrawerComponent = observer(() => {
                 <DrawerContentScrollView
                   {...props}
                   showsVerticalScrollIndicator={false}
+                  contentContainerStyle={styles.drawerContent}
                 >
-                  {/* Profil */}
-                  <View style={[styles.profileHeader, { backgroundColor: accentColorLight }]}>
+                  {/* Profile Header */}
+                  <View style={styles.profileHeader}>
                     <TouchableOpacity
-                      onPress={() => router.push("settings/accountscreen")}
+                      onPress={() => router.push("settings/account")}
                       activeOpacity={0.85}
                     >
                       <Image
@@ -118,7 +186,7 @@ const DrawerComponent = observer(() => {
                         resizeMode="cover"
                       />
                     </TouchableOpacity>
-                    <Text style={styles.profileName}>
+                    <Text style={[styles.profileName, { color: COLORS.primary }]}>
                       {user?.username || "Utilisateur"}
                     </Text>
                     <Text style={styles.profileEmail}>
@@ -126,94 +194,46 @@ const DrawerComponent = observer(() => {
                     </Text>
                   </View>
 
-                  {/* Mon compte */}
-                  <Text style={styles.sectionLabel}>Mon compte</Text>
-                  <View style={styles.section}>
-                    <DrawerItem
-                      label="À propos de moi"
-                      labelStyle={styles.itemLabel}
-                      onPress={() => router.push("settings/account")}
-                      icon={({ size }) => (
-                        <AntDesign name="user" color={accentColor} size={size} />
-                      )}
-                    />
-                    <DrawerItem
-                      label={auth.currentUser ? "Se déconnecter" : "Se connecter"}
-                      labelStyle={styles.itemLabel}
-                      onPress={handleAuth}
-                      icon={({ size }) => (
-                        <AntDesign name="logout" color={accentColor} size={size} />
-                      )}
-                    />
-                  </View>
+                  {/* Menu Sections */}
+                  {menuSections.map((section, sectionIndex) => (
+                    <View key={sectionIndex} style={styles.menuSection}>
+                      <Text style={[styles.sectionLabel, { color: COLORS.neutral400 }]}>
+                        {section.title}
+                      </Text>
+                      <View style={styles.section}>
+                        {section.items.map((item, itemIndex) => (
+                          <TouchableOpacity
+                            key={itemIndex}
+                            onPress={item.onPress}
+                            activeOpacity={0.7}
+                            style={[
+                              styles.menuItem,
+                              item.accent && { backgroundColor: accentColor },
+                            ]}
+                          >
+                            <View style={styles.menuItemLeft}>
+                              <AntDesign
+                                name={item.icon}
+                                size={20}
+                                color={item.accent ? "#FFFFFF" : accentColor}
+                              />
+                              <Text
+                                style={[
+                                  styles.menuItemLabel,
+                                  { color: item.accent ? "#FFFFFF" : COLORS.primary },
+                                ]}
+                              >
+                                {item.label}
+                              </Text>
+                            </View>
+                            <AntDesign name="right" size={16} color={item.accent ? "#FFFFFF" : COLORS.neutral400} />
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  ))}
 
-                   {/* Général */}
-                  <Text style={styles.sectionLabel}>Général</Text>
-                  <View style={styles.section}>
-                    <DrawerItem
-                      label="Langue et thème"
-                      labelStyle={styles.itemLabel}
-                      onPress={() => router.push("settings/language-and-theme")}
-                      icon={({ size }) => (
-                        <Ionicons name="language" color={accentColor} size={size} />
-                      )}
-                    />
-                    <DrawerItem
-                      label="FAQ"
-                      labelStyle={styles.itemLabel}
-                      onPress={() => router.push("settings/faq")}
-                      icon={({ size }) => (
-                        <Ionicons
-                          name="help-circle-outline"
-                          color={accentColor}
-                          size={size}
-                        />
-                      )}
-                    />
-                    <DrawerItem
-                      label={i18n.t("infoAmpela")}
-                      labelStyle={styles.itemLabel}
-                      onPress={() => router.push("settings/aboutampela")}
-                      icon={({ size }) => (
-                        <Ionicons
-                          name="information-circle-outline"
-                          color={accentColor}
-                          size={size}
-                        />
-                      )}
-                    />
-                    <DrawerItem
-                      label="Partager"
-                      labelStyle={styles.itemLabel}
-                      onPress={onShare}
-                      icon={({ size }) => (
-                        <Ionicons
-                          name="share-social-outline"
-                          color={accentColor}
-                          size={size}
-                        />
-                      )}
-                    />
-                  </View>
-
-                  {/* Feedback */}
-                  <Text style={styles.sectionLabel}>Feed-back</Text>
-                  <View style={styles.section}>
-                    <DrawerItem
-                      label="Envoyer des feedbacks"
-                      labelStyle={styles.itemLabel}
-                      onPress={() => router.push("settings/feedback")}
-                      icon={({ size }) => (
-                        <Ionicons
-                          name="chatbox-ellipses-outline"
-                          color={accentColor}
-                          size={size}
-                        />
-                      )}
-                    />
-                  </View>
-
-                  <View style={{ height: 20 }} />
+                  <View style={{ height: 30 }} />
                 </DrawerContentScrollView>
               )}
             />
@@ -245,7 +265,7 @@ const DrawerComponent = observer(() => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={confirmLogout}
-                    style={[styles.confirmButton, { backgroundColor: accentColor, shadowColor: accentColor }]}
+                    style={[styles.confirmButton, { backgroundColor: accentColor }]}
                     activeOpacity={0.85}
                   >
                     <Text style={styles.confirmButtonText}>Déconnecter</Text>
@@ -278,71 +298,91 @@ const DrawerComponent = observer(() => {
   );
 });
 
-export default DrawerComponent;
-
 const styles = StyleSheet.create({
+  drawerContent: {
+    paddingTop: 20,
+  },
   profileHeader: {
     alignItems: "center",
     paddingVertical: 32,
-    marginBottom: 8,
+    paddingHorizontal: 24,
+    marginBottom: 24,
   },
   avatar: {
     width: 96,
     height: 96,
     borderRadius: 48,
-    marginBottom: 12,
-    borderWidth: 2,
+    borderWidth: 3,
+    marginBottom: 16,
   },
   profileName: {
     fontFamily: "SBold",
-    fontSize: SIZES.medium,
-    color: "#1A1A1A",
+    fontSize: SIZES.medium + 1,
+    marginBottom: 4,
   },
   profileEmail: {
     fontFamily: "Regular",
     fontSize: SIZES.small,
-    color: "#8A8A8A",
-    marginTop: 2,
+    color: COLORS.neutral400,
+  },
+  menuSection: {
+    marginBottom: 24,
+    paddingHorizontal: 16,
   },
   sectionLabel: {
     fontFamily: "SBold",
-    fontSize: SIZES.small - 1,
-    color: "#B0B0B0",
+    fontSize: SIZES.xSmall,
+    letterSpacing: 1,
     textTransform: "uppercase",
-    letterSpacing: 0.5,
-    paddingLeft: 20,
-    marginTop: 16,
-    marginBottom: 4,
+    marginBottom: 8,
+    paddingHorizontal: 12,
   },
   section: {
-    paddingHorizontal: 8,
+    gap: 4,
   },
-  itemLabel: {
-    fontFamily: "Regular",
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+  },
+  menuItemLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  menuItemLabel: {
+    fontFamily: "SBold",
     fontSize: SIZES.small,
-    color: "#3A3A3A",
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContent: {
-    flex: 1,
+    width: "85%",
+    padding: 28,
     backgroundColor: COLORS.neutral100,
+    borderRadius: 24,
   },
   modalTitle: {
     fontFamily: "Bold",
-    fontSize: SIZES.medium,
+    fontSize: SIZES.medium + 1,
     color: "#1A1A1A",
     textAlign: "center",
-    marginBottom: 8,
+    marginBottom: 10,
   },
   modalMessage: {
     fontFamily: "Regular",
     fontSize: SIZES.small,
-    color: "#7A7A7A",
+    color: COLORS.neutral400,
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 24,
+    lineHeight: 22,
   },
   modalButtons: {
     flexDirection: "row",
@@ -366,10 +406,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: "center",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 4,
   },
   confirmButtonText: {
     fontFamily: "SBold",
@@ -377,3 +413,5 @@ const styles = StyleSheet.create({
     color: COLORS.neutral100,
   },
 });
+
+export default DrawerComponent;

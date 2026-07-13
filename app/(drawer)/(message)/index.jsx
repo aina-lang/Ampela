@@ -18,7 +18,7 @@ import {
 import { COLORS, SIZES } from "@/constants";
 import MessageItem from "@/components/messageItem";
 import { auth, database } from "@/services/firebaseConfig";
-import { useNavigation } from "expo-router";
+import { useRouter } from "expo-router";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import i18n from "@/constants/i18n";
 import { useAuth } from "@/hooks/AuthContext";
@@ -27,14 +27,18 @@ import { useSelector } from "@legendapp/state/react";
 import NetInfo, { useNetInfo } from "@react-native-community/netinfo";
 import AuthContent from "@/components/AuthContent";
 import { useBottomSheet, useModal } from "@/hooks/ModalProvider";
+import { useDiscoveryTheme } from "@/components/discovery";
+import DiscoveryInput from "@/components/discovery/DiscoveryInput";
+import DiscoveryCard from "@/components/discovery/DiscoveryCard";
 
 const MessagesScreen = () => {
+  const router = useRouter();
   const { theme } = useSelector(() => preferenceState.get());
-  const navigation = useNavigation();
   const [users, setUsers] = useState([]);
   const [searchText, setSearchText] = useState("");
   const { user, userProfile } = useAuth();
   const [loading, setLoading] = useState(true);
+  const { surface, accentColor } = useDiscoveryTheme();
 
   const { isConnected, isInternetReachable } = useNetInfo();
 
@@ -52,7 +56,7 @@ const MessagesScreen = () => {
 
   const handleMessageItemPress = (target) => {
     if (user) {
-      navigation.navigate("onemessage", { target });
+      router.push({ pathname: "/(message)/onemessage", params: { target } });
     }
   };
 
@@ -134,15 +138,7 @@ const MessagesScreen = () => {
   };
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor:
-            theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
-        },
-      ]}
-    >
+    <View style={[styles.container, { backgroundColor: surface }]}>
       {!isConnected || !isInternetReachable ? (
         <View style={styles.offlineContainer}>
           <MaterialCommunityIcons
@@ -154,28 +150,24 @@ const MessagesScreen = () => {
           <Text style={styles.text}>Hors ligne</Text>
         </View>
       ) : (
-        <View style={{ marginVertical: 30 }}>
-          <View style={[styles.inputBox]} className="shadow-sm shadow-black">
-            <TextInput
-              style={{
-                fontFamily: "Medium",
-                fontSize: SIZES.medium,
-                width: "90%",
-              }}
-              placeholder={i18n.t("rechercher")}
-              onChangeText={(text) => {
-                handleSearch(text);
-                const sanitizedText = text.replace(
-                  /[-[\]{}()*+?.,\\^$|#\s]/g,
-                  "\\$&"
-                );
-                const regex = new RegExp(sanitizedText, "i");
-                const usersFiltered = users.filter((i) => regex.test(i.pseudo));
-                setUsers(usersFiltered);
-              }}
-            />
-            <AntDesign name="search1" size={20} />
-          </View>
+        <View style={styles.searchSection}>
+          <DiscoveryInput
+            placeholder={i18n.t("rechercher")}
+            onChangeText={(text) => {
+              handleSearch(text);
+              const sanitizedText = text.replace(
+                /[-[\]{}()*+?.,\\^$|#\s]/g,
+                "\\$&"
+              );
+              const regex = new RegExp(sanitizedText, "i");
+              const usersFiltered = users.filter((i) => regex.test(i.pseudo));
+              setUsers(usersFiltered);
+            }}
+            value={searchText}
+            backgroundColor={COLORS.neutral100}
+            borderColor={accentColor}
+            containerStyle={styles.searchInput}
+          />
         </View>
       )}
 
@@ -184,13 +176,14 @@ const MessagesScreen = () => {
           showsVerticalScrollIndicator={false}
           data={users}
           renderItem={({ item, index }) => (
-            <MessageItem
-              key={index}
-              onPress={() => handleMessageItemPress(item)}
-              customStyles={{ marginBottom: 10 }}
-              target={item}
-              disabled={!user}
-            />
+            <DiscoveryCard style={styles.messageCard}>
+              <MessageItem
+                key={index}
+                onPress={() => handleMessageItemPress(item)}
+                target={item}
+                disabled={!user}
+              />
+            </DiscoveryCard>
           )}
         />
       )}
@@ -208,21 +201,20 @@ const MessagesScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 20,
     flex: 1,
   },
-  inputBox: {
-    width: "100%",
-    height: 44,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: COLORS.neutral100,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 99,
+  searchSection: {
+    paddingHorizontal: 20,
+    paddingTop: 200,
+    paddingBottom: 16,
   },
-
+  searchInput: {
+    marginBottom: 8,
+  },
+  messageCard: {
+    marginHorizontal: 20,
+    marginBottom: 12,
+  },
   offlineContainer: {
     position: "absolute",
     top: 0,

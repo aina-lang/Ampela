@@ -6,10 +6,10 @@ import {
   TouchableOpacity,
   Alert,
   ScrollView,
-  TextInput,
+  FlatList,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
-import { COLORS } from "@/constants";
+import { COLORS, SIZES } from "@/constants";
 import AppHeader from "@/components/AppHeader";
 import { useNavigation } from "expo-router";
 import { preferenceState } from "@/legendstate/AmpelaStates";
@@ -18,14 +18,19 @@ import {
   addCycleMenstruel,
   getAllCycle,
 } from "@/services/database";
+import { useDiscoveryTheme } from "@/components/discovery";
+import DiscoveryCard from "@/components/discovery/DiscoveryCard";
+import { ResponseOfQuestion0, ResponseOfQuestion1 } from "@/components/response-of-question";
+import ModernButton from "@/components/ModernButton";
 
 const UpdateCycleInfo = () => {
   const navigation = useNavigation();
   const [selectedDate, setSelectedDate] = useState(null);
-  const [cycleDuration, setCycleDuration] = useState("");
   const [periodDuration, setPeriodDuration] = useState("");
+  const [cycleDuration, setCycleDuration] = useState("");
   const { theme } = preferenceState.get();
   const isDateSelected = !!selectedDate;
+  const { surface, accentColor, accentColorDisabled } = useDiscoveryTheme();
 
   const getFirstDayOfLastMonth = () => {
     const now = new Date();
@@ -67,12 +72,15 @@ const UpdateCycleInfo = () => {
       return;
     }
 
-    if (parseInt(periodDuration) > 8) {
+    const periodNum = parseInt(periodDuration.split(" ")[0], 10);
+    const cycleNum = parseInt(cycleDuration.split(" ")[0], 10);
+
+    if (periodNum > 8) {
       Alert.alert("Erreur", "La durée des règles ne peut pas dépasser 8 jours");
       return;
     }
 
-    if (parseInt(periodDuration) < 1) {
+    if (periodNum < 1) {
       Alert.alert("Erreur", "La durée des règles doit être d'au moins 1 jour");
       return;
     }
@@ -96,17 +104,17 @@ const UpdateCycleInfo = () => {
       const startMenstruationDate = new Date(selectedDate);
       const endMenstruationDate = new Date(startMenstruationDate);
       endMenstruationDate.setDate(
-        endMenstruationDate.getDate() + parseInt(periodDuration) - 1
+        endMenstruationDate.getDate() + periodNum - 1
       );
 
       const nextMenstruationStartDate = new Date(startMenstruationDate);
       nextMenstruationStartDate.setDate(
-        nextMenstruationStartDate.getDate() + parseInt(cycleDuration)
+        nextMenstruationStartDate.getDate() + cycleNum
       );
 
       const nextMenstruationEndDate = new Date(nextMenstruationStartDate);
       nextMenstruationEndDate.setDate(
-        nextMenstruationEndDate.getDate() + parseInt(periodDuration) - 1
+        nextMenstruationEndDate.getDate() + periodNum - 1
       );
 
       const fecundityPeriodStart = new Date(startMenstruationDate);
@@ -147,7 +155,7 @@ const UpdateCycleInfo = () => {
           ovulationDate.toISOString().split("T")[0]
         );
 
-       
+        
         startMenstruationDate.setMonth(startMenstruationDate.getMonth() + 1);
       }
 
@@ -166,80 +174,88 @@ const UpdateCycleInfo = () => {
     // navigation.goBack();
   };
 
+  const periodDurations = [];
+  const cycleDurations = [];
+  for (let i = 1; i <= 8; i++) {
+    periodDurations.push(i + " jours");
+  }
+  for (let i = 20; i <= 45; i++) {
+    cycleDurations.push(i + " jours");
+  }
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: surface }]}>
       <AppHeader navigation={navigation} title="Modification" showBack absolute />
       <ScrollView
-        style={{ padding: 20, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
       >
         <Text style={styles.description}>
           Choisissez une date du mois précédent pour mettre à jour l'information
           du cycle. Ce date sera le début des règles du dernier cycle
         </Text>
-        <Calendar
-          onDayPress={handleDayPress}
-          minDate={getFirstDayOfLastMonth().toISOString().split("T")[0]}
-          maxDate={getLastDayOfLastMonth().toISOString().split("T")[0]}
-          markedDates={{
-            [selectedDate]: {
-              selected: true,
-              marked: true,
-              selectedColor: COLORS.accent500,
-            },
-          }}
-          theme={{
-            selectedDayBackgroundColor: COLORS.accent500,
-            todayTextColor: COLORS.accent500,
-            arrowColor: COLORS.accent500,
-          }}
-        />
-        <View style={styles.inputContainer}>
-          <Text>Nouveau règle</Text>
-          <TextInput
-            style={[styles.input, !isDateSelected && styles.inputDisabled]}
-            keyboardType="numeric"
-            value={periodDuration}
-            onChangeText={(text) => {
-              const value = text.replace(/[^0-9]/g, "");
-              const numValue = parseInt(value, 10);
-              if (numValue >= 1 && numValue <= 9) {
-                setPeriodDuration(value);
-              } else if (value === "") {
-                setPeriodDuration("");
-              }
+        <DiscoveryCard style={styles.calendarCard}>
+          <Calendar
+            onDayPress={handleDayPress}
+            minDate={getFirstDayOfLastMonth().toISOString().split("T")[0]}
+            maxDate={getLastDayOfLastMonth().toISOString().split("T")[0]}
+            markedDates={{
+              [selectedDate]: {
+                selected: true,
+                marked: true,
+                selectedColor: accentColor,
+              },
             }}
-            placeholder="Entrez une nouvelle durée des règles"
-            maxLength={1}
-            editable={isDateSelected}
+            theme={{
+              selectedDayBackgroundColor: accentColor,
+              todayTextColor: accentColor,
+              arrowColor: accentColor,
+            }}
           />
-        </View>
-        <View style={styles.inputContainer}>
-          <Text>Nouveau cycle</Text>
-          <TextInput
-            style={[styles.input, !isDateSelected && styles.inputDisabled]}
-            keyboardType="numeric"
-            value={cycleDuration}
-            onChangeText={setCycleDuration}
-            placeholder="Entrez une nouvelle durée du cycle"
-            maxLength={2}
-            editable={isDateSelected}
-          />
-        </View>
+        </DiscoveryCard>
 
-        <TouchableOpacity
-          style={[
-            styles.button,
-            {
-              backgroundColor:
-                theme === "pink" ? "rgba(226,68,92, 1)" : COLORS.accent800,
-            },
-          ]}
+        <Text style={styles.chipLabel}>Durée des règles</Text>
+        <FlatList
+          data={periodDurations}
+          keyExtractor={(item) => item}
+          renderItem={({ item }) => (
+            <ResponseOfQuestion0
+              text={item}
+              active={periodDuration === item}
+              onPress={() => setPeriodDuration(item)}
+              accentColor={accentColor}
+            />
+          )}
+          contentContainerStyle={styles.chipList}
+          showsHorizontalScrollIndicator={false}
+          horizontal
+        />
+
+        <Text style={styles.chipLabel}>Durée du cycle</Text>
+        <FlatList
+          data={cycleDurations}
+          keyExtractor={(item) => item}
+          renderItem={({ item }) => (
+            <ResponseOfQuestion1
+              text={item}
+              active={cycleDuration === item}
+              onPress={() => setCycleDuration(item)}
+              accentColor={accentColor}
+            />
+          )}
+          contentContainerStyle={styles.chipList}
+          showsHorizontalScrollIndicator={false}
+          horizontal
+        />
+
+        <ModernButton
+          title="Mettre à jour"
           onPress={handleUpdateCycleInfo}
-          disabled={!isDateSelected}
-        >
-          <Text style={styles.updateButtonText}>Mettre à jour</Text>
-        </TouchableOpacity>
+          disabled={!isDateSelected || !periodDuration || !cycleDuration}
+          accentColor={accentColor}
+          accentColorDisabled={accentColorDisabled}
+          style={{ marginTop: 20 }}
+        />
       </ScrollView>
     </View>
   );
@@ -248,8 +264,11 @@ const UpdateCycleInfo = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.neutral100,
-    paddingTop: 130,
+  },
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingTop: 200,
+    paddingBottom: 40,
   },
   description: {
     fontSize: 16,
@@ -258,30 +277,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     lineHeight: 30,
   },
-  inputContainer: {
+  calendarCard: {
     marginBottom: 20,
   },
-  input: {
-    backgroundColor: "white",
-    borderColor: "gray",
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
-    marginTop: 10,
+  chipLabel: {
+    fontFamily: "SBold",
+    fontSize: SIZES.small,
+    color: "#3A3A3A",
+    marginBottom: 10,
   },
-  inputDisabled: {
-    backgroundColor: "#e0e0e0",
-  },
-  button: {
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    marginTop: 20,
-  },
-  updateButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
+  chipList: {
+    gap: 10,
+    paddingRight: 10,
+    marginBottom: 20,
   },
 });
 

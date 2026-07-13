@@ -30,6 +30,7 @@ import {
   InputToolbar,
   Send,
 } from "react-native-gifted-chat";
+import { useDiscoveryTheme } from "@/components/discovery";
 
 export default function OneMessageScreen() {
   const [messages, setMessages] = useState([]);
@@ -38,6 +39,7 @@ export default function OneMessageScreen() {
   const route = useRoute();
   const { target } = route?.params;
   const { user, userProfile } = useAuth();
+  const { surface, accentColor } = useDiscoveryTheme();
 
   useEffect(() => {
     createRoomIfNotExists();
@@ -103,8 +105,6 @@ export default function OneMessageScreen() {
 
   console.log(userProfile?.profileImage);
   const renderBubble = (props) => {
-    // console.log("currentMessage:", props.currentMessage);
-    // console.log("currentMessage.user:", props.currentMessage.user);
     const { currentMessage } = props;
     return (
       <Bubble
@@ -112,13 +112,11 @@ export default function OneMessageScreen() {
         {...props}
         wrapperStyle={{
           left: {
-            backgroundColor:
-              theme === "pink" ? COLORS.neutral100 : "rgba(196, 196, 196, .5)",
+            backgroundColor: COLORS.neutral100,
             borderRadius: 15,
           },
           right: {
-            backgroundColor:
-              theme === "pink" ? COLORS.accent500 : COLORS.accent800,
+            backgroundColor: accentColor,
             borderRadius: 15,
           },
         }}
@@ -132,27 +130,20 @@ export default function OneMessageScreen() {
             fontFamily: "Regular",
           },
         }}
-        // position={
-        //   props.user._id === currentUser.uid ? "right" : "left"
-        // }
-        // bottomContainerStyle={m}
       />
     );
   };
 
   const customInputToolbar = (props) => {
     return (
-      <View
-        style={styles.inputToolbarContainer}
-        className="shadow-md shadow-black"
-      >
+      <View style={styles.inputToolbarContainer}>
         <InputToolbar {...props} containerStyle={styles.inputToolbar} />
       </View>
     );
   };
 
   return (
-    <SafeAreaView className="flex-1">
+    <SafeAreaView style={{ flex: 1, backgroundColor: surface }}>
       <AppHeader
         navigation={navigation}
         title={target?.username}
@@ -161,7 +152,6 @@ export default function OneMessageScreen() {
       />
 
       <GiftedChat
-      
         showUserAvatar
         messages={messages}
         onSend={(messages) => handleSend(messages)}
@@ -175,7 +165,7 @@ export default function OneMessageScreen() {
           return (
             <Send {...props}>
               <View style={styles.sendButton}>
-                <Feather name="send" size={24} color={COLORS.accent800} />
+                <Feather name="send" size={24} color={accentColor} />
               </View>
             </Send>
           );
@@ -201,7 +191,6 @@ const styles = StyleSheet.create({
   sendButton: {
     height: "100%",
     alignItems: "center",
-    // backgroundColor:"red",
     justifyContent: "center",
   },
 });

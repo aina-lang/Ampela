@@ -189,6 +189,8 @@ const styles = StyleSheet.create({
     borderRadius: DISCOVERY_RADIUS.xl,
     backgroundColor: COLORS.neutral100,
     overflow: "hidden",
+    borderWidth: 1.5,
+    borderColor: "#F0F0F0",
   },
   themeImageWrapper: {
     position: "relative",

@@ -16,6 +16,7 @@ const _layout = () => {
             navigation={navigation}
             title="Message"
             showBack
+            absolute
           />
         ),
 

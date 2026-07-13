@@ -18,6 +18,10 @@ import { useSelector } from "@legendapp/state/react";
 import { AntDesign, Feather, FontAwesome } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { updateUserSqlite } from "@/services/database";
+import { useDiscoveryTheme } from "@/components/discovery";
+import DiscoveryCard from "@/components/discovery/DiscoveryCard";
+import DiscoveryInput from "@/components/discovery/DiscoveryInput";
+import ModernButton from "@/components/ModernButton";
 
 const fieldConfig = {
   username: {
@@ -46,10 +50,7 @@ const AccountScreen = () => {
   const user = useSelector(() => userState.get());
   const { theme } = useSelector(() => preferenceState.get());
   const navigation = useNavigation();
-
-  const accentColor = theme === "pink" ? "#FF7575" : COLORS.accent800;
-  const cardBg = theme === "pink" ? COLORS.neutral100 : COLORS.neutral280;
-  const cardBorder = theme === "pink" ? "#F0C8C8" : "#E8D5C4";
+  const { surface, accentColor, accentColorDisabled } = useDiscoveryTheme();
 
   const [username, setUsername] = useState(user.username);
   const [cycleDuration, setCycleDuration] = useState(user.cycleDuration);
@@ -130,13 +131,13 @@ const AccountScreen = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme === "pink" ? COLORS.neutral200 : COLORS.neutral100 }]}>
+    <View style={[styles.container, { backgroundColor: surface }]}>
       <AppHeader navigation={navigation} title="À propos de moi" showBack absolute />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         style={styles.scroll}
-        contentContainerStyle={{ paddingTop: 130, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingTop: 200, paddingBottom: 40 }}
       >
         {/* Profil */}
         <View style={styles.profil}>
@@ -162,63 +163,63 @@ const AccountScreen = () => {
           </View>
         </View>
 
-        {/* Infos cycle */}
-        <View style={[styles.infoCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-          <View style={styles.infoRow}>
-            <View style={styles.infoIconWrapper}>
-              <FontAwesome name="calendar" color={accentColor} size={18} />
-            </View>
-            <Text style={[styles.infoLabel, { color: COLORS.neutral400 }]}>Durée du cycle</Text>
-            <Text style={[styles.infoValue, { color: COLORS.primary }]}>{user.cycleDuration} jours</Text>
-          </View>
+         {/* Infos cycle */}
+         <DiscoveryCard style={styles.infoCard}>
+           <View style={styles.infoRow}>
+             <View style={styles.infoIconWrapper}>
+               <FontAwesome name="calendar" color={accentColor} size={18} />
+             </View>
+             <Text style={[styles.infoLabel, { color: COLORS.neutral400 }]}>Durée du cycle</Text>
+             <Text style={[styles.infoValue, { color: COLORS.primary }]}>{user.cycleDuration} jours</Text>
+           </View>
 
-          <View style={[styles.infoDivider, { backgroundColor: cardBorder }]} />
+           <View style={styles.divider} />
 
-          <View style={styles.infoRow}>
-            <View style={styles.infoIconWrapper}>
-              <FontAwesome name="calendar-check-o" color={accentColor} size={18} />
-            </View>
-            <Text style={[styles.infoLabel, { color: COLORS.neutral400 }]}>Durée des règles</Text>
-            <Text style={[styles.infoValue, { color: COLORS.primary }]}>
-              {user.durationMenstruation} jours
-            </Text>
-          </View>
+           <View style={styles.infoRow}>
+             <View style={styles.infoIconWrapper}>
+               <FontAwesome name="calendar-check-o" color={accentColor} size={18} />
+             </View>
+             <Text style={[styles.infoLabel, { color: COLORS.neutral400 }]}>Durée des règles</Text>
+             <Text style={[styles.infoValue, { color: COLORS.primary }]}>
+               {user.durationMenstruation} jours
+             </Text>
+           </View>
 
-          <View style={[styles.infoDivider, { backgroundColor: cardBorder }]} />
+           <View style={styles.divider} />
 
-          <View style={styles.infoRow}>
-            <View style={styles.infoIconWrapper}>
-              <FontAwesome name="calendar-plus-o" color={accentColor} size={18} />
-            </View>
-            <Text style={[styles.infoLabel, { color: COLORS.neutral400 }]}>Dernier cycle</Text>
-            <Text style={[styles.infoValue, { color: COLORS.primary }]}>{user.lastMenstruationDate}</Text>
-          </View>
-        </View>
+           <View style={styles.infoRow}>
+             <View style={styles.infoIconWrapper}>
+               <FontAwesome name="calendar-plus-o" color={accentColor} size={18} />
+             </View>
+             <Text style={[styles.infoLabel, { color: COLORS.neutral400 }]}>Dernier cycle</Text>
+             <Text style={[styles.infoValue, { color: COLORS.primary }]}>{user.lastMenstruationDate}</Text>
+           </View>
+         </DiscoveryCard>
 
-        {/* Liens */}
-        <View style={[styles.linksCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate("settings/updatecycleinfo")}
-            style={styles.linkRow}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.linkText, { color: COLORS.primary }]}>
-              Modifier les informations du cycle
-            </Text>
-            <AntDesign name="right" size={16} color={COLORS.neutral400} />
-          </TouchableOpacity>
+         {/* Liens */}
+         <DiscoveryCard style={styles.linksCard}>
+           <TouchableOpacity
+             onPress={() => navigation.navigate("settings/updatecycleinfo")}
+             style={styles.linkRow}
+             activeOpacity={0.7}
+           >
+             <Text style={[styles.linkText, { color: COLORS.primary }]}>
+               Modifier les informations du cycle
+             </Text>
+             <AntDesign name="right" size={16} color={COLORS.neutral400} />
+           </TouchableOpacity>
 
-          <View style={[styles.infoDivider, { backgroundColor: cardBorder }]} />
+           <View style={styles.divider} />
 
-          <TouchableOpacity
-            onPress={() => navigation.navigate("settings/changepassword")}
-            style={styles.linkRow}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.linkText, { color: COLORS.primary }]}>Changer mon mot de passe</Text>
-            <AntDesign name="right" size={16} color={COLORS.neutral400} />
-          </TouchableOpacity>
-        </View>
+           <TouchableOpacity
+             onPress={() => navigation.navigate("settings/changepassword")}
+             style={styles.linkRow}
+             activeOpacity={0.7}
+           >
+             <Text style={[styles.linkText, { color: COLORS.primary }]}>Changer mon mot de passe</Text>
+             <AntDesign name="right" size={16} color={COLORS.neutral400} />
+           </TouchableOpacity>
+         </DiscoveryCard>
       </ScrollView>
 
       {/* Modal d'édition */}
@@ -229,29 +230,20 @@ const AccountScreen = () => {
         onRequestClose={() => setIsModalVisible(false)}
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+          <DiscoveryCard style={styles.modalContent}>
             <Text style={styles.modalTitle}>
               {currentField ? fieldConfig[currentField]?.label : ""}
             </Text>
 
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                value={
-                  currentField
-                    ? String(fieldValues[currentField] ?? "")
-                    : ""
-                }
-                onChangeText={(text) => fieldSetters[currentField]?.(text)}
-                keyboardType={
-                  currentField ? fieldConfig[currentField].keyboardType : "default"
-                }
-                placeholder={
-                  currentField ? fieldConfig[currentField].placeholder : ""
-                }
-                placeholderTextColor="#A0A0A0"
-              />
-            </View>
+            <DiscoveryInput
+              value={currentField ? String(fieldValues[currentField] ?? "") : ""}
+              onChangeText={(text) => fieldSetters[currentField]?.(text)}
+              keyboardType={currentField ? fieldConfig[currentField].keyboardType : "default"}
+              placeholder={currentField ? fieldConfig[currentField].placeholder : ""}
+              backgroundColor={COLORS.neutral100}
+              borderColor={accentColor}
+              containerStyle={styles.inputSpacing}
+            />
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
@@ -260,15 +252,15 @@ const AccountScreen = () => {
               >
                 <Text style={styles.cancelButtonText}>Annuler</Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              <ModernButton
+                title="Enregistrer"
                 onPress={handleSave}
-                style={styles.confirmButton}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.confirmButtonText}>Enregistrer</Text>
-              </TouchableOpacity>
+                accentColor={accentColor}
+                accentColorDisabled={accentColorDisabled}
+                style={{ flex: 1 }}
+              />
             </View>
-          </View>
+          </DiscoveryCard>
         </View>
       </Modal>
     </View>
@@ -281,7 +273,7 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
   },
   profil: {
     alignItems: "center",
@@ -297,7 +289,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 2,
-    borderColor: "#FF7575",
+    borderColor: "#F0F0F0",
   },
   editBadge: {
     position: "absolute",
@@ -306,7 +298,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#FF7575",
+    backgroundColor: COLORS.accent500,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
@@ -324,10 +316,6 @@ const styles = StyleSheet.create({
     color: "#1A1A1A",
   },
   infoCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    marginTop: 8,
   },
   infoRow: {
     flexDirection: "row",
@@ -348,13 +336,11 @@ const styles = StyleSheet.create({
     fontFamily: "SBold",
     fontSize: SIZES.small,
   },
-  infoDivider: {
+  divider: {
     height: 1,
+    backgroundColor: "#F0F0F0",
   },
   linksCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingHorizontal: 16,
     marginTop: 20,
   },
   linkRow: {
@@ -377,8 +363,6 @@ const styles = StyleSheet.create({
   modalContent: {
     width: "100%",
     padding: 24,
-    backgroundColor: COLORS.neutral100,
-    borderRadius: 20,
   },
   modalTitle: {
     fontFamily: "Bold",
@@ -387,18 +371,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: "center",
   },
-  inputContainer: {
-    borderWidth: 1,
-    borderColor: "#F0F0F0",
-    borderRadius: 14,
-    backgroundColor: "#FAFAFA",
-  },
-  input: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontFamily: "Regular",
-    fontSize: SIZES.medium,
-    color: "#1A1A1A",
+  inputSpacing: {
+    marginBottom: 16,
   },
   modalButtons: {
     flexDirection: "row",
@@ -416,23 +390,6 @@ const styles = StyleSheet.create({
     fontFamily: "SBold",
     fontSize: SIZES.small,
     color: "#7A7A7A",
-  },
-  confirmButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: "center",
-    backgroundColor: "#FF7575",
-    shadowColor: "#FF7575",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  confirmButtonText: {
-    fontFamily: "SBold",
-    fontSize: SIZES.small,
-    color: COLORS.neutral100,
   },
 });
 

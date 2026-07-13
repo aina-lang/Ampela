@@ -2,7 +2,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
   TextInput,
   TouchableOpacity,
   Alert,
@@ -10,7 +9,7 @@ import {
 import React, { useState } from "react";
 import { useSelector } from "@legendapp/state/react";
 import { preferenceState, userState } from "@/legendstate/AmpelaStates";
-import { COLORS } from "@/constants";
+import { COLORS, SIZES } from "@/constants";
 import AppHeader from "@/components/AppHeader";
 import { useNavigation } from "expo-router";
 import {
@@ -20,6 +19,10 @@ import {
   EmailAuthProvider,
 } from "firebase/auth";
 import { AntDesign } from "@expo/vector-icons";
+import { useDiscoveryTheme } from "@/components/discovery";
+import DiscoveryCard from "@/components/discovery/DiscoveryCard";
+import DiscoveryInput from "@/components/discovery/DiscoveryInput";
+import ModernButton from "@/components/ModernButton";
 
 const ChangePassword = () => {
   const { theme } = useSelector(() => preferenceState.get());
@@ -27,6 +30,7 @@ const ChangePassword = () => {
   const user = useSelector(() => userState.get());
   const auth = getAuth();
   const currentUser = auth.currentUser;
+  const { surface, accentColor, accentColorDisabled } = useDiscoveryTheme();
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -118,9 +122,7 @@ const ChangePassword = () => {
     <View
       style={{
         flex: 1,
-        justifyContent: "center",
-        backgroundColor:
-          theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
+        backgroundColor: surface,
       }}
     >
       <AppHeader
@@ -131,63 +133,52 @@ const ChangePassword = () => {
       />
       <View style={styles.container}>
         <Text style={styles.description}>
-          Pour garantir la sécurité de votre compte, veuillez entrer votre mot
-          de passe actuel, puis saisir un nouveau mot de passe conforme aux
-          exigences de sécurité. Assurez-vous que le nouveau mot de passe
-          contient au moins 8 caractères, avec une majuscule, une minuscule et
-          un chiffre.
+          Entrez votre mot de passe actuel, puis choisissez un nouveau mot de
+          passe sécurisé (8 caractères minimum, avec majuscule, minuscule et
+          chiffre).
         </Text>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Mot de passe actuel"
-            secureTextEntry
-            onChangeText={(text) => setCurrentPassword(text)}
-          />
-        </View>
+        <DiscoveryInput
+          placeholder="Mot de passe actuel"
+          secureTextEntry
+          onChangeText={(text) => setCurrentPassword(text)}
+          backgroundColor={COLORS.neutral100}
+          borderColor={accentColor}
+          containerStyle={styles.inputSpacing}
+        />
         {currentPasswordError && (
-          <Text style={{ color: "red" }}>{currentPasswordError}</Text>
+          <Text style={styles.error}>{currentPasswordError}</Text>
         )}
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Nouveau mot de passe"
-            secureTextEntry
-            onChangeText={handleNewPasswordChange}
-          />
-        </View>
+        <DiscoveryInput
+          placeholder="Nouveau mot de passe"
+          secureTextEntry
+          onChangeText={handleNewPasswordChange}
+          backgroundColor={COLORS.neutral100}
+          borderColor={accentColor}
+          containerStyle={styles.inputSpacing}
+        />
         {newPasswordError && (
-          <Text style={{ color: "red" }}>{newPasswordError}</Text>
+          <Text style={styles.error}>{newPasswordError}</Text>
         )}
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Confirmer le mot de passe"
-            secureTextEntry
-            onChangeText={handleConfirmPasswordChange}
-          />
-        </View>
+        <DiscoveryInput
+          placeholder="Confirmer le mot de passe"
+          secureTextEntry
+          onChangeText={handleConfirmPasswordChange}
+          backgroundColor={COLORS.neutral100}
+          borderColor={accentColor}
+          containerStyle={styles.inputSpacing}
+        />
         {confirmPasswordError && (
-          <Text style={{ color: "red" }}>{confirmPasswordError}</Text>
+          <Text style={styles.error}>{confirmPasswordError}</Text>
         )}
 
-        <TouchableOpacity
-          disabled={currentPassword == "" || newPassword == ""}
-          style={{
-            backgroundColor:
-              theme === "pink"
-                ? currentPassword == "" || newPassword == ""
-                  ? "rgba(226,68,92, .8)"
-                  : "gray"
-                : COLORS.accent800,
-            width: Math.floor(Dimensions.get("window").width) - 40,
-          }}
+        <ModernButton
+          title="Modifier le mot de passe"
           onPress={handleChangePassword}
-          className="p-3 rounded-md  mt-5 shadow-md shadow-black flex-row justify-center space-x-2 items-center"
-        >
-          <Text className="text-white">Modifier le mot de passe</Text>
-          <AntDesign name="right" size={20} color="white" className="ml-3" />
-        </TouchableOpacity>
+          disabled={currentPassword == "" || newPassword == ""}
+          accentColor={accentColor}
+          accentColorDisabled={accentColorDisabled}
+          style={{ marginTop: 20 }}
+        />
       </View>
     </View>
   );
@@ -195,42 +186,27 @@ const ChangePassword = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 130,
-    justifyContent: "center",
-    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingTop: 200,
+    paddingBottom: 40,
   },
   description: {
     marginBottom: 20,
     fontSize: 16,
-    color: COLORS.dark,
+    color: "#5A5A5A",
     textAlign: "center",
     lineHeight: 25,
   },
-  input: {
-    padding: 10,
-    borderRadius: 15,
-    overflow: "hidden",
+  inputSpacing: {
+    marginBottom: 16,
   },
-  inputContainer: {
-    borderWidth: 1,
-    borderColor: "#c0bdbd",
-    borderRadius: 15,
-    marginVertical: 10,
-    width: Math.floor(Dimensions.get("window").width) - 40,
-    backgroundColor: "rgb(243 244 246)",
-  },
-  button: {
-    marginTop: 20,
-    backgroundColor: COLORS.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 15,
-  },
-  buttonText: {
-    color: COLORS.white,
-    fontWeight: "bold",
+  error: {
+    color: "#E24C4C",
+    fontSize: SIZES.small - 1,
+    marginTop: 6,
+    marginLeft: 4,
+    marginBottom: 8,
+    fontFamily: "Regular",
   },
 });
 

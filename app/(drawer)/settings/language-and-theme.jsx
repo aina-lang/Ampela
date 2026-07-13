@@ -1,19 +1,18 @@
 import React, { useCallback } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from "react-native";
 import { SIZES, COLORS, images } from "@/constants";
-import { useRouter } from "expo-router";
+import { useNavigation } from "expo-router";
 import i18n from "@/constants/i18n";
 import { preferenceState, updatePreference } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
-import { MeshBackground, DiscoveryHeader, useDiscoveryTheme } from "@/components/discovery";
+import AppHeader from "@/components/AppHeader";
+import { MeshBackground, useDiscoveryTheme } from "@/components/discovery";
 import { DISCOVERY_RADIUS, DISCOVERY_SPACING } from "@/components/discovery/DiscoveryTheme";
 
 const LanguageAndThemeScreen = () => {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
   const { language, theme } = useSelector(() => preferenceState.get());
   const {
     accentColor,
@@ -33,10 +32,6 @@ const LanguageAndThemeScreen = () => {
   const handleThemeChange = (themeKey) => {
     updatePreference({ theme: themeKey });
   };
-
-  const handleBack = useCallback(() => {
-    router.back();
-  }, []);
 
   const LanguageCard = ({ code, label, flag }) => {
     const selected = language === code;
@@ -114,43 +109,43 @@ const LanguageAndThemeScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: surface }]}>
-      <StatusBar style="dark" />
+    <View style={[styles.container, { backgroundColor: surface }]}>
+      <StatusBar style="light" />
       <MeshBackground color={accentColor} surfaceColor={surface} />
 
-      <View style={[styles.content, { paddingTop: insets.top + 16 }]}>
-        <DiscoveryHeader
-          eyebrow="Paramètres"
-          title="Langue et thème"
-          subtitle="Choisissez votre langue et le thème qui vous convient."
-        />
+      <AppHeader
+        navigation={navigation}
+        title="Langue et thème"
+        showBack
+        absolute
+      />
 
-        <View style={styles.cardsWrapper}>
-          <LanguageCard code="fr" label="Français" flag={images.franceImg} />
-          <LanguageCard code="mg" label="Malagasy" flag={images.madaImg} />
-        </View>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.content}>
+          <View style={styles.cardsWrapper}>
+            <LanguageCard code="fr" label="Français" flag={images.franceImg} />
+            <LanguageCard code="mg" label="Malagasy" flag={images.madaImg} />
+          </View>
 
-        <View style={styles.sectionLabel}>
-          <Text style={styles.sectionLabelText}>Choisissez votre thème</Text>
-        </View>
+          <View style={styles.sectionLabel}>
+            <Text style={styles.sectionLabelText}>Choisissez votre thème</Text>
+          </View>
 
-        <View style={styles.themeCardsWrapper}>
-          <ThemeCard themeKey="pink" label="Anna's Rose" desc="Rose" image={images.pinkTheme} />
-          <ThemeCard
-            themeKey="orange"
-            label="Linda Sunset"
-            desc="Orange"
-            image={images.orangeTheme}
-          />
+          <View style={styles.themeCardsWrapper}>
+            <ThemeCard themeKey="pink" label="Anna's Rose" desc="Rose" image={images.pinkTheme} />
+            <ThemeCard
+              themeKey="orange"
+              label="Linda Sunset"
+              desc="Orange"
+              image={images.orangeTheme}
+            />
+          </View>
         </View>
-
-        <View style={styles.bottomArea}>
-          <TouchableOpacity onPress={handleBack} activeOpacity={0.7} style={styles.backButton}>
-            <Text style={styles.backButtonText}>Retour</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </SafeAreaView>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -158,9 +153,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 200,
+    paddingBottom: 40,
+  },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
   },
   cardsWrapper: {
     gap: 14,
@@ -185,6 +184,9 @@ const styles = StyleSheet.create({
     borderRadius: DISCOVERY_RADIUS.xl,
     backgroundColor: COLORS.neutral100,
     overflow: "hidden",
+    position: "relative",
+    borderWidth: 1.5,
+    borderColor: "#F0F0F0",
   },
   themeImageWrapper: {
     position: "relative",
@@ -251,20 +253,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
-  },
-  bottomArea: {
-    marginTop: "auto",
-    paddingBottom: 10,
-    paddingTop: 20,
-  },
-  backButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-  },
-  backButtonText: {
-    fontSize: 15,
-    fontFamily: "SBold",
-    color: "#9E9E9E",
   },
 });
 

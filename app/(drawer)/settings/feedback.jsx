@@ -12,18 +12,17 @@ import { SIZES, COLORS } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "@legendapp/state/react";
 import { preferenceState } from "@/legendstate/AmpelaStates";
+import { useDiscoveryTheme } from "@/components/discovery";
+import DiscoveryCard from "@/components/discovery/DiscoveryCard";
 
 const feedback = () => {
   const navigation = useNavigation();
   const { theme } = useSelector(() => preferenceState.get());
+  const { surface, accentColor } = useDiscoveryTheme();
 
   const handlePress = (url) => {
     Linking.openURL(url);
   };
-
-  const accentColor = theme === "pink" ? COLORS.accent500 : COLORS.accent800;
-  const cardBg = theme === "pink" ? COLORS.neutral100 : COLORS.neutral280;
-  const cardBorder = theme === "pink" ? "#F0C8C8" : "#E8D5C4";
 
   const contacts = [
     {
@@ -50,19 +49,11 @@ const feedback = () => {
   ];
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor:
-            theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
-        },
-      ]}
-    >
+    <View style={[styles.container, { backgroundColor: surface }]}>
       <AppHeader navigation={navigation} title="Feed-back" showBack absolute />
       <View style={styles.content}>
         <Text style={[styles.title, { color: COLORS.primary }]}>Contactez les développeurs</Text>
-        <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+        <DiscoveryCard style={styles.card}>
           {contacts.map((item, index) => (
             <View key={item.key}>
               <TouchableOpacity
@@ -79,11 +70,11 @@ const feedback = () => {
                 <Ionicons name="open-outline" size={16} color={COLORS.neutral400} />
               </TouchableOpacity>
               {index < contacts.length - 1 && (
-                <View style={[styles.divider, { backgroundColor: cardBorder }]} />
+                <View style={styles.divider} />
               )}
             </View>
           ))}
-        </View>
+        </DiscoveryCard>
       </View>
     </View>
   );
@@ -92,7 +83,7 @@ const feedback = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 130,
+    paddingTop: 200,
   },
   content: {
     flex: 1,
@@ -105,9 +96,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   card: {
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingHorizontal: 16,
   },
   contactRow: {
     flexDirection: "row",
@@ -118,8 +106,7 @@ const styles = StyleSheet.create({
   left: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    flex: 1,
+    gap: 12,
   },
   iconWrapper: {
     width: 32,
@@ -131,6 +118,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
+    backgroundColor: "#F0F0F0",
   },
 });
 

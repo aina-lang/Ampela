@@ -10,10 +10,12 @@ import {
 } from "firebase/firestore";
 import { database } from "@/services/firebaseConfig";
 import { useAuth } from "@/hooks/AuthContext";
+import { useDiscoveryTheme } from "@/components/discovery";
 
 const MessageItem = ({ onPress, target }) => {
   const [lastMessage, setLastMessage] = useState();
   const { user } = useAuth();
+  const { accentColor } = useDiscoveryTheme();
 
   useEffect(() => {
     if (user?.uid && target?.userId) {
@@ -65,14 +67,10 @@ const MessageItem = ({ onPress, target }) => {
   return (
     <TouchableOpacity
       style={styles.container}
-      className="justify-between"
       onPress={onPress}
     >
-      <View className="flex-row">
-        <View
-          style={styles.imageContainer}
-          className="border border-gray-400 rounded-full "
-        >
+      <View style={styles.row}>
+        <View style={styles.imageContainer}>
           <Image source={{ uri: target?.profileImage }} style={styles.image} />
 
           <View
@@ -81,7 +79,7 @@ const MessageItem = ({ onPress, target }) => {
               width: 10,
               height: 10,
               borderRadius: 100,
-              backgroundColor: COLORS.accent600,
+              backgroundColor: accentColor,
               top: 1,
               left: 5,
             }}
@@ -91,10 +89,7 @@ const MessageItem = ({ onPress, target }) => {
           <Text style={styles.name}>{target?.username}</Text>
           <Text style={styles.job}>{target?.job}</Text>
           <Text
-            style={[
-              styles.lastMessage,
-,
-            ]}
+            style={styles.lastMessage}
             numberOfLines={1}
           >
             {renderLastMessage()}
@@ -110,8 +105,13 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginBottom: 40,
-    marginLeft: 15,
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
   },
   imageContainer: {
     position: "relative",
@@ -123,10 +123,12 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     marginLeft: 15,
+    flex: 1,
   },
   name: {
-    fontFamily: "Regular",
-    fontSize: SIZES.medium,
+    fontFamily: "SBold",
+    fontSize: SIZES.small,
+    color: COLORS.primary,
   },
   job: {
     fontSize: SIZES.xSmall,

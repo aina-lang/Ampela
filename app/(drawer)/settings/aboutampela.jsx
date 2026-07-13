@@ -8,6 +8,8 @@ import i18n from "@/constants/i18n";
 import { useSelector } from "@legendapp/state/react";
 import { preferenceState } from "@/legendstate/AmpelaStates";
 import { AntDesign } from "@expo/vector-icons";
+import { useDiscoveryTheme } from "@/components/discovery";
+import DiscoveryCard from "@/components/discovery/DiscoveryCard";
 
 const contentData = [
   {
@@ -36,31 +38,20 @@ const InfoScreen = () => {
   const { theme, language } = useSelector(() => preferenceState.get());
   const navigation = useNavigation();
   const [data, setData] = useState([]);
-
-  const accentColor = theme === "pink" ? COLORS.accent500 : COLORS.accent800;
-  const cardBg = theme === "pink" ? COLORS.neutral100 : COLORS.neutral280;
-  const cardBorder = theme === "pink" ? "#F0C8C8" : "#E8D5C4";
+  const { surface, accentColor } = useDiscoveryTheme();
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor:
-            theme === "pink" ? COLORS.neutral200 : COLORS.neutral100,
-        },
-      ]}
-    >
+    <View style={[styles.container, { backgroundColor: surface }]}>
       <AppHeader navigation={navigation} title={i18n.t("infoAmpela")} showBack absolute />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <View style={[styles.introCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-          <Text style={[styles.introText, { color: COLORS.neutral400 }]}>{i18n.t("introInfo")}</Text>
-        </View>
+        <DiscoveryCard style={styles.introCard}>
+          <Text style={styles.introText}>{i18n.t("introInfo")}</Text>
+        </DiscoveryCard>
 
-        <View style={[styles.contentCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+        <DiscoveryCard style={styles.contentCard}>
           {contentData.map((item, index) => (
             <View key={item.subtitle}>
               <View style={styles.infoRow}>
@@ -81,13 +72,13 @@ const InfoScreen = () => {
                 </View>
               </View>
               {index < contentData.length - 1 && (
-                <View style={[styles.divider, { backgroundColor: cardBorder }]} />
+                <View style={styles.divider} />
               )}
             </View>
           ))}
-        </View>
+        </DiscoveryCard>
 
-        <View style={[styles.footerCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+        <DiscoveryCard style={styles.footerCard}>
           <View style={styles.infoRow}>
             <View style={styles.iconWrapper}>
               <AntDesign name="team" size={18} color={accentColor} />
@@ -101,7 +92,7 @@ const InfoScreen = () => {
               </Text>
             </View>
           </View>
-          <View style={[styles.divider, { backgroundColor: cardBorder }]} />
+          <View style={styles.divider} />
           <View style={styles.infoRow}>
             <View style={styles.iconWrapper}>
               <AntDesign name="earth" size={18} color={accentColor} />
@@ -111,7 +102,7 @@ const InfoScreen = () => {
               <Link url="https://www.google.com">www.ampela.com</Link>
             </View>
           </View>
-        </View>
+        </DiscoveryCard>
       </ScrollView>
     </View>
   );
@@ -120,27 +111,23 @@ const InfoScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 130,
+
   },
   scrollContent: {
+        paddingTop: 200,
     paddingHorizontal: 20,
     paddingBottom: 40,
   },
   introCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 16,
     marginTop: 20,
   },
   introText: {
     fontFamily: "Regular",
     fontSize: SIZES.medium,
     lineHeight: 22,
+    color: COLORS.neutral400,
   },
   contentCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingHorizontal: 16,
     marginTop: 16,
   },
   infoRow: {
@@ -169,11 +156,9 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
+    backgroundColor: "#F0F0F0",
   },
   footerCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingHorizontal: 16,
     marginTop: 16,
   },
 });

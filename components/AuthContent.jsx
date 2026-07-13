@@ -2,15 +2,13 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
-  Dimensions,
-  TouchableOpacity,
   FlatList,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
   ScrollView,
+  TouchableOpacity,
 } from "react-native";
 import { COLORS, SIZES } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
@@ -25,15 +23,14 @@ import { useSelector } from "@legendapp/state/react";
 import { userState, preferenceState } from "@/legendstate/AmpelaStates";
 import { useModal } from "@/hooks/ModalProvider";
 import { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
-
-const { width } = Dimensions.get("window");
+import ModernButton from "@/components/ModernButton";
+import DiscoveryInput from "@/components/discovery/DiscoveryInput";
+import { useDiscoveryTheme } from "@/components/discovery";
 
 const AuthContent = () => {
   const user = useSelector(() => userState.get());
   const { theme } = useSelector(() => preferenceState.get());
-  const accentColor = theme === "pink" ? "#FF7575" : "#FE8729";
-  const accentColorLight = theme === "pink" ? "#FFADAD" : "#FED39A";
-  const accentColorDisabled = theme === "pink" ? "#FFB5B5" : "#FED4A0";
+  const { accentColor, accentColorDisabled, surface } = useDiscoveryTheme();
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -58,6 +55,7 @@ const AuthContent = () => {
       ],
     };
   });
+
   const handleLoginEmailChange = (text) => {
     setLoginEmail(text);
     if (!text) {
@@ -262,43 +260,45 @@ const AuthContent = () => {
             </View>
 
             <View style={styles.form}>
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Email"
-                  placeholderTextColor="#A0A0A0"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  value={loginEmail}
-                  onChangeText={handleLoginEmailChange}
-                  editable={!loading}
-                />
-              </View>
+              <DiscoveryInput
+                placeholder="Email"
+                placeholderTextColor="#A0A0A0"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={loginEmail}
+                onChangeText={handleLoginEmailChange}
+                editable={!loading}
+                backgroundColor={COLORS.neutral100}
+                borderColor={accentColor}
+                containerStyle={styles.inputSpacing}
+              />
               {!!loginEmailError && (
                 <Text style={styles.fieldError}>{loginEmailError}</Text>
               )}
 
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={[styles.input, { flex: 1 }]}
-                  placeholder="Mot de passe"
-                  placeholderTextColor="#A0A0A0"
-                  secureTextEntry={!showPassword}
-                  value={loginPassword}
-                  onChangeText={handleLoginPasswordChange}
-                  editable={!loading}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeButton}
-                >
-                  <Ionicons
-                    name={showPassword ? "eye-off" : "eye"}
-                    size={20}
-                    color="#A0A0A0"
-                  />
-                </TouchableOpacity>
-              </View>
+              <DiscoveryInput
+                placeholder="Mot de passe"
+                placeholderTextColor="#A0A0A0"
+                secureTextEntry={!showPassword}
+                value={loginPassword}
+                onChangeText={handleLoginPasswordChange}
+                editable={!loading}
+                backgroundColor={COLORS.neutral100}
+                borderColor={accentColor}
+                containerStyle={styles.inputSpacing}
+                rightIcon={
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    style={styles.eyeButton}
+                  >
+                    <Ionicons
+                      name={showPassword ? "eye-off" : "eye"}
+                      size={20}
+                      color="#9E9E9E"
+                    />
+                  </TouchableOpacity>
+                }
+              />
               {!!loginPasswordError && (
                 <Text style={styles.fieldError}>{loginPasswordError}</Text>
               )}
@@ -307,30 +307,15 @@ const AuthContent = () => {
                 <Text style={styles.formError}>{loginError}</Text>
               )}
 
-              <TouchableOpacity
+              <ModernButton
+                title="Se connecter"
                 onPress={handleLogin}
                 disabled={!isFormValid || loading}
-                activeOpacity={0.85}
-                style={[
-                  styles.loginBtn,
-                  { backgroundColor: isFormValid && !loading ? accentColor : accentColorDisabled, shadowColor: isFormValid && !loading ? accentColor : "transparent", elevation: isFormValid && !loading ? 4 : 0 },
-                ]}
-              >
-                {loading ? (
-                  <ActivityIndicator
-                    color={isFormValid ? "#FFFFFF" : "#B0B0B0"}
-                  />
-                ) : (
-                  <Text
-                    style={[
-                      styles.loginBtnText,
-                      { color: isFormValid ? COLORS.neutral100 : "#B0B0B0" },
-                    ]}
-                  >
-                    Se connecter
-                  </Text>
-                )}
-              </TouchableOpacity>
+                loading={loading}
+                accentColor={accentColor}
+                accentColorDisabled={accentColorDisabled}
+                style={{ marginTop: 16 }}
+              />
             </View>
 
             <View style={styles.signupRow}>
@@ -350,94 +335,97 @@ const AuthContent = () => {
       key: "2",
       title: "Inscription",
       content: (
-        <>
-          <Text style={styles.title}>Inscription</Text>
-          <Text style={styles.infoText}>
-            Créez un compte pour sauvegarder vos données et échanger sur le forum.
-          </Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor="#A0A0A0"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={signupEmail}
-              onChangeText={handleSignupEmailChange}
-              editable={!loading}
-            />
-          </View>
-          {!!signupEmailError && (
-            <Text style={styles.fieldError}>{signupEmailError}</Text>
-          )}
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Mot de passe"
-              placeholderTextColor="#A0A0A0"
-              secureTextEntry
-              value={signupPassword}
-              onChangeText={handleSignupPasswordChange}
-              editable={!loading}
-            />
-          </View>
-          {!!signupPasswordError && (
-            <Text style={styles.fieldError}>{signupPasswordError}</Text>
-          )}
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Confirmer le mot de passe"
-              placeholderTextColor="#A0A0A0"
-              secureTextEntry
-              value={confirmPassword}
-              onChangeText={handleConfirmPasswordChange}
-              editable={!loading}
-            />
-          </View>
-          {!!confirmPasswordError && (
-            <Text style={styles.fieldError}>{confirmPasswordError}</Text>
-          )}
-          <TouchableOpacity
-            onPress={handleSignUp}
-            disabled={signupErrorPresent || loading}
-            activeOpacity={0.85}
-                style={[
-                  styles.loginBtn,
-                  { backgroundColor: signupErrorPresent || loading ? accentColorDisabled : accentColor, shadowColor: signupErrorPresent || loading ? "transparent" : accentColor, elevation: signupErrorPresent || loading ? 0 : 4 },
-                ]}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{ flex: 1 }}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
           >
-            {loading ? (
-              <ActivityIndicator
-                color={signupErrorPresent || loading ? "#B0B0B0" : "#FFFFFF"}
-              />
-            ) : (
-              <Text
-                style={[
-                  styles.loginBtnText,
-                  { color: signupErrorPresent || loading ? "#B0B0B0" : COLORS.neutral100 },
-                ]}
-              >
-                S'inscrire
+            <View style={styles.header}>
+              <Text style={[styles.eyebrow, { color: accentColor }]}>Inscription</Text>
+              <Text style={styles.title}>Créer un compte</Text>
+              <Text style={styles.subtitle}>
+                Créez un compte pour sauvegarder vos données et échanger sur le forum.
               </Text>
-            )}
-          </TouchableOpacity>
-          <View style={styles.signupRow}>
-            <Text style={styles.signupText}>Déjà un compte ?</Text>
-            <TouchableOpacity
-              onPress={() => handleScrollToIndex(0)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.signupLink, { color: accentColor }]}> Se connecter</Text>
-            </TouchableOpacity>
-          </View>
-        </>
+            </View>
+
+            <View style={styles.form}>
+              <DiscoveryInput
+                placeholder="Email"
+                placeholderTextColor="#A0A0A0"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={signupEmail}
+                onChangeText={handleSignupEmailChange}
+                editable={!loading}
+                backgroundColor={COLORS.neutral100}
+                borderColor={accentColor}
+                containerStyle={styles.inputSpacing}
+              />
+              {!!signupEmailError && (
+                <Text style={styles.fieldError}>{signupEmailError}</Text>
+              )}
+
+              <DiscoveryInput
+                placeholder="Mot de passe"
+                placeholderTextColor="#A0A0A0"
+                secureTextEntry
+                value={signupPassword}
+                onChangeText={handleSignupPasswordChange}
+                editable={!loading}
+                backgroundColor={COLORS.neutral100}
+                borderColor={accentColor}
+                containerStyle={styles.inputSpacing}
+              />
+              {!!signupPasswordError && (
+                <Text style={styles.fieldError}>{signupPasswordError}</Text>
+              )}
+
+              <DiscoveryInput
+                placeholder="Confirmer le mot de passe"
+                placeholderTextColor="#A0A0A0"
+                secureTextEntry
+                value={confirmPassword}
+                onChangeText={handleConfirmPasswordChange}
+                editable={!loading}
+                backgroundColor={COLORS.neutral100}
+                borderColor={accentColor}
+                containerStyle={styles.inputSpacing}
+              />
+              {!!confirmPasswordError && (
+                <Text style={styles.fieldError}>{confirmPasswordError}</Text>
+              )}
+
+              <ModernButton
+                title="S'inscrire"
+                onPress={handleSignUp}
+                disabled={signupErrorPresent || loading}
+                loading={loading}
+                accentColor={accentColor}
+                accentColorDisabled={accentColorDisabled}
+                style={{ marginTop: 16 }}
+              />
+
+              <View style={styles.signupRow}>
+                <Text style={styles.signupText}>Déjà un compte ?</Text>
+                <TouchableOpacity
+                  onPress={() => handleScrollToIndex(0)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.signupLink, { color: accentColor }]}> Se connecter</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       ),
     },
   ];
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={[styles.container, { backgroundColor: surface }]}>
       <FlatList
         ref={flatListRef}
         data={pages}
@@ -450,7 +438,6 @@ const AuthContent = () => {
             {item.content}
           </View>
         )}
-        contentContainerStyle={{ backgroundColor: "white" }}
       />
       <TouchableOpacity
         style={styles.closeButton}
@@ -463,8 +450,11 @@ const AuthContent = () => {
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   pageContainer: {
-    width,
+    width: SIZES.width,
     padding: 24,
     justifyContent: "center",
   },
@@ -494,36 +484,13 @@ const styles = StyleSheet.create({
     fontSize: SIZES.small,
     color: "#8A8A8A",
     lineHeight: 20,
-  },
-  infoText: {
-    marginBottom: 20,
     textAlign: "center",
-    fontFamily: "Regular",
-    fontSize: SIZES.small,
-    color: "#8A8A8A",
   },
   form: {
     width: "100%",
   },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#F0F0F0",
-    borderRadius: 14,
-    marginBottom: 10,
-    backgroundColor: "#FAFAFA",
-    paddingHorizontal: 16,
-  },
-  input: {
-    flex: 1,
-    paddingVertical: 14,
-    fontFamily: "Regular",
-    fontSize: SIZES.medium,
-    color: "#1A1A1A",
-  },
-  eyeButton: {
-    padding: 6,
+  inputSpacing: {
+    marginBottom: 4,
   },
   fieldError: {
     color: "#E24C4C",
@@ -539,24 +506,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontFamily: "SBold",
   },
-  loginBtn: {
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: "center",
-    marginTop: 12,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  loginBtnText: {
-    fontFamily: "SBold",
-    fontSize: SIZES.medium,
-  },
   signupRow: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 28,
+    marginTop: 24,
   },
   signupText: {
     fontFamily: "Regular",
