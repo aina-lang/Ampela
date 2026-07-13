@@ -1,7 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, ActivityIndicator } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Modal,
+  ActivityIndicator,
+  ScrollView,
+} from "react-native";
 import { COLORS, SIZES } from "@/constants";
-import { useNavigation } from "expo-router";
+import { useRouter } from "expo-router";
 import {
   ResponseOfQuestion0,
   ResponseOfQuestion1,
@@ -10,9 +19,17 @@ import { addCycleMenstruel, addUser } from "@/services/database";
 import { generateCycleMenstrualData } from "@/utils/menstruationUtils";
 import { updateUser, userState, preferenceState } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
-import { AntDesign } from "@expo/vector-icons";
-import StepScreenWrapper from "@/components/StepScreenWrapper";
 import ModernButton from "@/components/ModernButton";
+import {
+  DiscoveryBackButton,
+  DiscoveryCard,
+  useDiscoveryTheme,
+  MeshBackground,
+  DiscoveryHeader,
+} from "@/components/discovery";
+import { DISCOVERY_RADIUS, DISCOVERY_SHADOWS, DISCOVERY_SPACING } from "@/components/discovery/DiscoveryTheme";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
+import { StatusBar } from "expo-status-bar";
 
 const durationMenstruations = [];
 const cycleDurations = [];
@@ -28,8 +45,26 @@ for (let i = 2; i < 46; i++) {
 
 const dontRememberText = "je m'en souviens pas";
 
+const AnimatedProgressBar = ({ progress, accentColor }) => {
+  const width = useSharedValue(0);
+
+  useEffect(() => {
+    width.value = withTiming(progress, { duration: 200 });
+  }, [progress]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    width: `${width.value}%`,
+  }));
+
+  return (
+    <View style={styles.progressBarContainer}>
+      <Animated.View style={[styles.progressBar, animatedStyle, { backgroundColor: accentColor }]} />
+    </View>
+  );
+};
+
 const QuestionsSeries = () => {
-  const navigation = useNavigation();
+  const router = useRouter();
   const [response0, setResponse0] = useState(durationMenstruations[0]);
   const [response1, setResponse1] = useState(cycleDurations[0]);
   const [isNextBtnDisabled, setIsNextBtnDisabled] = useState(true);
@@ -37,11 +72,15 @@ const QuestionsSeries = () => {
   const [progress, setProgress] = useState(0);
   const user = useSelector(() => userState.get());
   const { theme } = useSelector(() => preferenceState.get());
-  const accentColor = theme === "pink" ? "#FF7575" : "#FE8729";
-  const accentColorDisabled = theme === "pink" ? "#FFB5B5" : "#FED4A0";
+  const {
+    accentColor,
+    accentColorDisabled,
+    accentContainer,
+    surface,
+  } = useDiscoveryTheme();
 
-  const handleResponsePress0 = (item) => setResponse0(item);
-  const handleResponsePress1 = (item) => setResponse1(item);
+  const handleResponsePress0 = useCallback((item) => setResponse0(item), []);
+  const handleResponsePress1 = useCallback((item) => setResponse1(item), []);
 
   function getNumberFromString(str) {
     if (str === dontRememberText) return 28;
@@ -98,7 +137,7 @@ const QuestionsSeries = () => {
         );
       }
 
-      navigation.navigate("(drawer)");
+      router.push("/(drawer)");
     } catch (error) {
       console.error("Erreur lors de l'enregistrement des cycles:", error);
     } finally {
@@ -107,87 +146,87 @@ const QuestionsSeries = () => {
   };
 
   return (
-    <StepScreenWrapper
-      stepNumber={3}
-      eyebrow="Étape 3 sur 3"
-      title="Vos durées menstruelles"
-      subtitle="Ces informations nous permettent de calculer vos prédictions."
-    >
+    <View style={[styles.container, { backgroundColor: surface }]}>
+      <StatusBar style="dark" />
+      <MeshBackground color={accentColor} surfaceColor={surface} />
+
       <View style={styles.content}>
-        <View style={styles.contentItem}>
-          <Text style={styles.question}>Durée de vos règles</Text>
-          <FlatList
-            data={durationMenstruations}
-            keyExtractor={(item) => item}
-            renderItem={({ item }) => (
-              <ResponseOfQuestion0
-                text={item}
-                active={response0 === item}
-                onPress={() => handleResponsePress0(item)}
-                accentColor={accentColor}
-              />
-            )}
-            contentContainerStyle={styles.chipList}
-            showsHorizontalScrollIndicator={false}
-            horizontal
-          />
-        </View>
+        <DiscoveryHeader
+          eyebrow="Prédictions"
+          title="Vos durées menstruelles"
+          subtitle="Ces informations nous permettent de calculer vos prédictions personnalisées."
+        />
 
-        <View style={styles.contentItem}>
-          <Text style={styles.question}>Durée du cycle</Text>
-          <FlatList
-            data={cycleDurations}
-            keyExtractor={(item) => item}
-            renderItem={({ item }) => (
-              <ResponseOfQuestion1
-                text={item}
-                active={response1 === item}
-                onPress={() => handleResponsePress1(item)}
-                accentColor={accentColor}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <DiscoveryCard style={styles.questionsCard}>
+            <View style={styles.contentItem}>
+              <Text style={styles.question}>Durée de vos règles</Text>
+              <FlatList
+                data={durationMenstruations}
+                keyExtractor={(item) => item}
+                renderItem={({ item }) => (
+                  <ResponseOfQuestion0
+                    text={item}
+                    active={response0 === item}
+                    onPress={() => handleResponsePress0(item)}
+                    accentColor={accentColor}
+                  />
+                )}
+                contentContainerStyle={styles.chipList}
+                showsHorizontalScrollIndicator={false}
+                horizontal
               />
-            )}
-            contentContainerStyle={styles.chipList}
-            showsHorizontalScrollIndicator={false}
-            horizontal
-          />
+            </View>
 
-          <TouchableOpacity
-            style={[
-              styles.dontRememberChip,
-              {
-                backgroundColor:
-                  response1 === dontRememberText ? accentColor : "#FAFAFA",
-                borderColor:
-                  response1 === dontRememberText ? accentColor : "#F0F0F0",
-              },
-            ]}
-            onPress={() => handleResponsePress1(dontRememberText)}
-            activeOpacity={0.85}
-          >
-            <Text
-              style={[
-                styles.dontRememberText,
-                {
-                  color:
-                    response1 === dontRememberText
-                      ? COLORS.neutral100
-                      : "#7A7A7A",
-                },
-              ]}
-            >
-              {dontRememberText}
-            </Text>
-          </TouchableOpacity>
-        </View>
+            <View style={styles.contentItem}>
+              <Text style={styles.question}>Durée du cycle</Text>
+              <FlatList
+                data={cycleDurations}
+                keyExtractor={(item) => item}
+                renderItem={({ item }) => (
+                  <ResponseOfQuestion1
+                    text={item}
+                    active={response1 === item}
+                    onPress={() => handleResponsePress1(item)}
+                    accentColor={accentColor}
+                  />
+                )}
+                contentContainerStyle={styles.chipList}
+                showsHorizontalScrollIndicator={false}
+                horizontal
+              />
+
+              <TouchableOpacity
+                style={[
+                  styles.dontRememberChip,
+                  { backgroundColor: response1 === dontRememberText ? accentColor : accentContainer },
+                ]}
+                onPress={() => handleResponsePress1(dontRememberText)}
+                activeOpacity={0.85}
+              >
+                <Text
+                  style={[
+                    styles.dontRememberText,
+                    {
+                      color:
+                        response1 === dontRememberText
+                          ? COLORS.neutral100
+                          : accentColor,
+                    },
+                  ]}
+                >
+                  {dontRememberText}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </DiscoveryCard>
+        </ScrollView>
 
         <View style={styles.btnBox}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <AntDesign name="arrowleft" size={16} color="#9E9E9E" />
-            <Text style={styles.backButtonText}>Précédent</Text>
-          </TouchableOpacity>
+          <DiscoveryBackButton onPress={() => router.back()} label="Précédent" />
 
           <ModernButton
             title="Terminer"
@@ -195,36 +234,43 @@ const QuestionsSeries = () => {
             disabled={isNextBtnDisabled}
             accentColor={accentColor}
             accentColorDisabled={accentColorDisabled}
-            style={{ flex: 1, marginLeft: 12 }}
+            style={{ alignSelf: "flex-end", marginLeft: 12 }}
           />
         </View>
       </View>
 
       <Modal transparent visible={isLoading} animationType="fade">
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+          <DiscoveryCard style={styles.modalContent} elevated>
             <ActivityIndicator size="large" color={accentColor} />
             <Text style={styles.modalText}>
               Préparation de vos données... {Math.round(progress)}%
             </Text>
-            <View style={styles.progressBarContainer}>
-              <View
-                style={[
-                  styles.progressBar,
-                  { width: `${progress}%`, backgroundColor: accentColor },
-                ]}
-              />
-            </View>
-          </View>
+            <AnimatedProgressBar progress={progress} accentColor={accentColor} />
+          </DiscoveryCard>
         </View>
       </Modal>
-    </StepScreenWrapper>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    
+  },
   content: {
     flex: 1,
+    paddingHorizontal: 24,
+    marginTop:20
+  },
+  scrollContent: {
+    paddingBottom: 16,
+  },
+  questionsCard: {
+    flex: 1,
+    marginBottom: 20,
+    justifyContent: "center",
   },
   contentItem: {
     marginBottom: 28,
@@ -233,22 +279,22 @@ const styles = StyleSheet.create({
     fontFamily: "SBold",
     fontSize: SIZES.medium,
     color: "#1A1A1A",
-    marginBottom: 14,
+    marginBottom: 5,
   },
   chipList: {
     gap: 10,
     paddingRight: 10,
+    paddingVertical: 10,
   },
   dontRememberChip: {
     alignSelf: "flex-start",
     marginTop: 14,
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 14,
-    borderWidth: 1.5,
+    borderRadius: DISCOVERY_RADIUS.md,
   },
   dontRememberText: {
-    fontFamily: "Regular",
+    fontFamily: "SBold",
     fontSize: SIZES.small,
   },
   btnBox: {
@@ -256,39 +302,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 12,
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 10,
-    gap: 6,
-  },
-  backButtonText: {
-    color: "#9E9E9E",
-    fontSize: 15,
-    fontFamily: "SBold",
+    paddingBottom: 10,
+    paddingTop: 20,
   },
   modalContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.45)",
   },
   modalContent: {
-    width: 260,
-    padding: 28,
-    backgroundColor: COLORS.neutral100,
-    borderRadius: 20,
+    width: 280,
+    padding: 32,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 8,
+    borderRadius: DISCOVERY_RADIUS.xl,
   },
   modalText: {
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: 18,
+    marginBottom: 10,
     fontSize: SIZES.small,
     fontFamily: "SBold",
     color: "#1A1A1A",

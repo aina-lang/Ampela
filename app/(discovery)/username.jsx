@@ -1,40 +1,55 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { COLORS, SIZES } from "@/constants";
+import { Calendar } from "react-native-calendars";
 import * as ImagePicker from "expo-image-picker";
 import { useSelector } from "@legendapp/state/react";
 import { updateUser, preferenceState } from "@/legendstate/AmpelaStates";
-import { useNavigation } from "expo-router";
-import StepScreenWrapper from "@/components/StepScreenWrapper";
+import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import ModernButton from "@/components/ModernButton";
+import { DiscoveryInput, DiscoveryBackButton, useDiscoveryTheme, MeshBackground, DiscoveryHeader } from "@/components/discovery";
+import { DISCOVERY_SPACING, DISCOVERY_RADIUS } from "@/components/discovery/DiscoveryTheme";
 
-const UsernameAndPasswordScreen = () => {
-  const navigation = useNavigation();
-  const { theme } = useSelector(() => preferenceState.get());
-  const accentColor = theme === "pink" ? "#FF7575" : "#FE8729";
-  const accentColorDisabled = theme === "pink" ? "#FFB5B5" : "#FED4A0";
+const UsernameAndDateScreen = () => {
+  const router = useRouter();
+  const today = new Date();
+  const todayString = today.toISOString().split("T")[0];
+  const firstDayOfMonth = `${today.getFullYear()}-${String(
+    today.getMonth() + 1
+  ).padStart(2, "0")}-01`;
 
   const [nameText, setNameText] = useState("");
   const [profileImage, setProfileImage] = useState(null);
-  const [isNextBtnDisabled, setIsNextBtnDisabled] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(todayString);
+  const { theme } = useSelector(() => preferenceState.get());
+  const {
+    accentColor,
+    accentColorDisabled,
+    accentContainer,
+    surface,
+  } = useDiscoveryTheme();
+
+  const isNameValid = nameText.trim().length > 0;
+  const isNextBtnDisabled = !isNameValid;
 
   useEffect(() => {
-    setIsNextBtnDisabled(nameText.trim() === "");
-  }, [nameText]);
+    updateUser({ username: nameText.trim(), profileImage });
+  }, [nameText, profileImage]);
+
+  useEffect(() => {
+    const dateToUpdate = selectedDate === "" ? firstDayOfMonth : selectedDate;
+    updateUser({ lastMenstruationDate: dateToUpdate });
+  }, [selectedDate]);
 
   const handleUsernameChange = (text) => {
     setNameText(text);
   };
 
-  const handleNextBtnPress = async () => {
+  const handleNextBtnPress = () => {
     if (isNextBtnDisabled) return;
-    const userData = {
-      username: nameText.trim(),
-      profileImage,
-    };
-    updateUser(userData);
-    navigation.navigate("lastMenstrualCycleStart");
+    router.push("/(discovery)/questionsSeries");
   };
 
   const pickImage = async () => {
@@ -57,53 +72,128 @@ const UsernameAndPasswordScreen = () => {
   };
 
   const prevHandled = () => {
-    navigation.goBack();
+    router.back();
   };
 
-  return (
-    <StepScreenWrapper
-      stepNumber={1}
-      eyebrow="Étape 1 sur 3"
-      title="Quel est votre nom d'utilisateur ?"
-      subtitle="Ce pseudo sera visible par les autres membres de la communauté."
-    >
-      <View style={styles.content}>
-        <View style={styles.avatarSection}>
-          <TouchableOpacity onPress={pickImage} activeOpacity={0.85}>
-            <View style={styles.imagePicker}>
-              {profileImage ? (
-                <Image source={{ uri: profileImage }} style={styles.image} />
-              ) : (
-                <Feather name="camera" size={32} color="#B0B0B0" />
-              )}
-              <View style={styles.editBadge}>
-                <Feather name="edit-2" size={14} color="#FFFFFF" />
-              </View>
-            </View>
-          </TouchableOpacity>
-          <Text style={styles.avatarLabel}>Photo de profil (optionnel)</Text>
-        </View>
+  const handleDateChange = (day) => {
+    const selectedDateStr = day.dateString;
+    if (new Date(selectedDateStr) <= today) {
+      setSelectedDate(selectedDateStr);
+    } else {
+      console.warn("La date sélectionnée doit être aujourd'hui ou dans le passé.");
+    }
+  };
 
-        <View style={styles.form}>
-          <Text style={styles.inputLabel}>Nom d'utilisateur</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
+  const handleForgetDate = () => {
+    setSelectedDate("");
+  };
+
+  const isForgotten = selectedDate === "";
+
+  return (
+    <View style={[styles.container, { backgroundColor: surface }]}>
+      <StatusBar style="dark" />
+      <MeshBackground color={accentColor} surfaceColor={surface} />
+
+      <View style={styles.content}>
+        <DiscoveryHeader
+          eyebrow="Votre profil"
+          title="Enregistrez vos informations"
+          subtitle="Ces données nous permettront de calculer vos prédictions personnalisées."
+        />
+
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <View style={styles.avatarSection}>
+            <TouchableOpacity onPress={pickImage} activeOpacity={0.85}>
+              <View style={[styles.imagePicker, { backgroundColor: accentContainer }]}>
+                {profileImage ? (
+                  <Image source={{ uri: profileImage }} style={styles.image} />
+                ) : (
+                  <Feather name="camera" size={32} color={accentColor} />
+                )}
+                <View style={[styles.editBadge, { backgroundColor: accentColor }]}>
+                  <Feather name="edit-2" size={14} color="#FFFFFF" />
+                </View>
+              </View>
+            </TouchableOpacity>
+            <Text style={styles.avatarLabel}>Photo de profil (optionnel)</Text>
+          </View>
+
+          <View style={styles.form}>
+            <Text style={styles.inputLabel}>Nom d'utilisateur</Text>
+            <DiscoveryInput
               cursorColor={COLORS.accent500}
               placeholder="Ex : Sarah_M"
-              placeholderTextColor="#A0A0A0"
               value={nameText}
               onChangeText={handleUsernameChange}
-              style={styles.input}
               autoCapitalize="none"
+              backgroundColor={COLORS.neutral100}
+              borderColor={accentColor}
             />
           </View>
-        </View>
+
+          <View style={styles.dateSection}>
+            <Text style={styles.inputLabel}>Date de vos dernières règles</Text>
+            <View style={styles.calendarCard}>
+              <Calendar
+                style={styles.calendar}
+                maxDate={todayString}
+                theme={{
+                  backgroundColor: "transparent",
+                  calendarBackground: "transparent",
+                  textSectionTitleColor: "#A0A0A0",
+                  todayTextColor: accentColor,
+                  dayTextColor: "#2D2D2D",
+                  textDisabledColor: "#D8D8D8",
+                  arrowColor: accentColor,
+                  monthTextColor: "#1A1A1A",
+                  textDayFontFamily: "Regular",
+                  textMonthFontFamily: "Bold",
+                  textDayHeaderFontFamily: "Regular",
+                  textDayFontSize: SIZES.medium,
+                  textMonthFontSize: SIZES.medium,
+                  textDayHeaderFontSize: SIZES.small,
+                  selectedDayBackgroundColor: accentColor,
+                  selectedDayTextColor: COLORS.neutral100,
+                  dotColor: accentColor,
+                }}
+                onDayPress={handleDateChange}
+                markedDates={{
+                  [selectedDate]: {
+                    selected: true,
+                    disableTouchEvent: true,
+                    selectedColor: accentColor,
+                    selectedTextColor: COLORS.neutral100,
+                  },
+                }}
+              />
+
+              <TouchableOpacity
+                style={[
+                  styles.forgetChip,
+                  { backgroundColor: isForgotten ? accentColor : accentContainer },
+                ]}
+                onPress={handleForgetDate}
+                activeOpacity={0.85}
+              >
+                <Text
+                  style={[
+                    styles.forgetChipText,
+                    { color: isForgotten ? COLORS.neutral100 : accentColor },
+                  ]}
+                >
+                  Je ne me souviens plus
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
 
         <View style={styles.btnBox}>
-          <TouchableOpacity onPress={prevHandled} style={styles.backButton}>
-            <Feather name="arrow-left" size={16} color="#9E9E9E" />
-            <Text style={styles.backButtonText}>Retour</Text>
-          </TouchableOpacity>
+          <DiscoveryBackButton onPress={prevHandled} />
 
           <ModernButton
             title="Suivant"
@@ -111,58 +201,59 @@ const UsernameAndPasswordScreen = () => {
             disabled={isNextBtnDisabled}
             accentColor={accentColor}
             accentColorDisabled={accentColorDisabled}
-            style={{ flex: 1, marginLeft: 12 }}
+            style={{ alignSelf: "flex-end", marginLeft: 12 }}
           />
         </View>
       </View>
-    </StepScreenWrapper>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   content: {
     flex: 1,
+    paddingHorizontal: 24,
+    marginTop: 20,
+  },
+  scrollContent: {
+    paddingBottom: 16,
   },
   avatarSection: {
     alignItems: "center",
-    marginBottom: 32,
+    marginBottom: 36,
   },
   imagePicker: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "#FAFAFA",
+    width: 128,
+    height: 128,
+    borderRadius: 64,
     justifyContent: "center",
     alignItems: "center",
+    overflow: "hidden",
     borderWidth: 2,
     borderColor: "#F0F0F0",
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
   },
   image: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 128,
+    height: 128,
+    borderRadius: 64,
   },
   editBadge: {
     position: "absolute",
     bottom: 4,
     right: 4,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.accent500,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2.5,
+    borderWidth: 3,
     borderColor: COLORS.neutral100,
   },
   avatarLabel: {
-    marginTop: 12,
+    marginTop: 14,
     fontFamily: "Regular",
     fontSize: SIZES.small - 1,
     color: "#9E9E9E",
@@ -176,44 +267,37 @@ const styles = StyleSheet.create({
     color: "#3A3A3A",
     marginBottom: 10,
   },
-  inputContainer: {
-    borderWidth: 1.5,
-    borderColor: "#F0F0F0",
-    borderRadius: 16,
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 18,
-    height: 56,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+  dateSection: {
+    marginBottom: 20,
   },
-  input: {
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-    fontFamily: "Regular",
-    fontSize: SIZES.medium,
-    color: "#1A1A1A",
-    flex: 1,
+  calendarCard: {
+    backgroundColor: COLORS.neutral100,
+    borderRadius: DISCOVERY_RADIUS.md,
+    padding: 16,
+  },
+  calendar: {
+    borderRadius: DISCOVERY_RADIUS.md,
+    backgroundColor: "transparent",
+  },
+  forgetChip: {
+    alignSelf: "center",
+    marginTop: 16,
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderRadius: DISCOVERY_RADIUS.md,
+  },
+  forgetChipText: {
+    fontFamily: "SBold",
+    fontSize: SIZES.small,
   },
   btnBox: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 8,
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 10,
-    gap: 6,
-  },
-  backButtonText: {
-    color: "#9E9E9E",
-    fontSize: 15,
-    fontFamily: "SBold",
+    paddingVertical: 12,
+    paddingBottom: 10,
+    paddingTop: 20,
   },
 });
 
-export default UsernameAndPasswordScreen;
+export default UsernameAndDateScreen;

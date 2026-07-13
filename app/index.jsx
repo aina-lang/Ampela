@@ -21,7 +21,7 @@ async function fetchData(setIsFirstTime, setInitialRouteName, setLoaded) {
       await updatePreference(preferenceData);
     }
 
-    setInitialRouteName(isFirstTimeLaunch ? "(discovery)" : "(discovery)");
+    setInitialRouteName(isFirstTimeLaunch ? "(discovery)" : "(drawer)/(main)");
   } catch (error) {
     console.error("Error:", error);
   } finally {

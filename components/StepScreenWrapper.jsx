@@ -5,13 +5,14 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withSpring,
-  FadeInUp,
 } from "react-native-reanimated";
-import { SIZES, COLORS, SHADOWS } from "@/constants";
+import { SIZES, COLORS } from "@/constants";
 import StepIndicator from "@/components/StepIndicator";
 import { useSelector } from "@legendapp/state/react";
 import { preferenceState } from "@/legendstate/AmpelaStates";
 import { StatusBar } from "expo-status-bar";
+import { useDiscoveryTheme } from "@/components/discovery/DiscoveryTheme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 
@@ -25,58 +26,39 @@ const StepScreenWrapper = ({
   contentStyle,
 }) => {
   const progress = useSharedValue(0);
-  const { theme } = useSelector(() => preferenceState.get());
-  const currentAccent = accentColor || (theme === "pink" ? "#FF7575" : "#FE8729");
+  const { theme, accentColor: themeAccent, surface } = useDiscoveryTheme();
+  const currentAccent = accentColor || themeAccent;
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     progress.value = 0;
-    progress.value = withSpring(1, {
-      damping: 20,
-      stiffness: 100,
-    });
+    progress.value = withSpring(1, { damping: 20, stiffness: 100 });
   }, []);
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: progress.value,
-      transform: [
-        {
-          translateY: withTiming(progress.value ? 0 : 20, {
-            duration: 400,
-          }),
-        },
-      ],
-    };
-  });
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [
+      {
+        translateY: withTiming(progress.value ? 0 : 20, { duration: 400 }),
+      },
+    ],
+  }));
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: surface }]}>
       <StatusBar style="dark" />
       <View style={styles.background}>
         <View style={[styles.blob, { backgroundColor: currentAccent }]} />
-        <View
-          style={[
-            styles.blob,
-            styles.blob2,
-            { backgroundColor: currentAccent },
-          ]}
-        />
+        <View style={[styles.blob, styles.blob2, { backgroundColor: currentAccent }]} />
       </View>
 
-      <AnimatedView style={[styles.content, animatedStyle]}>
+      <AnimatedView style={[styles.content, animatedStyle, { paddingTop: insets.top + 16 }]}>
         <View style={styles.header}>
-          <Text style={[styles.eyebrow, { color: currentAccent }]}>
-            {eyebrow}
-          </Text>
+          <Text style={[styles.eyebrow, { color: currentAccent }]}>{eyebrow}</Text>
           <Text style={styles.title}>{title}</Text>
-          {subtitle && (
-            <Text style={styles.subtitle}>{subtitle}</Text>
-          )}
+          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
           <View style={styles.stepIndicatorWrapper}>
-            <StepIndicator
-              currentStep={stepNumber}
-              accentColor={currentAccent}
-            />
+            <StepIndicator currentStep={stepNumber} accentColor={currentAccent} />
           </View>
         </View>
 
@@ -89,7 +71,6 @@ const StepScreenWrapper = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.neutral100,
   },
   background: {
     ...StyleSheet.absoluteFillObject,
@@ -97,53 +78,54 @@ const styles = StyleSheet.create({
   },
   blob: {
     position: "absolute",
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    opacity: 0.06,
-    top: -50,
-    right: -80,
+    width: 380,
+    height: 380,
+    borderRadius: 190,
+    opacity: 0.08,
+    top: -90,
+    right: -90,
   },
   blob2: {
-    width: 200,
-    height: 200,
+    width: 280,
+    height: 280,
     bottom: 100,
-    left: -60,
+    left: -80,
     top: undefined,
     right: undefined,
+    opacity: 0.06,
   },
   content: {
     flex: 1,
     paddingHorizontal: 24,
   },
   header: {
-    paddingTop: 8,
-    paddingBottom: 8,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
   eyebrow: {
     fontFamily: "SBold",
-    fontSize: SIZES.small,
+    fontSize: SIZES.small - 1,
     letterSpacing: 1.5,
     textTransform: "uppercase",
-    marginBottom: 8,
+    marginBottom: 10,
   },
   title: {
     fontFamily: "Bold",
     fontSize: SIZES.width * 0.065,
     color: "#1A1A1A",
-    marginBottom: 8,
-    lineHeight: SIZES.width * 0.075,
+    marginBottom: 10,
+    lineHeight: SIZES.width * 0.078,
   },
   subtitle: {
     fontFamily: "Regular",
     fontSize: SIZES.small,
-    color: "#8A8A8A",
-    lineHeight: 20,
-    marginBottom: 8,
+    color: "#6A6A6A",
+    lineHeight: 22,
+    marginBottom: 10,
   },
   stepIndicatorWrapper: {
-    marginTop: 4,
-    marginBottom: 8,
+    marginTop: 8,
+    marginBottom: 4,
   },
   body: {
     flex: 1,

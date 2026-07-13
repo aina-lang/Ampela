@@ -1,33 +1,39 @@
 import React, { useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  TouchableOpacity,
-  SafeAreaView,
-  FlatList,
-} from "react-native";
+import { View, Text, StyleSheet, Pressable, SafeAreaView, FlatList } from "react-native";
 import { Checkbox } from "expo-checkbox";
 import { COLORS, SIZES } from "@/constants";
-import { useNavigation } from "expo-router";
+import { useRouter } from "expo-router";
 import { AntDesign } from "@expo/vector-icons";
 import ModernButton from "@/components/ModernButton";
 import { StatusBar } from "expo-status-bar";
+import { useSelector } from "@legendapp/state/react";
+import { preferenceState } from "@/legendstate/AmpelaStates";
+import {
+  MeshBackground,
+  DiscoveryHeader,
+  DiscoveryBackButton,
+  DiscoveryCard,
+  useDiscoveryTheme,
+} from "@/components/discovery";
+import { DISCOVERY_SPACING, DISCOVERY_RADIUS } from "@/components/discovery/DiscoveryTheme";
 
-const confidentiality = () => {
-  const navigation = useNavigation();
+const Confidentiality = () => {
+  const router = useRouter();
   const { theme } = useSelector(() => preferenceState.get());
-  const accentColor = theme === "pink" ? "#FF7575" : "#FE8729";
-  const accentColorDisabled = theme === "pink" ? "#FFB5B5" : "#FED4A0";
+  const {
+    accentColor,
+    accentColorDisabled,
+    surface,
+    accentSoft,     
+  } = useDiscoveryTheme();
   const [accepted, setAccepted] = useState(false);
 
   const handleNextBtnPress = useCallback(() => {
-    navigation.navigate("login");
+    router.push("/(discovery)/login");
   }, []);
 
   const prevHandled = () => {
-    navigation.goBack();
+    router.back();
   };
 
   const confidentialiteData = [
@@ -59,7 +65,7 @@ const confidentiality = () => {
   ];
 
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
+    <DiscoveryCard style={styles.card}>
       <View style={styles.cardIcon}>
         <AntDesign name="lock" size={20} color={accentColor} />
       </View>
@@ -67,25 +73,20 @@ const confidentiality = () => {
         <Text style={styles.cardTitle}>{item.title}</Text>
         <Text style={styles.cardDescription}>{item.description}</Text>
       </View>
-    </View>
+    </DiscoveryCard>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: surface }]}>
       <StatusBar style="dark" />
-      <View style={styles.meshBackground}>
-        <View style={[styles.blob, { backgroundColor: COLORS.accent500 }]} />
-        <View style={[styles.blob, styles.blob2, { backgroundColor: COLORS.accent400 }]} />
-      </View>
+      <MeshBackground color={accentColor} surfaceColor={surface} />
 
       <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={[styles.eyebrow, { color: accentColor }]}>Avant de continuer</Text>
-          <Text style={styles.title}>Confidentialité</Text>
-          <Text style={styles.subtitle}>
-            Nous prenons la protection de vos données très au sérieux
-          </Text>
-        </View>
+        <DiscoveryHeader
+          eyebrow="Confidentialité"
+          title="Vos données, notre priorité"
+          subtitle="Nous prenons la protection de vos données très au sérieux."
+        />
 
         <FlatList
           data={confidentialiteData}
@@ -101,7 +102,8 @@ const confidentiality = () => {
             onPress={() => setAccepted(!accepted)}
             style={[
               styles.acceptRow,
-              { borderColor: accepted ? accentColor : "#E5E5E5" },
+              accepted && { backgroundColor: accentSoft },
+              accepted && styles.acceptRowActive,
             ]}
           >
             <Checkbox
@@ -116,10 +118,7 @@ const confidentiality = () => {
           </Pressable>
 
           <View style={styles.navRow}>
-            <TouchableOpacity onPress={prevHandled} style={styles.backButton}>
-              <AntDesign name="arrowleft" size={16} color="#9E9E9E" />
-              <Text style={styles.backButtonText}>Retour</Text>
-            </TouchableOpacity>
+            <DiscoveryBackButton onPress={prevHandled} />
 
             <View style={{ flex: 1 }} />
 
@@ -129,7 +128,7 @@ const confidentiality = () => {
               disabled={!accepted}
               accentColor={accentColor}
               accentColorDisabled={accentColorDisabled}
-              style={{ flex: 1, marginLeft: 12 }}
+              style={{ marginLeft: 12 }}
             />
           </View>
         </View>
@@ -141,57 +140,11 @@ const confidentiality = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.neutral100,
-  },
-  meshBackground: {
-    ...StyleSheet.absoluteFillObject,
-    overflow: "hidden",
-  },
-  blob: {
-    position: "absolute",
-    width: 400,
-    height: 400,
-    borderRadius: 200,
-    opacity: 0.05,
-    top: -100,
-    right: -100,
-  },
-  blob2: {
-    width: 300,
-    height: 300,
-    bottom: 150,
-    left: -100,
-    top: undefined,
-    right: undefined,
   },
   content: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 60,
-  },
-  header: {
-    marginBottom: 24,
-  },
-  eyebrow: {
-    fontFamily: "SBold",
-    fontSize: SIZES.small,
-    letterSpacing: 1.5,
-    textTransform: "uppercase",
-    color: COLORS.accent500,
-    marginBottom: 10,
-  },
-  title: {
-    fontFamily: "Bold",
-    fontSize: SIZES.width * 0.075,
-    color: "#1A1A1A",
-    lineHeight: SIZES.width * 0.09,
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontFamily: "Regular",
-    fontSize: SIZES.small,
-    color: "#8A8A8A",
-    lineHeight: 20,
+    paddingTop: 16,
   },
   list: {
     flex: 1,
@@ -202,20 +155,16 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: "row",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: "#F0F0F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    elevation: 2,
     gap: 14,
   },
   cardIcon: {
     marginTop: 2,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#FAFAFA",
+    alignItems: "center",
+    justifyContent: "center",
   },
   cardTextContainer: {
     flex: 1,
@@ -233,21 +182,21 @@ const styles = StyleSheet.create({
     color: "#7A7A7A",
   },
   bottomArea: {
-    paddingBottom: 32,
-    paddingTop: 16,
+    paddingBottom: 10,
+    paddingTop: 20,
   },
   acceptRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    borderWidth: 1.5,
-    borderRadius: 14,
-    padding: 16,
+    borderRadius: DISCOVERY_RADIUS.md,
+    padding: DISCOVERY_SPACING.lg,
     marginBottom: 20,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.neutral100,
   },
   checkbox: {
     borderRadius: 6,
+    borderWidth: 1.5,
   },
   acceptText: {
     flex: 1,
@@ -260,18 +209,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    gap: 6,
-  },
-  backButtonText: {
-    color: "#9E9E9E",
-    fontSize: 15,
-    fontFamily: "SBold",
-  },
 });
 
-export default confidentiality;
+export default Confidentiality;

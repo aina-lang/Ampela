@@ -14,6 +14,7 @@ import {
   userState,
 } from "@/legendstate/AmpelaStates";
 import i18n from "@/constants/i18n";
+import { useDiscoveryTheme } from "@/components/discovery";
 
 LocaleConfig.locales["fr"] = {
   monthNames: [
@@ -51,6 +52,8 @@ const index = () => {
   const user = useSelector(() => userState.get());
   const { theme, language } = useSelector(() => preferenceState.get());
   const { cyclesData } = useSelector(() => cycleMenstruelState.get());
+  const discovery = useDiscoveryTheme();
+
 
   const [howmanytimeReminder1, setHowmanytimeReminder1] = useState("quotidien");
   const [howmanytimeReminder2, setHowmanytimeReminder2] = useState("quotidien");
@@ -161,10 +164,12 @@ const index = () => {
       >
         <BackgroundContainer>
           {/* Calendrier */}
-          <View style={styles.calendarCard}>
+          <View  style={[styles.calendarCard,{
+                backgroundColor: discovery.surface,
+              }]}>
             <Calendar
               disableAllTouchEventsForDisabledDays
-              style={styles.calendar}
+              style={[styles.calendar]}
               theme={{
                 textSectionTitleColor: "#B0B0B0",
                 todayTextColor: "#FF7575",
@@ -193,7 +198,9 @@ const index = () => {
           </View>
 
           {/* Rappels */}
-          <View style={styles.reminderCard}>
+          <View style={[styles.reminderCard,{
+                backgroundColor: discovery.surface,
+              }]}>
             <Text style={styles.reminderTitle}>Rappels</Text>
             <View style={{ gap: 10 }}>
               <ReminderItem
@@ -234,10 +241,9 @@ const styles = StyleSheet.create({
   calendarCard: {
     marginTop: 160,
     marginBottom: 20,
-    backgroundColor: "#FAFAFA",
+   
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#F0F0F0",
+
     padding: 8,
   },
   calendar: {
@@ -260,9 +266,7 @@ const styles = StyleSheet.create({
     marginBottom: 140,
     padding: 16,
     borderRadius: 16,
-    backgroundColor: "#FAFAFA",
-    borderWidth: 1,
-    borderColor: "#F0F0F0",
+
   },
 });
 

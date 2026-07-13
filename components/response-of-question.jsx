@@ -1,16 +1,20 @@
 import React from "react";
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
 import { COLORS, SIZES } from "@/constants";
+import { DISCOVERY_RADIUS, DISCOVERY_SHADOWS, useDiscoveryTheme } from "@/components/discovery/DiscoveryTheme";
 
-const ResponseChip = ({ text, active, onPress, accentColor = "#FF7575" }) => {
+const ResponseChip = ({ text, active, onPress, accentColor }) => {
+  const { accentColor: themeAccent, accentSoft } = useDiscoveryTheme();
+  const color = accentColor || themeAccent;
+
   return (
     <TouchableOpacity
       style={[
         styles.container,
         {
-          backgroundColor: active ? accentColor : "#FAFAFA",
-          borderColor: active ? accentColor : "#F0F0F0",
+          backgroundColor: active ? color : accentSoft,
         },
+        active && DISCOVERY_SHADOWS.button(color),
       ]}
       onPress={onPress}
       activeOpacity={0.85}
@@ -18,7 +22,8 @@ const ResponseChip = ({ text, active, onPress, accentColor = "#FF7575" }) => {
       <Text
         style={[
           styles.text,
-          { color: active ? COLORS.neutral100 : "#3A3A3A" },
+          { color: active ? COLORS.neutral100 : color },
+          active && styles.textSelected,
         ]}
       >
         {text}
@@ -27,23 +32,24 @@ const ResponseChip = ({ text, active, onPress, accentColor = "#FF7575" }) => {
   );
 };
 
-// Alias conservés pour ne pas casser les imports existants
-// (les deux composants étaient identiques)
 export const ResponseOfQuestion0 = ResponseChip;
 export const ResponseOfQuestion1 = ResponseChip;
 
 const styles = StyleSheet.create({
   container: {
-    height: 40,
+    height: 42,
     alignSelf: "flex-start",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1,
+    paddingHorizontal: 18,
+    borderRadius: DISCOVERY_RADIUS.md,
+    marginRight: 8,
   },
   text: {
     fontFamily: "Regular",
     fontSize: SIZES.small,
+  },
+  textSelected: {
+    fontFamily: "SBold",
   },
 });

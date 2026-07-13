@@ -27,6 +27,7 @@ import Animated, {
   useAnimatedStyle,
 } from "react-native-reanimated";
 import AuthContent from "@/components/AuthContentFromSetting";
+import { StatusBar } from "expo-status-bar";
 
 const DrawerComponent = observer(() => {
   const router = useRouter();
@@ -90,6 +91,7 @@ const DrawerComponent = observer(() => {
   const insets = useSafeAreaInsets();
   return (
        <SafeAreaView className="flex-1" style={{ marginTop: -(insets.top + 40) }}>
+      <StatusBar style="light" />
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ModalProvider>
           <AuthContextProvider>
@@ -145,27 +147,15 @@ const DrawerComponent = observer(() => {
                     />
                   </View>
 
-                  {/* Général */}
+                   {/* Général */}
                   <Text style={styles.sectionLabel}>Général</Text>
                   <View style={styles.section}>
                     <DrawerItem
-                      label="Langues"
+                      label="Langue et thème"
                       labelStyle={styles.itemLabel}
-                      onPress={() => router.push("settings/changelanguage")}
+                      onPress={() => router.push("settings/language-and-theme")}
                       icon={({ size }) => (
                         <Ionicons name="language" color={accentColor} size={size} />
-                      )}
-                    />
-                    <DrawerItem
-                      label="Thème"
-                      labelStyle={styles.itemLabel}
-                      onPress={() => router.push("settings/changetheme")}
-                      icon={({ size }) => (
-                        <Ionicons
-                          name="color-palette-outline"
-                          color={accentColor}
-                          size={size}
-                        />
                       )}
                     />
                     <DrawerItem

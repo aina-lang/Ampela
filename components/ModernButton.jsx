@@ -1,6 +1,7 @@
 import React from "react";
-import { TouchableOpacity, Text, ActivityIndicator, StyleSheet, View } from "react-native";
-import { COLORS, SIZES, SHADOWS } from "@/constants";
+import { TouchableOpacity, Text, ActivityIndicator, StyleSheet } from "react-native";
+import { COLORS, SIZES } from "@/constants";
+import { DISCOVERY_RADIUS, DISCOVERY_SHADOWS } from "@/components/discovery/DiscoveryTheme";
 
 const ModernButton = ({
   title,
@@ -9,10 +10,19 @@ const ModernButton = ({
   loading = false,
   accentColor = "#FF7575",
   accentColorDisabled = "#FFB5B5",
+  variant = "filled",
   style,
   textStyle,
 }) => {
   const isDisabled = disabled || loading;
+
+  const backgroundColor = variant === "filled"
+    ? (isDisabled ? accentColorDisabled : accentColor)
+    : "transparent";
+
+  const textColor = variant === "filled"
+    ? (isDisabled ? "rgba(255,255,255,0.7)" : COLORS.neutral100)
+    : accentColor;
 
   return (
     <TouchableOpacity
@@ -22,19 +32,21 @@ const ModernButton = ({
       style={[
         styles.button,
         {
-          backgroundColor: isDisabled ? accentColorDisabled : accentColor,
-          shadowColor: isDisabled ? "transparent" : accentColor,
+          backgroundColor,
+          borderColor: variant === "outlined" ? accentColor : "transparent",
+          borderWidth: variant === "outlined" ? 1.5 : 0,
         },
+        !isDisabled && variant === "filled" && DISCOVERY_SHADOWS.button(accentColor),
         style,
       ]}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={COLORS.neutral100} />
+        <ActivityIndicator size="small" color={textColor} />
       ) : (
         <Text
           style={[
             styles.buttonText,
-            { color: isDisabled ? "#9E9E9E" : COLORS.neutral100 },
+            { color: textColor },
             textStyle,
           ]}
         >
@@ -49,14 +61,10 @@ const styles = StyleSheet.create({
   button: {
     paddingVertical: 16,
     paddingHorizontal: 24,
-    borderRadius: 16,
+    borderRadius: DISCOVERY_RADIUS.md,
     alignItems: "center",
     justifyContent: "center",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 4,
-    minHeight: 52,
+    minHeight: 54,
   },
   buttonText: {
     fontFamily: "SBold",

@@ -1,6 +1,9 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { SIZES, COLORS } from "@/constants";
+import Animated, { useAnimatedStyle, withSpring } from "react-native-reanimated";
+
+const AnimatedCircle = Animated.createAnimatedComponent(View);
 
 const StepIndicator = ({ currentStep, accentColor = "#FF7575" }) => {
   const steps = [
@@ -19,43 +22,33 @@ const StepIndicator = ({ currentStep, accentColor = "#FF7575" }) => {
         return (
           <View key={step.key} style={styles.stepWrapper}>
             <View style={styles.stepContent}>
-              <View
+              <AnimatedCircle
                 style={[
                   styles.circle,
                   {
-                    backgroundColor: isCompleted || isCurrent ? accentColor : "#F0F0F0",
-                    borderColor: isCompleted || isCurrent ? accentColor : "#E0E0E0",
-                    transform: isCurrent ? [{ scale: 1.1 }] : [{ scale: 1 }],
+                    backgroundColor: isCompleted || isCurrent ? accentColor : "#F4F4F4",
+                    transform: [{ scale: isCurrent ? 1.12 : 1 }],
                   },
                 ]}
               >
                 {isCompleted ? (
-                  <View style={styles.checkmark}>
-                    <Text style={[styles.checkText, { color: COLORS.neutral100 }]}>
-                      ✓
-                    </Text>
-                  </View>
+                  <Text style={styles.checkText}>✓</Text>
                 ) : (
                   <Text
                     style={[
                       styles.number,
-                      {
-                        color: isCurrent ? COLORS.neutral100 : "#B0B0B0",
-                        fontFamily: isCurrent ? "SBold" : "Regular",
-                      },
+                      { color: isCurrent ? COLORS.neutral100 : "#B0B0B0" },
                     ]}
                   >
                     {stepNumber}
                   </Text>
                 )}
-              </View>
+              </AnimatedCircle>
               {index < steps.length - 1 && (
                 <View
                   style={[
                     styles.line,
-                    {
-                      backgroundColor: stepNumber < currentStep ? accentColor : "#E8E8E8",
-                    },
+                    { backgroundColor: stepNumber < currentStep ? accentColor : "#EFEFEF" },
                   ]}
                 />
               )}
@@ -96,24 +89,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   circle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2.5,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
     zIndex: 2,
   },
-  checkmark: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
   checkText: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: "Bold",
+    color: COLORS.neutral100,
   },
   number: {
     fontSize: 14,
+    fontFamily: "SBold",
   },
   line: {
     flex: 1,

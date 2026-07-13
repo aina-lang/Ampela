@@ -7,12 +7,11 @@ import i18n from "@/constants/i18n";
 import { preferenceState, updatePreference } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 import { Ionicons } from "@expo/vector-icons";
-import ModernButton from "@/components/ModernButton";
 import { StatusBar } from "expo-status-bar";
 import { MeshBackground, DiscoveryHeader, useDiscoveryTheme } from "@/components/discovery";
 import { DISCOVERY_RADIUS, DISCOVERY_SPACING } from "@/components/discovery/DiscoveryTheme";
 
-const SelectLanguage = () => {
+const LanguageAndThemeScreen = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { language, theme } = useSelector(() => preferenceState.get());
@@ -35,8 +34,8 @@ const SelectLanguage = () => {
     updatePreference({ theme: themeKey });
   };
 
-  const handleNextBtnPress = useCallback(() => {
-    router.push("/(discovery)/confidentiality");
+  const handleBack = useCallback(() => {
+    router.back();
   }, []);
 
   const LanguageCard = ({ code, label, flag }) => {
@@ -121,7 +120,7 @@ const SelectLanguage = () => {
 
       <View style={[styles.content, { paddingTop: insets.top + 16 }]}>
         <DiscoveryHeader
-          eyebrow="Bienvenue"
+          eyebrow="Paramètres"
           title="Langue et thème"
           subtitle="Choisissez votre langue et le thème qui vous convient."
         />
@@ -146,12 +145,9 @@ const SelectLanguage = () => {
         </View>
 
         <View style={styles.bottomArea}>
-          <ModernButton
-            title="Continuer"
-            onPress={handleNextBtnPress}
-            accentColor={accentColor}
-            accentColorDisabled={accentColorDisabled}
-          />
+          <TouchableOpacity onPress={handleBack} activeOpacity={0.7} style={styles.backButton}>
+            <Text style={styles.backButtonText}>Retour</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
@@ -261,6 +257,15 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     paddingTop: 20,
   },
+  backButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+  },
+  backButtonText: {
+    fontSize: 15,
+    fontFamily: "SBold",
+    color: "#9E9E9E",
+  },
 });
 
-export default SelectLanguage;
+export default LanguageAndThemeScreen;
