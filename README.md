@@ -1,50 +1,57 @@
-# Welcome to your Expo app 👋
+# Ampela
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Monorepo de l'application Ampela (suivi du cycle menstruel, forum et messagerie).
 
-## Get started
+| Dossier     | Contenu                                                     |
+|-------------|-------------------------------------------------------------|
+| `mobile/`   | Application Expo / React Native (expo-router, Legend State) |
+| `backend/`  | API NestJS + PostgreSQL (Prisma), authentification par code e-mail |
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-    npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Démarrage rapide
 
 ```bash
-npm run reset-project
+# API
+cd backend && cp .env.example .env && npm install
+npx prisma migrate dev && npm run start:dev
+
+# Mobile
+cd mobile && npm install && npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+L'URL de l'API utilisée par l'app mobile se règle dans `mobile/services/api.js`
+(variable `EXPO_PUBLIC_API_URL` ou valeur par défaut).
 
-## Learn more
+## Publication (Google Play)
 
-To learn more about developing your project with Expo, look at the following resources:
+Le build et la signature sont gérés par [EAS Build](https://docs.expo.dev/build/introduction/) (`mobile/eas.json`). Les dossiers natifs `mobile/android` et `mobile/ios` ne sont pas versionnés : EAS les régénère depuis `app.json`.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Première fois
 
-## Join the community
+```bash
+cd mobile
+npm install -g eas-cli      # si besoin
+eas login
+eas credentials -p android  # laisser EAS générer et conserver le keystore de signature
+```
 
-Join our community of developers creating universal apps.
+Dans la Play Console : créer l'application (package `com.maminiaina_mercia.Ampela`), puis un compte de service avec le rôle « Administrateur des versions », et enregistrer sa clé JSON dans `mobile/google-service-account.json` (ignoré par git).
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Chaque version
+
+```bash
+cd mobile
+eas build -p android --profile production   # .aab signé, versionCode auto-incrémenté
+eas submit -p android --latest              # envoi sur la piste « internal » (brouillon)
+```
+
+Puis dans la Play Console : promouvoir vers « fermé » ou « production ». Pour un APK de test à installer directement : `eas build -p android --profile preview`.
+
+### Fiche Play Store
+
+- Politique de confidentialité : `https://ampela.178-104-61-143.sslip.io/privacy/`
+- Suppression de compte (section « Sécurité des données ») : `https://ampela.178-104-61-143.sslip.io/account-deletion/`
+- Données de démonstration pour les captures et la revue : `cd backend && npm run seed` (comptes `*@demo.ampela.mg`).
+
+## Application professionnelle (`doctor/`)
+
+`doctor/` est l'application des professionnelles de santé, « Ampela Pro » : copie adaptée de `mobile/` qui partage le même backend. Connexion obligatoire, profil avec spécialité et rôle `doctor`, tableau de bord (questions sans réponse, messages, notifications), pas de calendrier ni de rappels. Voir `doctor/README.md`.

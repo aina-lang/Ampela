@@ -1,0 +1,81 @@
+{
+  "expo": {
+    "name": "Ampela Pro",
+    "slug": "ampela-pro",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/logo/logo-1.png",
+    "scheme": "ampelapro",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/logo/logo-1.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FF7575"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.maminiaina.ampelapro"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#FF7575"
+      },
+      "package": "com.maminiaina_mercia.AmpelaPro",
+      "permissions": [
+        "android.permission.WAKE_LOCK",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ],
+      "versionCode": 1
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/favicon.png",
+          "color": "#ffffff",
+          "sounds": [
+            "./assets/sound/notification.mp3"
+          ]
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Cette application nécessite une permission d'accès à votre galerie"
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Autorisez $(PRODUCT_NAME) à utiliser Face ID pour déverrouiller l'application."
+        }
+      ],
+      "expo-router",
+      "expo-font",
+      "expo-sqlite",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Autorisez $(PRODUCT_NAME) à utiliser le micro pour envoyer des messages vocaux."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    },
+    "description": "Application des professionnelles de santé Ampela : répondre aux questions du forum et échanger en privé avec les utilisatrices.",
+    "primaryColor": "#FF7575"
+  }
+}

@@ -1,0 +1,108 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { unlink } from 'node:fs/promises';
+import { join } from 'node:path';
+import { PrismaService } from '../prisma/prisma.service';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+
+/** Champs publics d'un profil (jamais l'e-mail ni les données de santé). */
+export const publicUserSelect = {
+  id: true,
+  username: true,
+  profession: true,
+  role: true,
+  profileImage: true,
+} as const;
+
+@Injectable()
+export class UsersService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async getMe(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Profil introuvable.');
+    return user;
+  }
+
+  updateMe(userId: string, dto: UpdateProfileDto) {
+    return this.prisma.user.update({ where: { id: userId }, data: dto });
+  }
+
+  /**
+   * Suppression de compte (exigence Google Play) : efface l'utilisatrice et
+   * tout ce qui lui est rattaché. Cycles, posts, likes, commentaires et
+   * messages partent par cascade ; les salons de discussion et la demande
+   * OTP sont supprimés explicitement, puis l'avatar sur le disque.
+   */
+  async deleteMe(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Profil introuvable.');
+
+    await this.prisma.$transaction([
+      this.prisma.room.deleteMany({
+        where: { OR: [{ userAId: userId }, { userBId: userId }] },
+      }),
+      this.prisma.otpRequest.deleteMany({ where: { email: user.email } }),
+      this.prisma.user.delete({ where: { id: userId } }),
+    ]);
+
+    const avatarPath = this.localUploadPath(user.profileImage);
+    if (avatarPath) await unlink(avatarPath).catch(() => undefined);
+
+    return { ok: true };
+  }
+
+  /** Chemin disque d'une URL servie depuis /uploads/, sinon null. */
+  private localUploadPath(url: string | null): string | null {
+    const match = /\/uploads\/([A-Za-z0-9._-]+)$/.exec(url ?? '');
+    return match ? join(process.cwd(), 'uploads', match[1]) : null;
+  }
+
+  /**
+   * Contacts de la messagerie, triés par date du dernier message échangé.
+   * La messagerie est réservée aux échanges professionnelle ↔ utilisatrice :
+   * une utilisatrice voit les professionnelles, une professionnelle voit
+   * les utilisatrices.
+   */
+  async listOthers(userId: string) {
+    const me = await this.prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+    const otherRole = me?.role === 'doctor' ? 'user' : 'doctor';
+    const users = await this.prisma.user.findMany({
+      where: { id: { not: userId }, role: otherRole, username: { not: '' } },
+      select: publicUserSelect,
+      take: 200,
+    });
+    const rooms = await this.prisma.room.findMany({
+      where: { OR: [{ userAId: userId }, { userBId: userId }] },
+      select: { id: true, userAId: true, userBId: true, userAClearedAt: true, userBClearedAt: true },
+    });
+    type LastMessage = { text: string; userId: string; createdAt: Date; attachmentType: string | null; deletedAt: Date | null };
+    const lastByUser = new Map<string, LastMessage>();
+    const unreadByUser = new Map<string, number>();
+    for (const room of rooms) {
+      const other = room.userAId === userId ? room.userBId : room.userAId;
+      const clearedAt = room.userAId === userId ? room.userAClearedAt : room.userBClearedAt;
+      const visible = { roomId: room.id, ...(clearedAt ? { createdAt: { gt: clearedAt } } : {}) };
+      const [last, unread] = await Promise.all([
+        this.prisma.message.findFirst({
+          where: visible,
+          orderBy: { createdAt: 'desc' },
+          select: { text: true, userId: true, createdAt: true, attachmentType: true, deletedAt: true },
+        }),
+        this.prisma.message.count({ where: { ...visible, userId: other, readAt: null } }),
+      ]);
+      if (last) lastByUser.set(other, last);
+      unreadByUser.set(other, unread);
+    }
+    return users
+      .map((u) => ({
+        ...u,
+        lastMessage: lastByUser.get(u.id) ?? null,
+        unreadCount: unreadByUser.get(u.id) ?? 0,
+      }))
+      .sort(
+        (a, b) =>
+          (b.lastMessage?.createdAt.getTime() ?? 0) -
+          (a.lastMessage?.createdAt.getTime() ?? 0),
+      );
+  }
+}
