@@ -115,3 +115,57 @@ export function generateCycleMenstrualData(
 
   return cyclesData;
 }
+
+/**
+ * Jeu de cycles cohérent avec les informations actuelles.
+ *
+ * Un jeu stocké peut mélanger plusieurs générations de prédictions
+ * (anciennes versions de la synchronisation, restaurations) : des cycles
+ * qui commencent à quelques jours d'écart et se chevauchent. On garde :
+ *  - à partir de la dernière date de règles saisie : uniquement la chaîne
+ *    J1 + k × durée du cycle (celle que l'onboarding / « Modifier le
+ *    cycle » génère), toute autre prédiction est écartée ;
+ *  - avant cette date (historique) : un seul cycle par période, deux
+ *    débuts à moins de 15 jours d'écart ne pouvant pas être deux cycles
+ *    réels (le plus récent l'emporte, car il vient de la saisie la plus
+ *    récente).
+ * Renvoie { kept, dropped }.
+ */
+export function normalizeCycles(cycles = [], { lastMenstruationDate, cycleDuration } = {}) {
+  const valid = cycles.filter((c) => c?.startMenstruationDate);
+  // Doublons exacts : la dernière ligne insérée l'emporte.
+  const byStart = new Map();
+  for (const cycle of valid) byStart.set(cycle.startMenstruationDate, cycle);
+  const sorted = [...byStart.values()].sort((a, b) =>
+    a.startMenstruationDate.localeCompare(b.startMenstruationDate)
+  );
+
+  const length = Number(cycleDuration) || 0;
+  const anchor = lastMenstruationDate ? moment(lastMenstruationDate) : null;
+  const inChain = (cycle) => {
+    if (!anchor || !length) return true;
+    const diff = moment(cycle.startMenstruationDate).diff(anchor, "days");
+    return diff >= 0 && diff % length === 0;
+  };
+
+  const kept = [];
+  const history = sorted.filter((c) => anchor && moment(c.startMenstruationDate).isBefore(anchor));
+  const future = sorted.filter((c) => !anchor || !moment(c.startMenstruationDate).isBefore(anchor));
+
+  // Historique : on parcourt du plus récent au plus ancien, en écartant tout
+  // début à moins de 15 jours du dernier conservé.
+  let lastKeptStart = anchor;
+  for (const cycle of [...history].reverse()) {
+    const gap = lastKeptStart ? lastKeptStart.diff(moment(cycle.startMenstruationDate), "days") : 99;
+    if (gap < 15) continue;
+    kept.unshift(cycle);
+    lastKeptStart = moment(cycle.startMenstruationDate);
+  }
+  for (const cycle of future) {
+    if (inChain(cycle)) kept.push(cycle);
+  }
+
+  const keptIds = new Set(kept.map((c) => c.id ?? c.startMenstruationDate));
+  const dropped = cycles.filter((c) => !keptIds.has(c.id ?? c.startMenstruationDate));
+  return { kept, dropped };
+}

@@ -7,10 +7,14 @@ import {
   userState,
   updateUser,
   updateCycleMenstruelData,
+  touchCycles,
 } from "@/legendstate/AmpelaStates";
 import AppHeader, { tabHeaderIcons } from "@/components/AppHeader";
 import { useUnreadNotifications } from "@/hooks/useUnreadNotifications";
 import { refreshRemindersIfStale } from "@/services/reminders";
+import { normalizeCycles } from "@/utils/menstruationUtils";
+import { deleteCycleById } from "@/services/database";
+import { scheduleSync } from "@/services/sync";
 
 const TabLayout = () => {
   const user = useSelector(() => userState.get());
@@ -25,7 +29,16 @@ const TabLayout = () => {
         await setFirstLaunchFalse();
         updateUser(userFromSqlite);
 
-        const cyclesFromSqlite = await getAllCycle();
+        let cyclesFromSqlite = await getAllCycle();
+        // Cohérence : un jeu mélangé (plusieurs prédictions qui se
+        // chevauchent) est nettoyé, localement puis dans le cloud.
+        const { kept, dropped } = normalizeCycles(cyclesFromSqlite, userFromSqlite || {});
+        if (dropped.length > 0) {
+          for (const cycle of dropped) if (cycle.id != null) await deleteCycleById(cycle.id);
+          cyclesFromSqlite = kept;
+          touchCycles();
+          scheduleSync();
+        }
         updateCycleMenstruelData(cyclesFromSqlite);
         // Renouvelle les rappels planifiés si leur fenêtre est entamée.
         refreshRemindersIfStale(cyclesFromSqlite).catch((error) =>

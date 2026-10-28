@@ -18,6 +18,7 @@ import {
   updateCycleMenstruelData,
 } from "@/legendstate/AmpelaStates";
 import { scheduleReminder, cancelReminder, rescheduleAllReminders } from "@/services/reminders";
+import { normalizeCycles } from "@/utils/menstruationUtils";
 
 /**
  * Synchronisation multi-appareils, règle unique : « le plus récent gagne ».
@@ -201,10 +202,14 @@ const toPayload = (cycle) => ({
 
 /** Remplace les cycles locaux par ceux du cloud et replanifie les rappels. */
 const replaceLocalCycles = async (remoteCycles, updatedAt) => {
+  // Cohérence avec le profil : prédictions mélangées écartées à l'arrivée.
+  const { kept, dropped } = normalizeCycles(remoteCycles, userState.get());
   await deleteAllCycles();
-  if (remoteCycles.length > 0) await addCyclesMenstruels(remoteCycles.map(toPayload));
+  if (kept.length > 0) await addCyclesMenstruels(kept.map(toPayload));
   const refreshed = await getAllCycle();
-  updateCycleMenstruelData(refreshed, { updatedAt: updatedAt ?? null });
+  // Si le cloud contenait du mélange, la version nettoyée devient la plus
+  // récente et repartira vers le cloud au prochain passage.
+  updateCycleMenstruelData(refreshed, dropped.length > 0 ? { touch: true } : { updatedAt: updatedAt ?? null });
   await rescheduleAllReminders(refreshed);
 };
 
