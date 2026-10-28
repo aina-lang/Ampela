@@ -8,6 +8,10 @@ export const createPost = ({ title, description, photos }) =>
 
 export const deletePost = (postId) => apiDelete(`/posts/${postId}`);
 
+/** Modification par l'auteure ; renvoie le post mis à jour. */
+export const updatePost = (postId, { title, description, photos }) =>
+  apiPatch(`/posts/${postId}`, { title, description, photos: photos ?? null });
+
 /** Renvoie le post mis à jour (likeCount, likedByMe). */
 export const likePost = (postId) => apiPost(`/posts/${postId}/like`);
 export const unlikePost = (postId) => apiDelete(`/posts/${postId}/like`);

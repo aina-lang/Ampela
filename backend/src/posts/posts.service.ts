@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { MessagesGateway } from '../messages/messages.gateway';
 import { isVerifiedDoctor, publicUserSelect } from '../users/users.service';
-import { CreatePostDto } from './dto/create-post.dto';
+import { CreatePostDto, UpdatePostDto } from './dto/create-post.dto';
 
 // userId absent (lecture anonyme) : aucun like ne peut être « le mien ».
 const postInclude = (userId?: string) =>
@@ -81,6 +81,32 @@ export class PostsService {
     });
     const view = toView(post);
     this.realtime.broadcast('post:new', { ...view, likedByMe: false });
+    return view;
+  }
+
+  /** Modification par son auteure uniquement (titre, description, photo). */
+  async update(userId: string, postId: string, dto: UpdatePostDto) {
+    const post = await this.prisma.post.findUnique({ where: { id: postId }, select: { authorId: true } });
+    if (!post) throw new NotFoundException('Publication introuvable.');
+    if (post.authorId !== userId) {
+      throw new ForbiddenException('Seule l’autrice peut modifier ce post.');
+    }
+    const data = Object.fromEntries(Object.entries(dto).filter(([, v]) => v !== undefined));
+    const updated = await this.prisma.post.update({
+      where: { id: postId },
+      data,
+      include: postInclude(userId),
+    });
+    const view = toView(updated);
+    this.realtime.broadcast('post:updated', {
+      id: view.id,
+      title: view.title,
+      description: view.description,
+      photos: view.photos,
+      likeCount: view.likeCount,
+      commentCount: view.commentCount,
+      updatedAt: view.updatedAt,
+    });
     return view;
   }
 

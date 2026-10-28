@@ -677,5 +677,8 @@
   "notifPillDay": "Pilina · andro faha-%{day} amin'ny tsingerina",
   "notifPillDay1Body": "Andro voalohan'ny tsingerinao : fotoanan'ny pilinao (%{time}). Raha vao manomboka pilina ianao, androany no atomboka ny takelaka voalohany (farafahatarany andro faha-5 amin'ny tsingerina).",
   "notifPillFertileBody": "Fotoanan'ny pilinao (%{time}). Araka ny kalandrienao dia ao anatin'ny fotoana mahalonaka ianao : aza misy adino ary tazony ny elanelana 3 ora.",
-  "notifPillDayBody": "Fotoanan'ny pilinao (%{time}). Fotoana mitovy isan'andro, takelaka manaraka avy hatrany rehefa lany ny iray, tsy misy fiatoana."
+  "notifPillDayBody": "Fotoanan'ny pilinao (%{time}). Fotoana mitovy isan'andro, takelaka manaraka avy hatrany rehefa lany ny iray, tsy misy fiatoana.",
+  "forumEditQuestion": "Hanova ny fanontaniana",
+  "forumQuestionUpdated": "Voaova ny fanontaniana.",
+  "forumCommentsTitle": "Hevitra"
 }

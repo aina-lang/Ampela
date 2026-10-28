@@ -85,7 +85,7 @@ const ForumItem = ({ post, onChange }) => {
           <Text style={styles.meta} numberOfLines={1}>
             {[
               post.authorRole === "doctor"
-                ? [post.authorProfession, i18n.t("roleDoctor")].filter(Boolean).join(" · ")
+                ? i18n.t("roleDoctor")
                 : null,
               relativeDate(post.createdAt),
             ]

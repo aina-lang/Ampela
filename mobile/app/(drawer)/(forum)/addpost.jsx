@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import * as ImagePicker from "expo-image-picker";
-import { useNavigation } from "expo-router";
+import { useNavigation, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { SIZES } from "@/constants";
 import { HEADER_HEIGHT } from "@/components/AppHeader";
@@ -18,7 +18,8 @@ import { handleHeaderScroll } from "@/hooks/useHeaderScroll";
 import { useDiscoveryTheme } from "@/components/discovery";
 import DiscoveryCard from "@/components/discovery/DiscoveryCard";
 import { Input, PrimaryButton, DecorativeBlobs, toast } from "@/components/ui";
-import { createPost } from "@/services/forumAPI";
+import { createPost, updatePost } from "@/services/forumAPI";
+import { writeCache } from "@/services/localCache";
 import { uploadImage } from "@/services/api";
 import { suspendAppLock } from "@/components/AppLockGate";
 
@@ -26,9 +27,12 @@ const TITLE_MAX = 80;
 const DESCRIPTION_MAX = 600;
 
 const AddPost = () => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [photo, setPhoto] = useState(null);
+  // Mode modification : la question existante arrive dans les params.
+  const params = useLocalSearchParams();
+  const editingId = typeof params.id === "string" && params.id ? params.id : null;
+  const [title, setTitle] = useState(editingId ? String(params.title ?? "") : "");
+  const [description, setDescription] = useState(editingId ? String(params.description ?? "") : "");
+  const [photo, setPhoto] = useState(editingId && params.photos ? String(params.photos) : null);
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
   const { surface, accentColor, accentContainer } = useDiscoveryTheme();
@@ -56,15 +60,23 @@ const AddPost = () => {
       let photoUrl = null;
       if (photo) {
         try {
-          photoUrl = await uploadImage(photo);
+          // Une photo déjà en ligne (modification) n'est pas renvoyée.
+          photoUrl = /^https?:\/\//i.test(photo) ? photo : await uploadImage(photo);
         } catch (error) {
-          console.error("Photo upload failed: ", error);
+          console.log("Photo upload failed: ", error?.message ?? error);
           toast.error(i18n.t("forumPhotoUploadFailed"));
           return;
         }
       }
-      await createPost({ title: title.trim(), description: description.trim(), photos: photoUrl });
-      toast.success(i18n.t("forumQuestionPublished"));
+      const payload = { title: title.trim(), description: description.trim(), photos: photoUrl };
+      if (editingId) {
+        const updated = await updatePost(editingId, payload);
+        writeCache(`forum:post:${editingId}`, updated);
+        toast.success(i18n.t("forumQuestionUpdated"));
+      } else {
+        await createPost(payload);
+        toast.success(i18n.t("forumQuestionPublished"));
+      }
       navigation.goBack();
     } catch (error) {
       console.error("Error creating post: ", error);
@@ -171,7 +183,7 @@ const AddPost = () => {
         {/* Action principale toujours visible en bas */}
         <View style={styles.footer}>
           <PrimaryButton
-            title={i18n.t("forumPublish")}
+            title={editingId ? i18n.t("editProfileSave") : i18n.t("forumPublish")}
             onPress={submitPost}
             disabled={!canPublish}
             loading={loading}

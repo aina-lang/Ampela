@@ -23,8 +23,5 @@ export const isDoctor = (person) =>
   person?.role === ROLES.doctor &&
   (person?.verificationStatus === undefined || person?.verificationStatus === "verified");
 
-/** « Sage-femme · Professionnelle de santé », « Professionnelle de santé » ou "" pour une utilisatrice. */
-export const describeRole = (person) => {
-  if (!isDoctor(person)) return "";
-  return [person.profession, ROLE_LABEL.doctor].filter(Boolean).join(" · ");
-};
+/** « Professionnelle de santé » (sans la spécialité) ou "" pour une utilisatrice. */
+export const describeRole = (person) => (isDoctor(person) ? ROLE_LABEL.doctor : "");

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import { useCache, writeCache } from "@/services/localCache";
 import Avatar from "@/components/ui/Avatar";
 import {
@@ -11,7 +11,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { SIZES } from "@/constants";
@@ -90,16 +90,32 @@ const PostScreen = () => {
     return () => clearTimeout(timer);
   }, [loadAll]);
 
+  // Au retour de l'écran de modification : version à jour.
+  const firstFocus = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (firstFocus.current) {
+        firstFocus.current = false;
+        return;
+      }
+      const timer = setTimeout(loadAll, 0);
+      return () => clearTimeout(timer);
+    }, [loadAll])
+  );
+
   // Temps réel : compteurs, commentaires des autres membres, suppression.
   const { applyRemote } = thread;
   useEffect(() => {
     return subscribeToMessageEvents((event, payload) => {
       if (event === "post:updated" && payload.id === id) {
-        setPost((current) =>
-          current
-            ? { ...current, likeCount: payload.likeCount ?? current.likeCount, commentCount: payload.commentCount ?? current.commentCount }
-            : current
-        );
+        setPost((current) => {
+          if (!current) return current;
+          const next = { ...current, likeCount: payload.likeCount ?? current.likeCount, commentCount: payload.commentCount ?? current.commentCount };
+          if (payload.title !== undefined) next.title = payload.title;
+          if (payload.description !== undefined) next.description = payload.description;
+          if (payload.photos !== undefined) next.photos = payload.photos;
+          return next;
+        });
       } else if (event === "post:deleted" && payload.id === id) {
         toast.info(i18n.t("forumQuestionDeleted"));
         router.back();
@@ -195,15 +211,28 @@ const PostScreen = () => {
                   </Text>
                   <Text style={styles.meta} numberOfLines={1}>
                     {[
-              post.authorRole === "doctor"
-                ? [post.authorProfession, i18n.t("roleDoctor")].filter(Boolean).join(" · ")
-                : null,
+              post.authorRole === "doctor" ? i18n.t("roleDoctor") : null,
               relativeDate(post.createdAt),
             ]
               .filter(Boolean)
               .join(" · ")}
                   </Text>
                 </View>
+                {isMine && (
+                  <TouchableOpacity
+                    onPress={() =>
+                      router.push({
+                        pathname: "/(drawer)/(forum)/addpost",
+                        params: { id: post.id, title: post.title ?? "", description: post.description ?? "", photos: post.photos ?? "" },
+                      })
+                    }
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityLabel={i18n.t("forumEditQuestion")}
+                    style={{ marginRight: 14 }}
+                  >
+                    <Ionicons name="create-outline" size={20} color={accentColor} />
+                  </TouchableOpacity>
+                )}
                 {isMine && (
                   <TouchableOpacity
                     onPress={() => setConfirmDelete(true)}
@@ -246,7 +275,7 @@ const PostScreen = () => {
           )}
 
           {/* Fil des commentaires */}
-          <Text style={styles.sectionLabel}>Commentaires</Text>
+          <Text style={styles.sectionLabel}>{i18n.t("forumCommentsTitle")}</Text>
           <View style={styles.threadCard}>
             {thread.loading || thread.comments === null ? (
               <CommentThreadSkeleton />

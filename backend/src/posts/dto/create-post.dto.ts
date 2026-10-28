@@ -11,6 +11,17 @@ export class CreatePostDto {
   photos?: string | null;
 }
 
+export class UpdatePostDto {
+  @IsOptional() @IsString() @MinLength(1) @MaxLength(200)
+  title?: string;
+
+  @IsOptional() @IsString() @MinLength(1) @MaxLength(5000)
+  description?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  photos?: string | null;
+}
+
 export class CreateCommentDto {
   @IsString() @MinLength(1) @MaxLength(2000)
   content!: string;

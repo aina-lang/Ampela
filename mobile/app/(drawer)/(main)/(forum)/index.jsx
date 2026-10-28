@@ -102,11 +102,14 @@ const Index = () => {
         if (event === "post:new" && !prev.some((p) => p.id === payload.id)) {
           next = [payload, ...prev];
         } else if (event === "post:updated") {
-          next = prev.map((p) =>
-            p.id === payload.id
-              ? { ...p, likeCount: payload.likeCount ?? p.likeCount, commentCount: payload.commentCount ?? p.commentCount }
-              : p
-          );
+          next = prev.map((p) => {
+            if (p.id !== payload.id) return p;
+            const merged = { ...p, likeCount: payload.likeCount ?? p.likeCount, commentCount: payload.commentCount ?? p.commentCount };
+            if (payload.title !== undefined) merged.title = payload.title;
+            if (payload.description !== undefined) merged.description = payload.description;
+            if (payload.photos !== undefined) merged.photos = payload.photos;
+            return merged;
+          });
         } else if (event === "post:deleted") {
           next = prev.filter((p) => p.id !== payload.id);
         }

@@ -3,7 +3,7 @@ import { AuthGuard } from '../auth/auth.guard';
 import { OptionalAuthGuard } from '../auth/optional-auth.guard';
 import type { JwtPayload } from '../auth/auth.service';
 import { CurrentUser } from '../auth/current-user.decorator';
-import { CreateCommentDto, CreatePostDto, UpdateCommentDto } from './dto/create-post.dto';
+import { CreateCommentDto, CreatePostDto, UpdateCommentDto, UpdatePostDto } from './dto/create-post.dto';
 import { PostsService } from './posts.service';
 
 // Lecture (liste, détail, commentaires) ouverte à toutes ; écrire, réagir
@@ -28,6 +28,12 @@ export class PostsController {
   @UseGuards(OptionalAuthGuard)
   getOne(@Param('id') id: string, @CurrentUser() user?: JwtPayload) {
     return this.posts.getOne(user?.sub, id);
+  }
+
+  @Patch(':id')
+  @UseGuards(AuthGuard)
+  update(@CurrentUser() user: JwtPayload, @Param('id') id: string, @Body() dto: UpdatePostDto) {
+    return this.posts.update(user.sub, id, dto);
   }
 
   @Delete(':id')

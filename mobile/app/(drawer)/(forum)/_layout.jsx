@@ -11,7 +11,13 @@ const Layout = () => {
         header: ({ route }) => (
           <AppHeader
             navigation={navigation}
-            title={route.name === "post" ? i18n.t("forumQuestion") : i18n.t("forumAskQuestion")}
+            title={
+              route.name === "post"
+                ? i18n.t("forumQuestion")
+                : route.params?.id
+                  ? i18n.t("forumEditQuestion")
+                  : i18n.t("forumAskQuestion")
+            }
             showBack
             absolute
           />

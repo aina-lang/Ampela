@@ -678,5 +678,8 @@
   "notifPillDay": "Pilule · jour %{day} du cycle",
   "notifPillDay1Body": "Premier jour de votre cycle : c'est l'heure de votre pilule (%{time}). Si vous débutez la pilule, la première plaquette se commence aujourd'hui (au plus tard le 5e jour du cycle).",
   "notifPillFertileBody": "C'est l'heure de votre pilule (%{time}). D'après votre calendrier, vous seriez en période de fécondité : ne sautez aucune prise et restez dans la plage de 3 heures.",
-  "notifPillDayBody": "C'est l'heure de votre pilule (%{time}). Même moment chaque jour, plaquette suivante dès la fin de celle-ci, sans pause."
+  "notifPillDayBody": "C'est l'heure de votre pilule (%{time}). Même moment chaque jour, plaquette suivante dès la fin de celle-ci, sans pause.",
+  "forumEditQuestion": "Modifier la question",
+  "forumQuestionUpdated": "Question modifiée.",
+  "forumCommentsTitle": "Commentaires"
 }
