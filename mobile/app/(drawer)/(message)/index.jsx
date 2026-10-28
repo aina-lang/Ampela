@@ -1,3 +1,4 @@
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { handleHeaderScroll } from "@/hooks/useHeaderScroll";
 import { useCache, writeCache } from "@/services/localCache";
 import i18n from "@/constants/i18n";
@@ -6,7 +7,7 @@ import { View, StyleSheet, FlatList, Text, TouchableOpacity, RefreshControl } fr
 import { SIZES } from "@/constants";
 import MessageItem from "@/components/messageItem";
 import { HEADER_HEIGHT } from "@/components/AppHeader";
-import { listConversations, subscribeToMessages, clearConversation } from "@/services/messagesAPI";
+import { listConversations, subscribeToMessages, clearConversation, searchConversations } from "@/services/messagesAPI";
 import ConfirmSheet from "@/components/ConfirmSheet";
 import { isDoctor } from "@/utils/roles";
 import { useRouter, useFocusEffect } from "expo-router";
@@ -25,6 +26,29 @@ const MessagesScreen = () => {
   const { theme } = useSelector(() => preferenceState.get());
   const [users, setUsers] = useState([]);
   const [searchText, setSearchText] = useState("");
+  // Recherche servie par l'API (pseudo ou spécialité, fautes tolérées) ;
+  // hors ligne, filtre local sur la liste connue.
+  const debouncedSearch = useDebouncedValue(searchText.trim());
+  const [searchResults, setSearchResults] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      if (!debouncedSearch) {
+        if (!cancelled) setSearchResults(null);
+        return;
+      }
+      try {
+        const results = await searchConversations(debouncedSearch);
+        if (!cancelled) setSearchResults(results);
+      } catch {
+        if (!cancelled) setSearchResults(null);
+      }
+    }, 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [debouncedSearch]);
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const { surface, accentColor, accentContainer } = useDiscoveryTheme();
@@ -162,11 +186,10 @@ const MessagesScreen = () => {
   // Hors ligne, le spinner n'est pas affiché (le rendu est dérivé de
   // isConnected) : pas besoin de forcer loading=false dans un effet.
   const visibleUsers = searchText
-    ? users.filter((u) =>
-        (u.username || u.pseudo || "")
-          .toLowerCase()
-          .includes(searchText.toLowerCase())
-      )
+    ? (searchResults ??
+      users.filter((u) =>
+        (u.username || u.pseudo || "").toLowerCase().includes(searchText.toLowerCase())
+      ))
     : users;
 
   const offline = !isConnected || !isInternetReachable;

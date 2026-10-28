@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { fuzzyMatch, fuzzyScore, normalizeQuery } from '../common/fuzzy';
 
 /** Champs publics d'un profil (jamais l'e-mail ni les données de santé). */
 export const publicUserSelect = {
@@ -102,19 +103,40 @@ export class UsersService {
    * une utilisatrice voit les professionnelles, une professionnelle voit
    * les utilisatrices.
    */
-  async listOthers(userId: string) {
+  async listOthers(userId: string, rawQuery?: string) {
     const me = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { role: true, verificationStatus: true },
     });
     const iAmDoctor = isVerifiedDoctor(me);
+    const q = normalizeQuery(rawQuery);
+    // Recherche : pseudo ou spécialité ressemblant au motif, par pertinence.
+    let matchedIds: string[] | null = null;
+    if (q) {
+      const username = Prisma.sql`"username"`;
+      const profession = Prisma.sql`COALESCE("profession", '')`;
+      const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+        SELECT "id" FROM "User"
+        WHERE "id" <> ${userId} AND (${fuzzyMatch(username, q)} OR ${fuzzyMatch(profession, q)})
+        ORDER BY GREATEST(${fuzzyScore(username, q)}, ${fuzzyScore(profession, q)}) DESC
+        LIMIT 200`;
+      matchedIds = rows.map((r) => r.id);
+      if (matchedIds.length === 0) return [];
+    }
     const users = await this.prisma.user.findMany({
-      where: iAmDoctor
-        ? { id: { not: userId }, role: 'user', username: { not: '' } }
-        : { id: { not: userId }, role: 'doctor', verificationStatus: 'verified', username: { not: '' } },
+      where: {
+        ...(iAmDoctor
+          ? { id: { not: userId }, role: 'user', username: { not: '' } }
+          : { id: { not: userId }, role: 'doctor', verificationStatus: 'verified', username: { not: '' } }),
+        ...(matchedIds ? { id: { in: matchedIds } } : {}),
+      },
       select: publicUserSelect,
       take: 200,
     });
+    if (matchedIds) {
+      const order = new Map(matchedIds.map((id, i) => [id, i]));
+      users.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+    }
     const rooms = await this.prisma.room.findMany({
       where: { OR: [{ userAId: userId }, { userBId: userId }] },
       select: { id: true, userAId: true, userBId: true, userAClearedAt: true, userBClearedAt: true },

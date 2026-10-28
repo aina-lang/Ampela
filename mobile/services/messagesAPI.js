@@ -5,6 +5,9 @@ import { sessionState } from "@/legendstate/AmpelaStates";
 /** Autres membres avec, pour chacune, le dernier message échangé. */
 export const listConversations = () => apiGet("/users");
 
+/** Contacts dont le pseudo ou la spécialité ressemble au motif (fautes tolérées). */
+export const searchConversations = (q) => apiGet(`/users?q=${encodeURIComponent(q)}`);
+
 /** Messages avec une utilisatrice, du plus récent au plus ancien. */
 export const listMessages = (otherUserId, before) =>
   apiGet(

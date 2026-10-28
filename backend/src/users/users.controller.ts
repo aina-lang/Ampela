@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Patch, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
 import type { JwtPayload } from '../auth/auth.service';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -26,8 +26,9 @@ export class UsersController {
     return this.users.deleteMe(user.sub);
   }
 
+  /** Contacts de la messagerie ; `?q=` filtre par pseudo ou spécialité (fautes tolérées). */
   @Get()
-  listOthers(@CurrentUser() user: JwtPayload) {
-    return this.users.listOthers(user.sub);
+  listOthers(@CurrentUser() user: JwtPayload, @Query('q') q?: string) {
+    return this.users.listOthers(user.sub, q);
   }
 }

@@ -1,3 +1,4 @@
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { enqueueMessage, flushOutbox, isQueueable, pendingFor, subscribeToOutbox, usePendingFor } from "@/services/outbox";
 import { useCache, writeCache } from "@/services/localCache";
@@ -55,6 +56,7 @@ import {
   deleteMessage,
   markConversationRead,
   clearConversation,
+  searchMessages,
 } from "@/services/messagesAPI";
 import { suspendAppLock } from "@/components/AppLockGate";
 
@@ -352,15 +354,41 @@ export default function OneMessageScreen() {
   // La conversation reste affichée ; les occurrences sont surlignées et
   // les flèches font défiler vers la précédente / la suivante.
   const searchTerm = searchOpen ? searchText.trim().toLowerCase() : "";
+  // Les occurrences viennent de l'API (recherche tolérante aux fautes) ;
+  // sans réponse (hors ligne), repli sur une recherche locale exacte.
+  const debouncedTerm = useDebouncedValue(searchTerm);
+  const [remoteMatchIds, setRemoteMatchIds] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      if (!debouncedTerm || !targetId) {
+        if (!cancelled) setRemoteMatchIds(null);
+        return;
+      }
+      try {
+        const list = await searchMessages(targetId, debouncedTerm);
+        if (!cancelled) setRemoteMatchIds(new Set(list.map((m) => m.id)));
+      } catch {
+        if (!cancelled) setRemoteMatchIds(null);
+      }
+    }, 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [debouncedTerm, targetId]);
   // Indices (dans la liste inversée : 0 = le plus récent) des messages qui contiennent le motif.
   const matches = useMemo(() => {
     if (!searchTerm) return [];
     return messages.reduce((acc, m, index) => {
-      const haystack = `${m.text || ""} ${m.file?.name || ""}`.toLowerCase();
-      if (!m.deleted && haystack.includes(searchTerm)) acc.push(index);
+      if (m.deleted) return acc;
+      const hit = remoteMatchIds
+        ? remoteMatchIds.has(m._id)
+        : `${m.text || ""} ${m.file?.name || ""}`.toLowerCase().includes(searchTerm);
+      if (hit) acc.push(index);
       return acc;
     }, []);
-  }, [messages, searchTerm]);
+  }, [messages, searchTerm, remoteMatchIds]);
   const currentMatchId = matches.length ? messages[matches[matchIdx]]?._id : null;
 
   const scrollToMatch = useCallback(

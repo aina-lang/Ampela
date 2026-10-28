@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { fuzzyMatch, normalizeQuery } from '../common/fuzzy';
 import { isVerifiedDoctor, publicUserSelect } from '../users/users.service';
 import { SendMessageDto } from './dto/send-message.dto';
 
@@ -52,23 +53,35 @@ export class MessagesService {
     return { roomId, ...(clearedAt ? { createdAt: { gt: clearedAt } } : {}) };
   }
 
-  /** Messages (du plus récent au plus ancien), avec recherche plein texte optionnelle. */
+  /**
+   * Messages (du plus récent au plus ancien). Avec `q`, recherche tolérante
+   * aux fautes dans le texte et le nom des pièces jointes (hors supprimés).
+   */
   async list(me: string, other: string, before?: string, q?: string) {
     const room = await this.ensureRoom(me, other);
-    const term = q?.trim();
+    const term = normalizeQuery(q);
+    const clearedAt = this.clearedAt(room, me);
+    if (term) {
+      const text = Prisma.sql`"text"`;
+      const name = Prisma.sql`COALESCE("attachmentName", '')`;
+      const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+        SELECT "id" FROM "Message"
+        WHERE "roomId" = ${room.id} AND "deletedAt" IS NULL
+          ${clearedAt ? Prisma.sql`AND "createdAt" > ${clearedAt}` : Prisma.empty}
+          AND (${fuzzyMatch(text, term)} OR ${fuzzyMatch(name, term)})
+        ORDER BY "createdAt" DESC
+        LIMIT 200`;
+      if (rows.length === 0) return [];
+      return this.prisma.message.findMany({
+        where: { id: { in: rows.map((r) => r.id) } },
+        orderBy: { createdAt: 'desc' },
+        include: messageInclude,
+      });
+    }
     return this.prisma.message.findMany({
       where: {
-        ...this.visibleWhere(room.id, this.clearedAt(room, me)),
+        ...this.visibleWhere(room.id, clearedAt),
         ...(before ? { createdAt: { lt: new Date(before) } } : {}),
-        ...(term
-          ? {
-              deletedAt: null,
-              OR: [
-                { text: { contains: term, mode: 'insensitive' } },
-                { attachmentName: { contains: term, mode: 'insensitive' } },
-              ],
-            }
-          : {}),
       },
       orderBy: { createdAt: 'desc' },
       take: 100,

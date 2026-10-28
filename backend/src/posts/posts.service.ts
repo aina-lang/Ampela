@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { MessagesGateway } from '../messages/messages.gateway';
+import { fuzzyMatch, fuzzyScore, normalizeQuery } from '../common/fuzzy';
 import { isVerifiedDoctor, publicUserSelect } from '../users/users.service';
 import { CreatePostDto, UpdatePostDto } from './dto/create-post.dto';
 
@@ -63,6 +64,29 @@ export class PostsService {
       include: postInclude(userId),
     });
     return posts.map(toView);
+  }
+
+  /** Recherche dans le titre et la description, tolérante aux fautes, triée par pertinence. */
+  async search(userId: string | undefined, rawQuery: string) {
+    const q = normalizeQuery(rawQuery);
+    if (!q) return this.list(userId);
+    const title = Prisma.sql`"title"`;
+    const description = Prisma.sql`"description"`;
+    const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT "id"
+      FROM "Post"
+      WHERE ${fuzzyMatch(title, q)} OR ${fuzzyMatch(description, q)}
+      ORDER BY GREATEST(${fuzzyScore(title, q)} * 1.2, ${fuzzyScore(description, q)}) DESC, "createdAt" DESC
+      LIMIT 100`;
+    if (rows.length === 0) return [];
+    const posts = await this.prisma.post.findMany({
+      where: { id: { in: rows.map((r) => r.id) } },
+      include: postInclude(userId),
+    });
+    const order = new Map(rows.map((r, i) => [r.id, i]));
+    return posts
+      .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
+      .map(toView);
   }
 
   async getOne(userId: string | undefined, postId: string) {

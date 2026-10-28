@@ -23,7 +23,8 @@ import AuthContent from "@/components/AuthContent";
 import { useModal } from "@/hooks/ModalProvider";
 import { useAuth } from "@/hooks/AuthContext";
 import { SecondaryButton } from "@/components/ui";
-import { listPosts } from "@/services/forumAPI";
+import { listPosts, searchPosts } from "@/services/forumAPI";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { subscribeToMessageEvents } from "@/services/messagesAPI";
 import { useNetInfo } from "@react-native-community/netinfo";
 import { useDiscoveryTheme } from "@/components/discovery";
@@ -35,6 +36,9 @@ const Index = () => {
   const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [searchText, setSearchText] = useState("");
+  // Recherche servie par l'API (tolérante aux fautes) ; hors ligne, filtre local.
+  const debouncedSearch = useDebouncedValue(searchText.trim());
+  const [searchResults, setSearchResults] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const { openModal } = useModal();
   const router = useRouter();
@@ -57,6 +61,29 @@ const Index = () => {
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cachedPosts]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      if (!debouncedSearch || !isConnected || !isInternetReachable) {
+        if (!cancelled) setSearchResults(null);
+        return;
+      }
+      try {
+        const results = await searchPosts(debouncedSearch);
+        if (!cancelled) setSearchResults(results);
+      } catch {
+        if (!cancelled) setSearchResults(null);
+      }
+    }, 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [debouncedSearch, isConnected, isInternetReachable]);
+
+  const localFilter = (list, text) =>
+    list.filter((p) => `${p.title ?? ""} ${p.description ?? ""}`.toLowerCase().includes(text.toLowerCase()));
 
   const loadPosts = useCallback(async () => {
     if (!canLoad) return;
@@ -179,15 +206,7 @@ const Index = () => {
             <FlatList
         onScroll={handleHeaderScroll}
         scrollEventThrottle={16}
-              data={
-                searchText
-                  ? posts.filter((p) =>
-                      `${p.title ?? ""} ${p.description ?? ""}`
-                        .toLowerCase()
-                        .includes(searchText.toLowerCase())
-                    )
-                  : posts
-              }
+              data={searchText ? (searchResults ?? localFilter(posts, searchText)) : posts}
               renderItem={({ item }) => (
                 <ForumItem post={item} onChange={handlePostChange} />
               )}

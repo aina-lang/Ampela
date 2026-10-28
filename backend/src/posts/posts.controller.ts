@@ -1,4 +1,4 @@
-import { Patch, Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Patch, Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
 import { OptionalAuthGuard } from '../auth/optional-auth.guard';
 import type { JwtPayload } from '../auth/auth.service';
@@ -12,10 +12,11 @@ import { PostsService } from './posts.service';
 export class PostsController {
   constructor(private readonly posts: PostsService) {}
 
+  /** Liste, ou recherche tolérante aux fautes avec `?q=`. */
   @Get()
   @UseGuards(OptionalAuthGuard)
-  list(@CurrentUser() user?: JwtPayload) {
-    return this.posts.list(user?.sub);
+  list(@Query('q') q?: string, @CurrentUser() user?: JwtPayload) {
+    return q?.trim() ? this.posts.search(user?.sub, q) : this.posts.list(user?.sub);
   }
 
   @Post()

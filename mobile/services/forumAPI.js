@@ -3,6 +3,9 @@ import { apiDelete, apiGet, apiPatch, apiPost } from "@/services/api";
 /** Posts du forum, du plus récent au plus ancien, avec compteurs. */
 export const listPosts = () => apiGet("/posts");
 
+/** Recherche côté serveur, tolérante aux fautes, triée par pertinence. */
+export const searchPosts = (q) => apiGet(`/posts?q=${encodeURIComponent(q)}`);
+
 export const createPost = ({ title, description, photos }) =>
   apiPost("/posts", { title, description, photos: photos ?? null });
 
