@@ -80,11 +80,11 @@ const ReminderItem = ({ as, onRegister }) => {
           { touch: true }
         );
         scheduleSync();
-        if (!isEventReminder) {
+        if (frequency === "quotidien") {
+          toast.success(i18n.t("reminderEnabledDaily", { label, time: `${pad(hour)}:${pad(minute)}` }));
+        } else if (frequency !== "lejourmeme" || !isEventReminder) {
           toast.success(
-            frequency === "quotidien"
-              ? i18n.t("reminderEnabledDaily", { label, time: `${pad(hour)}:${pad(minute)}` })
-              : i18n.t("reminderEnabledFrequency", { label, frequency: frequencyLabel(frequency), time: `${pad(hour)}:${pad(minute)}` })
+            i18n.t("reminderEnabledFrequency", { label, frequency: frequencyLabel(frequency), time: `${pad(hour)}:${pad(minute)}` })
           );
         } else if (ids.length && nextEvent) {
           toast.success(

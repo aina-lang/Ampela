@@ -82,7 +82,7 @@ export const useDiscoveryTheme = () => {
 
   return useMemo(() => {
     const isPink = theme === "pink";
-    const accentColor = isPink ? "#FF7575" : "#FE8729";
+    const accentColor = accentFor(theme);
     const accentColorDisabled = isPink ? "#FFB5B5" : "#FED4A0";
     const accentSoft = isPink ? "#FFF0F0" : "#FFF5EB";
     const accentSurface = isPink ? "#FFF5F5" : "#FFFAF5";
@@ -113,3 +113,6 @@ export const useDiscoveryTheme = () => {
     };
   }, [theme]);
 };
+
+/** Couleur d'accent d'un thème, utilisable hors composant (notifications…). */
+export const accentFor = (theme) => (theme === "orange" ? "#FE8729" : "#FF7575");

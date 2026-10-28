@@ -654,5 +654,28 @@
   "msgListen": "Hihaino",
   "voirPlus": "Hijery bebe kokoa",
   "networkError": "Tsy afaka nifandray tamin'ny mpizara. Jereo ny tambajotranao.",
-  "msgQueued": "Tsy misy tambajotra : halefa ny hafatra raha vao azo atao."
+  "msgQueued": "Tsy misy tambajotra : halefa ny hafatra raha vao azo atao.",
+  "notifOneWeek": "1 herinandro",
+  "notifDays": {
+    "one": "1 andro",
+    "other": "%{count} andro"
+  },
+  "notifPeriodIn": "Fadimbolana afaka %{when}",
+  "notifPeriodInBody": "Vinavinaina ny %{date} ny fadimbolanao manaraka. Tadidio ny hanomana ny fiarovanao.",
+  "notifPeriodToday": "Fadimbolana vinavinaina androany",
+  "notifPeriodTodayBody": "Araka ny tsingerinao, tokony hanomboka androany (%{date}) ny fadimbolanao. Raha tsy izany, havaozy ny mombamomba anao ao amin'ny Ampela.",
+  "notifFertileWindow": "Fotoana mahalonaka manomboka ny %{from} ka hatramin'ny %{to}.",
+  "notifOvulationIn": "Famokarana atodinaina afaka %{when}",
+  "notifOvulationInBody": "Vinavinaina ny %{date} ny famokarana atodinainao.",
+  "notifOvulationTodayBody": "Androany (%{date}) no andro vinavinaina famokarana atodinainao, ny tampon'ny fotoana mahalonaka.",
+  "notifPeriodOngoing": "Fadimbolana mandeha · andro faha-%{day}",
+  "notifPeriodOngoingBody": "Vinavinaina hifarana ny %{date}. Misotroa rano, mialà sasatra raha ilaina ary soraty izay soritr'aretina tsy mahazatra.",
+  "notifFertileOngoing": "Fotoana mahalonaka mandeha",
+  "notifFertileOngoingBody": "Famokarana atodinaina vinavinaina afaka %{when} (%{date}). Avo ny mety hahabevohoka amin'izao andro izao.",
+  "notifFertileUntil": "Fotoana mahalonaka hatramin'ny %{date}.",
+  "notifPillBody": "Fotoanan'ny pilinao (%{time}). Alao isan'andro amin'ny fotoana mitovy, tsy mihoatra ny 3 ora elanelana.",
+  "notifPillDay": "Pilina · andro faha-%{day} amin'ny tsingerina",
+  "notifPillDay1Body": "Andro voalohan'ny tsingerinao : fotoanan'ny pilinao (%{time}). Raha vao manomboka pilina ianao, androany no atomboka ny takelaka voalohany (farafahatarany andro faha-5 amin'ny tsingerina).",
+  "notifPillFertileBody": "Fotoanan'ny pilinao (%{time}). Araka ny kalandrienao dia ao anatin'ny fotoana mahalonaka ianao : aza misy adino ary tazony ny elanelana 3 ora.",
+  "notifPillDayBody": "Fotoanan'ny pilinao (%{time}). Fotoana mitovy isan'andro, takelaka manaraka avy hatrany rehefa lany ny iray, tsy misy fiatoana."
 }

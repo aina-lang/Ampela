@@ -2,6 +2,8 @@ import * as Notifications from "expo-notifications";
 import moment from "moment";
 import { reminderState, updateReminder, preferenceState } from "@/legendstate/AmpelaStates";
 import { ensureNotificationPermission } from "@/utils/notifications";
+import i18n from "@/constants/i18n";
+import { accentFor } from "@/components/discovery/DiscoveryTheme";
 
 /**
  * Rappels planifiés côté OS (délivrés même app fermée).
@@ -35,48 +37,25 @@ export const FREQUENCY_OPTIONS = [
 ];
 
 /**
- * Pour les rappels liés au cycle, la périodicité fixe les jours d'avance :
- *  - quotidien : chaque jour des 3 jours précédents, puis le jour même ;
- *  - hebdomadaire : une semaine avant, puis le jour même ;
- *  - le jour même : uniquement le jour prévu ;
- *  - chaque deux / trois jours : 2 ou 3 jours avant, puis le jour même.
+ * La périodicité est prise au pied de la lettre, pour tous les rappels :
+ *  - quotidien : chaque jour ; chaque deux / trois jours : tous les 2 ou
+ *    3 jours ; hebdomadaire : tous les 7 jours — toujours à l'heure choisie,
+ *    à partir d'aujourd'hui, sur les 60 prochains jours, avec un texte qui
+ *    suit le cycle (« Règles dans 5 jours », « Pilule · jour 12 »…) ;
+ *  - le jour même : uniquement le jour de l'événement (règles, ovulation) ;
+ *    pour la pilule, une seule fois à la prochaine heure choisie.
  */
-const daysBeforeFor = (frequency) => {
+const stepDaysFor = (frequency) => {
   switch (frequency) {
     case "hebdomadaire":
-      return [7, 0];
-    case "lejourmeme":
-      return [0];
+      return 7;
     case "chaquedeuxjours":
-      return [2, 0];
+      return 2;
     case "chaquetroisjours":
-      return [3, 0];
+      return 3;
     case "quotidien":
     default:
-      return [3, 2, 1, 0];
-  }
-};
-
-/** Déclencheur répétitif pour la pilule (périodicité d'avant). */
-const pillTrigger = (frequency, hour, minute) => {
-  const T = Notifications.SchedulableTriggerInputTypes;
-  switch (frequency) {
-    case "hebdomadaire":
-      return { type: T.WEEKLY, weekday: new Date().getDay() + 1, hour, minute };
-    case "chaquedeuxjours":
-    case "chaquetroisjours": {
-      const days = frequency === "chaquedeuxjours" ? 2 : 3;
-      return { type: T.TIME_INTERVAL, seconds: days * 24 * 60 * 60, repeats: true };
-    }
-    case "lejourmeme": {
-      const next = new Date();
-      next.setHours(hour, minute, 0, 0);
-      if (next <= new Date()) next.setDate(next.getDate() + 1);
-      return { type: T.DATE, date: next };
-    }
-    case "quotidien":
-    default:
-      return { type: T.DAILY, hour, minute };
+      return 1;
   }
 };
 
@@ -98,6 +77,8 @@ const MONTH_NAMES = {
   ],
 };
 const lang = () => (preferenceState.language.get() === "mg" ? "mg" : "fr");
+/** Couleur du logo dans la notification : suit le thème choisi (Android). */
+const notifColor = () => accentFor(preferenceState.theme.get());
 
 /** « mercredi 12 novembre » dans la langue de l'app (sans locale moment). */
 export const formatDateFr = (input) => {
@@ -127,37 +108,37 @@ export const upcomingEvents = (kind, cycles = []) => {
     .slice(0, MAX_EVENTS);
 };
 
-const dayWord = (n) => (n === 7 ? "1 semaine" : `${n} jour${n > 1 ? "s" : ""}`);
+const dayWord = (n) => (n === 7 ? i18n.t("notifOneWeek") : i18n.t("notifDays", { count: n }));
 
 const buildContent = (kind, event, daysBefore) => {
   const dateFr = formatDateFr(event.date);
   if (kind === "period") {
     if (daysBefore > 0) {
       return {
-        title: `Règles dans ${dayWord(daysBefore)}`,
-        body: `Vos prochaines règles sont prévues ${dateFr}. Pensez à prévoir vos protections.`,
+        title: i18n.t("notifPeriodIn", { when: dayWord(daysBefore) }),
+        body: i18n.t("notifPeriodInBody", { date: dateFr }),
       };
     }
     return {
-      title: "Règles prévues aujourd'hui",
-      body: `D'après votre cycle, vos règles devraient commencer aujourd'hui (${dateFr}). Si ce n'est pas le cas, mettez à jour vos informations dans Ampela.`,
+      title: i18n.t("notifPeriodToday"),
+      body: i18n.t("notifPeriodTodayBody", { date: dateFr }),
     };
   }
   // ovulation
   const { fecundityPeriodStart, fecundityPeriodEnd } = event.cycle;
   const window =
     fecundityPeriodStart && fecundityPeriodEnd
-      ? ` Période de fécondité du ${shortDateFr(fecundityPeriodStart)} au ${shortDateFr(fecundityPeriodEnd)}.`
+      ? ` ${i18n.t("notifFertileWindow", { from: shortDateFr(fecundityPeriodStart), to: shortDateFr(fecundityPeriodEnd) })}`
       : "";
   if (daysBefore > 0) {
     return {
-      title: `Ovulation dans ${dayWord(daysBefore)}`,
-      body: `Votre ovulation est estimée ${dateFr}.${window}`,
+      title: i18n.t("notifOvulationIn", { when: dayWord(daysBefore) }),
+      body: `${i18n.t("notifOvulationInBody", { date: dateFr })}${window}`,
     };
   }
   return {
-    title: "Jour d'ovulation",
-    body: `Aujourd'hui (${dateFr}) est votre jour d'ovulation estimé, le pic de votre période de fécondité.${window}`,
+    title: i18n.t("jourDovulation"),
+    body: `${i18n.t("notifOvulationTodayBody", { date: dateFr })}${window}`,
   };
 };
 
@@ -167,10 +148,74 @@ const atTime = (dateKey, hour, minute) => {
   return d;
 };
 
-// Rappel pilule quotidien : une notification par jour sur les 60 prochains
-// jours, chacune adaptée au cycle (jour du cycle, période de fécondité,
-// début d'un nouveau cycle = nouvelle plaquette).
-const PILL_DAYS_AHEAD = 60;
+// Rappel de cycle quotidien : une notification par jour sur les 60
+// prochains jours, chacune adaptée à la position dans le cycle.
+const EVENT_DAYS_AHEAD = 60;
+
+const eventDailyContent = (kind, dateKey, cycles) => {
+  const events = [...cycles]
+    .map((cycle) => ({ date: kind === "period" ? cycle.startMenstruationDate : cycle.ovulationDate, cycle }))
+    .filter((e) => e.date)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const next = events.find((e) => e.date >= dateKey);
+  const current = cycleAt(dateKey, cycles);
+
+  if (kind === "period") {
+    // Règles en cours : entre le début et la fin des règles du cycle courant.
+    if (current?.endMenstruationDate && dateKey > current.startMenstruationDate && dateKey <= current.endMenstruationDate) {
+      const day = moment(dateKey).diff(moment(current.startMenstruationDate), "days") + 1;
+      return {
+        title: i18n.t("notifPeriodOngoing", { day }),
+        body: i18n.t("notifPeriodOngoingBody", { date: formatDateFr(current.endMenstruationDate) }),
+      };
+    }
+  } else if (
+    current?.fecundityPeriodStart &&
+    current?.fecundityPeriodEnd &&
+    dateKey >= current.fecundityPeriodStart &&
+    dateKey <= current.fecundityPeriodEnd &&
+    next &&
+    next.date !== dateKey
+  ) {
+    const daysToOvulation = moment(next.date).diff(moment(dateKey), "days");
+    return {
+      title: i18n.t("notifFertileOngoing"),
+      body:
+        daysToOvulation > 0
+          ? i18n.t("notifFertileOngoingBody", { when: dayWord(daysToOvulation), date: formatDateFr(next.date) })
+          : i18n.t("notifFertileUntil", { date: shortDateFr(current.fecundityPeriodEnd) }),
+    };
+  }
+  if (!next) return null;
+  const daysBefore = moment(next.date).diff(moment(dateKey), "days");
+  return buildContent(kind, next, daysBefore);
+};
+
+/**
+ * Une notification tous les `stepDays` jours à l'heure choisie, sur les 60
+ * prochains jours, à partir d'aujourd'hui (ou de demain si l'heure est
+ * passée). `contentFor(dateKey)` donne le texte du jour, ou null pour
+ * sauter ce jour.
+ */
+const scheduleEvery = async (as, stepDays, hour, minute, contentFor) => {
+  const now = new Date();
+  const ids = [];
+  const firstToday = atTime(moment().format("YYYY-MM-DD"), hour, minute) > now;
+  for (let i = firstToday ? 0 : 1; i < EVENT_DAYS_AHEAD; i += stepDays) {
+    const dateKey = moment().add(i, "days").format("YYYY-MM-DD");
+    const content = contentFor(dateKey);
+    if (!content) continue;
+    const id = await Notifications.scheduleNotificationAsync({
+      content: { ...content, sound: true, color: notifColor(), data: { kind: "reminder", as } },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: atTime(dateKey, hour, minute) },
+    });
+    ids.push(id);
+  }
+  return ids;
+};
+
+// Rappel pilule : chaque notification est adaptée au cycle (jour du cycle,
+// période de fécondité, début d'un nouveau cycle = nouvelle plaquette).
 
 /** Cycle qui contient la date (début ≤ date < début suivant), sinon null. */
 const cycleAt = (dateKey, cycles = []) => {
@@ -190,8 +235,8 @@ const pillContent = (dateKey, hour, minute, cycles) => {
   const cycle = cycleAt(dateKey, cycles);
   if (!cycle) {
     return {
-      title: "Prise de pilule",
-      body: `C'est l'heure de votre pilule (${time}). Prenez-la chaque jour au même moment, dans une plage de 3 heures au plus.`,
+      title: i18n.t("priseDePilule"),
+      body: i18n.t("notifPillBody", { time }),
     };
   }
   const dayOfCycle = moment(dateKey).diff(moment(cycle.startMenstruationDate), "days") + 1;
@@ -203,37 +248,22 @@ const pillContent = (dateKey, hour, minute, cycles) => {
 
   if (dayOfCycle === 1) {
     return {
-      title: "Pilule · jour 1 du cycle",
-      body: `Premier jour de votre cycle : c'est l'heure de votre pilule (${time}). Si vous débutez la pilule, la première plaquette se commence aujourd'hui (au plus tard le 5e jour du cycle).`,
+      title: i18n.t("notifPillDay", { day: 1 }),
+      body: i18n.t("notifPillDay1Body", { time }),
     };
   }
   if (inFertileWindow) {
     return {
-      title: `Pilule · jour ${dayOfCycle} du cycle`,
-      body: `C'est l'heure de votre pilule (${time}). D'après votre calendrier, vous seriez en période de fécondité : ne sautez aucune prise et restez dans la plage de 3 heures.`,
+      title: i18n.t("notifPillDay", { day: dayOfCycle }),
+      body: i18n.t("notifPillFertileBody", { time }),
     };
   }
   return {
-    title: `Pilule · jour ${dayOfCycle} du cycle`,
-    body: `C'est l'heure de votre pilule (${time}). Même moment chaque jour, plaquette suivante dès la fin de celle-ci, sans pause.`,
+    title: i18n.t("notifPillDay", { day: dayOfCycle }),
+    body: i18n.t("notifPillDayBody", { time }),
   };
 };
 
-const schedulePillDaily = async (hour, minute, cycles) => {
-  const now = new Date();
-  const ids = [];
-  for (let i = 0; i < PILL_DAYS_AHEAD; i++) {
-    const dateKey = moment().add(i, "days").format("YYYY-MM-DD");
-    const fireAt = atTime(dateKey, hour, minute);
-    if (fireAt <= now) continue;
-    const id = await Notifications.scheduleNotificationAsync({
-      content: { ...pillContent(dateKey, hour, minute, cycles), sound: true, data: { kind: "reminder", as: "Prise de pilule" } },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: fireAt },
-    });
-    ids.push(id);
-  }
-  return ids;
-};
 
 /**
  * Planifie un rappel et renvoie les identifiants des notifications.
@@ -247,40 +277,43 @@ export const scheduleReminder = async (as, config, cycles) => {
   const { hour = 8, minute = 0, frequency = "quotidien" } = config;
 
   if (kind === "pill") {
-    if (frequency === "quotidien") {
-      return schedulePillDaily(hour, minute, cycles);
+    if (frequency === "lejourmeme") {
+      // Une seule fois, à la prochaine heure choisie.
+      const next = new Date();
+      next.setHours(hour, minute, 0, 0);
+      if (next <= new Date()) next.setDate(next.getDate() + 1);
+      const dateKey = moment(next).format("YYYY-MM-DD");
+      const id = await Notifications.scheduleNotificationAsync({
+        content: { ...pillContent(dateKey, hour, minute, cycles), sound: true, color: notifColor(), data: { kind: "reminder", as } },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: next },
+      });
+      return [id];
     }
-    const id = await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Prise de pilule",
-        body: `C'est l'heure de votre pilule (${pad(hour)}:${pad(minute)}). La prendre à heure fixe garantit son efficacité.`,
-        sound: true,
-        data: { kind: "reminder", as: "Prise de pilule" },
-      },
-      trigger: pillTrigger(frequency, hour, minute),
-    });
-    return [id];
+    return scheduleEvery(as, stepDaysFor(frequency), hour, minute, (dateKey) =>
+      pillContent(dateKey, hour, minute, cycles)
+    );
   }
 
-  const now = new Date();
-  const ids = [];
-  const slots = daysBeforeFor(frequency);
-  for (const event of upcomingEvents(kind, cycles)) {
-    for (const before of slots) {
-      const fireAt = atTime(
-        moment(event.date).subtract(before, "days").format("YYYY-MM-DD"),
-        hour,
-        minute
-      );
+  if (frequency === "lejourmeme") {
+    // Uniquement les jours d'événement (prochaines règles / ovulations).
+    const now = new Date();
+    const ids = [];
+    for (const event of upcomingEvents(kind, cycles)) {
+      const fireAt = atTime(event.date, hour, minute);
       if (fireAt <= now) continue;
       const id = await Notifications.scheduleNotificationAsync({
-        content: { ...buildContent(kind, event, before), sound: true, data: { kind: "reminder", as } },
+        content: { ...buildContent(kind, event, 0), sound: true, color: notifColor(), data: { kind: "reminder", as } },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: fireAt },
       });
       ids.push(id);
     }
+    return ids;
   }
-  return ids;
+
+  // Tous les N jours, avec un texte qui suit le cycle.
+  return scheduleEvery(as, stepDaysFor(frequency), hour, minute, (dateKey) =>
+    eventDailyContent(kind, dateKey, cycles)
+  );
 };
 
 export const cancelReminder = async (saved = {}) => {
@@ -312,8 +345,8 @@ export const rescheduleAllReminders = async (cycles, { onlyIfStale = false } = {
   const staleBefore = Date.now() - REFRESH_AFTER_DAYS * 24 * 60 * 60 * 1000;
   for (const [as, saved] of Object.entries(all)) {
     if (!saved?.enabled) continue;
-    // La pilule ne dépend du cycle qu'en mode quotidien (texte par jour du cycle).
-    if (REMINDER_KIND[as] === "pill" && (saved.frequency ?? "quotidien") !== "quotidien") continue;
+    // Pilule « le jour même » : notification unique, pas à renouveler.
+    if (REMINDER_KIND[as] === "pill" && saved.frequency === "lejourmeme") continue;
     if (onlyIfStale && saved.scheduledAt && saved.scheduledAt > staleBefore) continue;
     try {
       await cancelReminder(saved);

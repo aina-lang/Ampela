@@ -655,5 +655,28 @@
   "msgListen": "Écouter",
   "voirPlus": "Voir plus",
   "networkError": "Impossible de contacter le serveur. Vérifiez votre connexion.",
-  "msgQueued": "Hors ligne : le message partira dès que possible."
+  "msgQueued": "Hors ligne : le message partira dès que possible.",
+  "notifOneWeek": "1 semaine",
+  "notifDays": {
+    "one": "1 jour",
+    "other": "%{count} jours"
+  },
+  "notifPeriodIn": "Règles dans %{when}",
+  "notifPeriodInBody": "Vos prochaines règles sont prévues %{date}. Pensez à prévoir vos protections.",
+  "notifPeriodToday": "Règles prévues aujourd'hui",
+  "notifPeriodTodayBody": "D'après votre cycle, vos règles devraient commencer aujourd'hui (%{date}). Si ce n'est pas le cas, mettez à jour vos informations dans Ampela.",
+  "notifFertileWindow": "Période de fécondité du %{from} au %{to}.",
+  "notifOvulationIn": "Ovulation dans %{when}",
+  "notifOvulationInBody": "Votre ovulation est estimée %{date}.",
+  "notifOvulationTodayBody": "Aujourd'hui (%{date}) est votre jour d'ovulation estimé, le pic de votre période de fécondité.",
+  "notifPeriodOngoing": "Règles en cours · jour %{day}",
+  "notifPeriodOngoingBody": "Fin prévue %{date}. Hydratez-vous, reposez-vous si besoin et notez tout symptôme inhabituel.",
+  "notifFertileOngoing": "Période de fécondité en cours",
+  "notifFertileOngoingBody": "Ovulation estimée dans %{when} (%{date}). Fertilité élevée ces jours-ci.",
+  "notifFertileUntil": "Période de fécondité jusqu'au %{date}.",
+  "notifPillBody": "C'est l'heure de votre pilule (%{time}). Prenez-la chaque jour au même moment, dans une plage de 3 heures au plus.",
+  "notifPillDay": "Pilule · jour %{day} du cycle",
+  "notifPillDay1Body": "Premier jour de votre cycle : c'est l'heure de votre pilule (%{time}). Si vous débutez la pilule, la première plaquette se commence aujourd'hui (au plus tard le 5e jour du cycle).",
+  "notifPillFertileBody": "C'est l'heure de votre pilule (%{time}). D'après votre calendrier, vous seriez en période de fécondité : ne sautez aucune prise et restez dans la plage de 3 heures.",
+  "notifPillDayBody": "C'est l'heure de votre pilule (%{time}). Même moment chaque jour, plaquette suivante dès la fin de celle-ci, sans pause."
 }
