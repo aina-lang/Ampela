@@ -680,5 +680,10 @@
   "notifPillDayBody": "Fotoanan'ny pilinao (%{time}). Fotoana mitovy isan'andro, takelaka manaraka avy hatrany rehefa lany ny iray, tsy misy fiatoana.",
   "forumEditQuestion": "Hanova ny fanontaniana",
   "forumQuestionUpdated": "Voaova ny fanontaniana.",
-  "forumCommentsTitle": "Hevitra"
+  "forumCommentsTitle": "Hevitra",
+  "appLockedTitle": "Mihidy ny rindranasa",
+  "appLockedSubtitle": "Ampiasao ny dian-tananao, ny tarehinao na ny endrika fanidiana ny telefaonao mba hanohizana.",
+  "appLockUnlock": "Vohay",
+  "appLockPromptMessage": "Vohay Ampela",
+  "appLockCancel": "Aoka ihany"
 }

@@ -681,5 +681,10 @@
   "notifPillDayBody": "C'est l'heure de votre pilule (%{time}). Même moment chaque jour, plaquette suivante dès la fin de celle-ci, sans pause.",
   "forumEditQuestion": "Modifier la question",
   "forumQuestionUpdated": "Question modifiée.",
-  "forumCommentsTitle": "Commentaires"
+  "forumCommentsTitle": "Commentaires",
+  "appLockedTitle": "Application verrouillée",
+  "appLockedSubtitle": "Utilisez votre empreinte, votre visage ou le schéma de votre téléphone pour continuer.",
+  "appLockUnlock": "Déverrouiller",
+  "appLockPromptMessage": "Déverrouillez Ampela",
+  "appLockCancel": "Annuler"
 }

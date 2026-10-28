@@ -5,8 +5,10 @@ import * as LocalAuthentication from "expo-local-authentication";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "@legendapp/state/react";
 import { preferenceState } from "@/legendstate/AmpelaStates";
-import { COLORS, SIZES } from "@/constants";
+import { SIZES } from "@/constants";
 import { useDiscoveryTheme } from "@/components/discovery";
+import * as SplashScreen from "expo-splash-screen";
+import i18n from "@/constants/i18n";
 
 // Ouvrir la galerie, un sélecteur de fichiers ou une demande de permission
 // met l'app en arrière-plan un instant : on ne verrouille qu'après un vrai
@@ -30,7 +32,7 @@ export const resumeAppLock = () => {
  */
 const AppLockGate = ({ children }) => {
   const { appLockEnabled } = useSelector(() => preferenceState.get());
-  const { accentColor, accentContainer } = useDiscoveryTheme();
+  const { accentColor, accentContainer, surface } = useDiscoveryTheme();
   const [locked, setLocked] = useState(!!appLockEnabled);
   const authInProgress = useRef(false);
   const appStateRef = useRef(AppState.currentState);
@@ -47,8 +49,8 @@ const AppLockGate = ({ children }) => {
         return;
       }
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: "Déverrouillez Ampela",
-        cancelLabel: "Annuler",
+        promptMessage: i18n.t("appLockPromptMessage"),
+        cancelLabel: i18n.t("appLockCancel"),
       });
       if (result.success) {
         setLocked(false);
@@ -94,22 +96,27 @@ const AppLockGate = ({ children }) => {
     return () => clearTimeout(timer);
   }, [locked, appLockEnabled, unlock]);
 
-  if (!locked || !appLockEnabled) {
+  const showLockScreen = locked && appLockEnabled;
+  useEffect(() => {
+    // L'écran verrouillé remplace le reste de l'app, donc le chargeur qui
+    // retire le splash natif n'est pas monté : on le retire ici, sinon
+    // l'invite annulée laisse l'utilisatrice bloquée sur le splash.
+    if (showLockScreen) SplashScreen.hideAsync().catch(() => {});
+  }, [showLockScreen]);
+
+  if (!showLockScreen) {
     return children;
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: surface }]}>
       <View style={[styles.iconCircle, { backgroundColor: accentContainer }]}>
         <Ionicons name="lock-closed" size={40} color={accentColor} />
       </View>
-      <Text style={styles.title}>Application verrouillée</Text>
-      <Text style={styles.subtitle}>
-        Utilisez votre empreinte, votre visage ou le schéma de votre téléphone
-        pour continuer.
-      </Text>
+      <Text style={styles.title}>{i18n.t("appLockedTitle")}</Text>
+      <Text style={styles.subtitle}>{i18n.t("appLockedSubtitle")}</Text>
       <PrimaryButton
-        title="Déverrouiller"
+        title={i18n.t("appLockUnlock")}
         onPress={unlock}
         icon={<Ionicons name="finger-print" size={20} color="#FFFFFF" />}
       />
@@ -122,7 +129,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.neutral100,
     paddingHorizontal: 40,
   },
   iconCircle: {
