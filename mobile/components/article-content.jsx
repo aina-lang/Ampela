@@ -4,6 +4,7 @@ import { FlatList, StyleSheet } from "react-native";
 import { SIZES, data } from "@/constants";
 import { useRouter } from "expo-router";
 import ArticleItem from "./articleItem";
+import { useTabBarSpace } from "@/components/MyTabBar";
 
 const showActiveCategoryContent = (activeCategory) => {
   let content = null;
@@ -30,6 +31,7 @@ const showActiveCategoryContent = (activeCategory) => {
 };
 
 const ArticleContent = ({ navigation, activeCategory, text }) => {
+  const tabBarSpace = useTabBarSpace();
   const router = useRouter();
   const content = showActiveCategoryContent(activeCategory);
 
@@ -70,7 +72,7 @@ const ArticleContent = ({ navigation, activeCategory, text }) => {
       keyExtractor={(item) => item.title}
       showsVerticalScrollIndicator={false}
       style={styles.container}
-      contentContainerStyle={{  paddingBottom: 80 }}
+      contentContainerStyle={{ paddingBottom: tabBarSpace }}
     />
   );
 };

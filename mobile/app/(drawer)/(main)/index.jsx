@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, SIZES } from "@/constants";
 import i18n from "@/constants/i18n";
 import BackgroundContainer from "@/components/background-container";
+import { useTabBarSpace } from "@/components/MyTabBar";
 import IndicationCalendar from "@/components/calendar/indication-calendar";
 import { Calendar } from "react-native-calendars";
 import { LocaleConfig, monthNames as calendarMonthNames } from "@/constants/calendarLocale";
@@ -29,6 +30,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 
 const Index = () => {
+  const tabBarSpace = useTabBarSpace();
   const navigation = useNavigation();
   const user = useSelector(() => userState.get());
   const { theme, language } = useSelector(() => preferenceState.get());
@@ -174,7 +176,7 @@ const Index = () => {
         onScroll={handleHeaderScroll}
         scrollEventThrottle={16}
         style={styles.container}
-        contentContainerStyle={styles.contentContainer}
+        contentContainerStyle={[styles.contentContainer, { paddingBottom: tabBarSpace }]}
         showsVerticalScrollIndicator={false}
       >
           {/* Calendrier */}

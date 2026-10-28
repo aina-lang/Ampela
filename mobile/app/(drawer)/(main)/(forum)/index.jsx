@@ -28,6 +28,7 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { subscribeToMessageEvents } from "@/services/messagesAPI";
 import { useNetInfo } from "@react-native-community/netinfo";
 import { useDiscoveryTheme } from "@/components/discovery";
+import { useTabBarSpace } from "@/components/MyTabBar";
 import i18n from "@/constants/i18n";
 import { useSelector } from "@legendapp/state/react";
 import { preferenceState } from "@/legendstate/AmpelaStates";
@@ -43,6 +44,7 @@ const Index = () => {
   const { openModal } = useModal();
   const router = useRouter();
   const { accentColor } = useDiscoveryTheme();
+  const tabBarSpace = useTabBarSpace();
   const { isConnected, isInternetReachable } = useNetInfo();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -233,7 +235,7 @@ const Index = () => {
               refreshing={refreshing}
               onRefresh={handleRefresh}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ padding: 12, paddingBottom: 80 }}
+              contentContainerStyle={{ padding: 12, paddingBottom: tabBarSpace }}
             />
           )}
         </BackgroundContainer>

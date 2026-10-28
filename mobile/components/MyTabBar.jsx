@@ -13,6 +13,16 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDiscoveryTheme } from "@/components/discovery";
 
 const BAR_HEIGHT = SIZES.scale(64);
+
+/** Position du bas de la pilule selon la barre système du téléphone. */
+const barBottomFor = (insetBottom) =>
+  insetBottom > 30 ? insetBottom + 6 : Math.max(insetBottom - 14, 4);
+
+/** Espace à laisser en bas des listes pour passer sous la barre d'onglets. */
+export const useTabBarSpace = () => {
+  const insets = useSafeAreaInsets();
+  return barBottomFor(insets.bottom) + BAR_HEIGHT + 12;
+};
 const BAR_PADDING_H = 8;
 const INDICATOR_HEIGHT = 46;
 
@@ -23,7 +33,14 @@ const INDICATOR_HEIGHT = 46;
  */
 function MyTabBar({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
-  const { accentColor, accentContainer } = useDiscoveryTheme();
+  const { accentColor, accentContainer, surface } = useDiscoveryTheme();
+  // Barre de navigation Android à trois boutons (inset haut) : la pilule
+  // se place au-dessus et un fond opaque masque le contenu qui défile
+  // derrière les boutons système. Barre de gestes : collée au bord.
+  const hasButtonBar = insets.bottom > 30;
+  const barBottom = hasButtonBar
+    ? insets.bottom + 6
+    : Math.max(insets.bottom - 14, 4);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [translateY] = useState(() => new Animated.Value(0));
 
@@ -63,7 +80,7 @@ function MyTabBar({ state, descriptors, navigation }) {
           easing: Easing.ease,
           useNativeDriver: true,
         }).start();
-      }
+      },
     );
     const keyboardDidHideListener = Keyboard.addListener(
       "keyboardDidHide",
@@ -75,7 +92,7 @@ function MyTabBar({ state, descriptors, navigation }) {
           easing: Easing.ease,
           useNativeDriver: true,
         }).start();
-      }
+      },
     );
 
     return () => {
@@ -85,85 +102,89 @@ function MyTabBar({ state, descriptors, navigation }) {
   }, [translateY]);
 
   return (
-    <View
-      style={[
-        styles.safeArea,
-        // Collée au bord : juste de quoi ne pas chevaucher la barre de
-        // gestes sur les téléphones qui en ont une.
-        { bottom: Math.max(insets.bottom - 14, 4) },
-      ]}
-    >
-      <Animated.View
-        style={[
-          styles.tabContainer,
-          {
-            transform: [{ translateY }],
-          },
-        ]}
-        onLayout={(e) => setBarWidth(e.nativeEvent.layout.width)}
-      >
-        {/* Indicateur pastel qui glisse sous l'onglet actif */}
-        <Animated.View
+    <>
+      {insets.bottom > 0 && (
+        <View
           pointerEvents="none"
           style={[
-            styles.indicator,
-            {
-              width: indicatorWidth,
-              backgroundColor: accentContainer,
-              transform: [{ translateX: indicatorX }],
-            },
+            styles.backdrop,
+            { height: insets.bottom, backgroundColor: surface },
           ]}
         />
+      )}
+      <View style={[styles.safeArea, { bottom: barBottom }]}>
+        <Animated.View
+          style={[
+            styles.tabContainer,
+            {
+              transform: [{ translateY }],
+            },
+          ]}
+          onLayout={(e) => setBarWidth(e.nativeEvent.layout.width)}
+        >
+          {/* Indicateur pastel qui glisse sous l'onglet actif */}
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.indicator,
+              {
+                width: indicatorWidth,
+                backgroundColor: accentContainer,
+                transform: [{ translateX: indicatorX }],
+              },
+            ]}
+          />
 
-        {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key];
-          const icon = options.tabBarIcon;
-          const isFocused = state.index === index;
+          {state.routes.map((route, index) => {
+            const { options } = descriptors[route.key];
+            const icon = options.tabBarIcon;
+            const isFocused = state.index === index;
 
-          const onPress = () => {
-            const event = navigation.emit({
-              type: "tabPress",
-              target: route.key,
-              canPreventDefault: true,
-            });
+            const onPress = () => {
+              const event = navigation.emit({
+                type: "tabPress",
+                target: route.key,
+                canPreventDefault: true,
+              });
 
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name, route.params);
-            }
-          };
+              if (!isFocused && !event.defaultPrevented) {
+                navigation.navigate(route.name, route.params);
+              }
+            };
 
-          const onLongPress = () => {
-            navigation.emit({
-              type: "tabLongPress",
-              target: route.key,
-            });
-          };
+            const onLongPress = () => {
+              navigation.emit({
+                type: "tabLongPress",
+                target: route.key,
+              });
+            };
 
-          const hideOnKeyboard = options.tabBarHideOnKeyboard;
+            const hideOnKeyboard = options.tabBarHideOnKeyboard;
 
-          if (isKeyboardVisible && hideOnKeyboard) return null;
+            if (isKeyboardVisible && hideOnKeyboard) return null;
 
-          return (
-            <TouchableOpacity
-              key={route.key}
-              accessibilityRole="button"
-              accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={options.tabBarAccessibilityLabel}
-              testID={options.tabBarTestID}
-              onPress={onPress}
-              onLongPress={onLongPress}
-              style={styles.tabButton}
-            >
-              <Ionicons
-                name={icon}
-                size={22}
-                color={isFocused ? accentColor : "#B9B3BE"}
-              />
-            </TouchableOpacity>
-          );
-        })}
-      </Animated.View>
-    </View>
+            return (
+              <TouchableOpacity
+                key={route.key}
+                accessibilityRole="button"
+                accessibilityState={isFocused ? { selected: true } : {}}
+                accessibilityLabel={options.tabBarAccessibilityLabel}
+                testID={options.tabBarTestID}
+                onPress={onPress}
+                onLongPress={onLongPress}
+                style={styles.tabButton}
+              >
+                <Ionicons
+                  name={icon}
+                  size={22}
+                  color={isFocused ? accentColor : "#B9B3BE"}
+                />
+              </TouchableOpacity>
+            );
+          })}
+        </Animated.View>
+      </View>
+    </>
   );
 }
 
@@ -171,6 +192,13 @@ const styles = StyleSheet.create({
   safeArea: {
     width: SIZES.width,
     position: "absolute",
+    zIndex: 1,
+  },
+  backdrop: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
     zIndex: 1,
   },
   tabContainer: {
