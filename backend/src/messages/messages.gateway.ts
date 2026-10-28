@@ -48,4 +48,14 @@ export class MessagesGateway implements OnGatewayConnection {
       this.server.to(`user:${id}`).emit(event, payload);
     }
   }
+
+  /**
+   * Diffusion à toutes les connectées (forum) : `post:new`, `post:updated`
+   * ({ id, likeCount, commentCount }), `post:deleted` ({ id }),
+   * `comment:new` / `comment:updated` ({ postId, comment }),
+   * `comment:deleted` ({ postId, commentId }).
+   */
+  broadcast(event: string, payload: unknown) {
+    this.server.emit(event, payload);
+  }
 }

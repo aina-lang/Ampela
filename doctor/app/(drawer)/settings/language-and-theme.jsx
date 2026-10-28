@@ -61,7 +61,7 @@ const ThemeCard = ({ themeKey, label, desc, image, selected, onSelect }) => {
     <TouchableOpacity
       activeOpacity={0.85}
       onPress={() => onSelect(themeKey)}
-      style={styles.themeCard}
+      style={[styles.themeCard, { borderColor: selected ? cardAccent : "transparent" }]}
     >
       <View style={styles.themeImageWrapper}>
         <Image source={image} style={styles.themeImage} resizeMode="cover" />
@@ -207,6 +207,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.neutral100,
     overflow: "hidden",
     position: "relative",
+    // Bordure couleur du thème sur la carte sélectionnée
+    borderWidth: 2.5,
   },
   themeImageWrapper: {
     position: "relative",

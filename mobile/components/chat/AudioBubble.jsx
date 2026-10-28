@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import i18n from "@/constants/i18n";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
@@ -37,7 +38,7 @@ const AudioBubble = ({ uri, durationMs, mine, accentColor }) => {
       const ext = (uri.split(".").pop() || "m4a").toLowerCase().split("?")[0];
       await downloadToDevice(uri, `vocal-${Date.now()}.${ext}`, ext === "m4a" ? "audio/mp4" : `audio/${ext}`);
     } catch (error) {
-      toast.error(error.message || "Téléchargement impossible.");
+      toast.error(error.message || i18n.t("msgDownloadFailed"));
     }
   };
 
@@ -47,7 +48,7 @@ const AudioBubble = ({ uri, durationMs, mine, accentColor }) => {
         onPress={toggle}
         style={[styles.play, { backgroundColor: mine ? "rgba(255,255,255,0.25)" : `${accentColor}22` }]}
         activeOpacity={0.8}
-        accessibilityLabel={status.playing ? "Pause" : "Écouter"}
+        accessibilityLabel={status.playing ? i18n.t("msgPause") : i18n.t("msgListen")}
       >
         <Ionicons name={status.playing ? "pause" : "play"} size={18} color={fg} />
       </TouchableOpacity>
@@ -58,7 +59,7 @@ const AudioBubble = ({ uri, durationMs, mine, accentColor }) => {
       <Text style={[styles.time, { color: mine ? "rgba(255,255,255,0.9)" : "#5C5661" }]}>
         {status.playing ? fmt(status.currentTime) : fmt(total)}
       </Text>
-      <TouchableOpacity onPress={download} hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }} accessibilityLabel="Télécharger">
+      <TouchableOpacity onPress={download} hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }} accessibilityLabel={i18n.t("msgDownload")}>
         <Ionicons name="download-outline" size={16} color={fg} />
       </TouchableOpacity>
     </View>

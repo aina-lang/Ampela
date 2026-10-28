@@ -1,4 +1,5 @@
 import React from "react";
+import i18n from "@/constants/i18n";
 import ConfirmSheet from "@/components/ConfirmSheet";
 
 /** Confirmation de suppression d'un commentaire, branchée sur useComments. */
@@ -12,13 +13,13 @@ const CommentDeleteSheet = ({ thread }) => {
       visible={!!target}
       icon="trash-outline"
       danger
-      title={isRoot ? "Supprimer ce commentaire ?" : "Supprimer cette réponse ?"}
+      title={isRoot ? i18n.t("forumDeleteCommentTitle") : i18n.t("forumDeleteReplyTitle")}
       message={
         hasReplies
-          ? "Le commentaire et toutes ses réponses seront supprimés définitivement."
-          : "Cette action est définitive."
+          ? i18n.t("forumDeleteCommentMessage")
+          : i18n.t("forumDeleteReplyMessage")
       }
-      confirmLabel="Supprimer"
+      confirmLabel={i18n.t("forumDelete")}
       loading={thread.sending}
       onConfirm={thread.confirmDelete}
       onCancel={thread.cancelDelete}

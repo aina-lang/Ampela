@@ -9,6 +9,7 @@ import { MessagesModule } from './messages/messages.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PostsModule } from './posts/posts.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { RemindersModule } from './reminders/reminders.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { UsersModule } from './users/users.module';
 
@@ -28,6 +29,7 @@ class HealthController {
     AuthModule,
     UsersModule,
     CyclesModule,
+    RemindersModule,
     DoctorsModule,
     PostsModule,
     MessagesModule,

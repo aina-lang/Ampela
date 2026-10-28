@@ -1,9 +1,12 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { View, Text, StyleSheet, SectionList, TouchableOpacity, Image, RefreshControl } from "react-native";
+import { useCache, writeCache } from "@/services/localCache";
+import Avatar from "@/components/ui/Avatar";
+import i18n from "@/constants/i18n";
+import { View, Text, StyleSheet, SectionList, TouchableOpacity, RefreshControl } from "react-native";
 import { useNavigation, useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Notifications from "expo-notifications";
-import { SIZES, images } from "@/constants";
+import { SIZES } from "@/constants";
 import AppHeader, { HEADER_HEIGHT } from "@/components/AppHeader";
 import { handleHeaderScroll } from "@/hooks/useHeaderScroll";
 import { useDiscoveryTheme } from "@/components/discovery";
@@ -18,6 +21,14 @@ import {
   markNotificationRead,
 } from "@/services/notificationsAPI";
 import { subscribeToMessageEvents } from "@/services/messagesAPI";
+
+// Titres traduits à l'affichage (le serveur les stocke en français) :
+// reconstruits depuis le type et l'autrice quand le type est connu.
+const TITLE_KEYS = { like: "notifLike", comment: "notifComment", reply: "notifReply", message: "notifMessage" };
+const notificationTitle = (n) =>
+  TITLE_KEYS[n.type]
+    ? i18n.t(TITLE_KEYS[n.type], { name: n.actor?.username || i18n.t("anonymous") })
+    : n.title;
 
 const ICONS = {
   like: "heart",
@@ -39,6 +50,15 @@ const NotificationsScreen = () => {
   const [reminders, setReminders] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Local d'abord : dernière liste connue affichée avant le réseau.
+  const cachedItems = useCache("notifications:list");
+  useEffect(() => {
+    if (!cachedItems || items !== null) return undefined;
+    const timer = setTimeout(() => setItems((prev) => prev ?? cachedItems), 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cachedItems]);
+
   const load = useCallback(async () => {
     try {
       const [list, scheduled] = await Promise.all([
@@ -46,6 +66,7 @@ const NotificationsScreen = () => {
         Notifications.getAllScheduledNotificationsAsync().catch(() => []),
       ]);
       setItems(list);
+      if (user) writeCache("notifications:list", list);
       // Les 5 prochains rappels planifiés sur l'appareil (date absolue uniquement).
       const upcoming = scheduled
         .map((n) => ({
@@ -62,7 +83,9 @@ const NotificationsScreen = () => {
         .slice(0, 5);
       setReminders(upcoming);
     } catch (error) {
-      toast.error(error.message || "Impossible de charger les notifications.");
+      // Hors ligne avec un cache : on garde la liste connue.
+      if (!error?.status && items && items.length > 0) return;
+      toast.error(error.message || i18n.t("notifLoadFailed"));
       setItems([]);
     } finally {
       setRefreshing(false);
@@ -109,7 +132,7 @@ const NotificationsScreen = () => {
       setItems((prev) => prev.map((x) => ({ ...x, readAt: x.readAt ?? new Date().toISOString() })));
       setUnreadNotifications(0);
     } catch (_error) {
-      toast.error("Impossible de tout marquer comme lu.");
+      toast.error(i18n.t("notifReadAllFailed"));
     }
   };
 
@@ -118,9 +141,9 @@ const NotificationsScreen = () => {
   const recent = (items ?? []).filter((x) => new Date(x.createdAt).toDateString() === today);
   const earlier = (items ?? []).filter((x) => new Date(x.createdAt).toDateString() !== today);
   const sections = [
-    ...(reminders.length ? [{ key: "reminders", title: "Rappels à venir", data: reminders }] : []),
-    ...(recent.length ? [{ key: "today", title: "Aujourd'hui", data: recent }] : []),
-    ...(earlier.length ? [{ key: "earlier", title: "Plus tôt", data: earlier }] : []),
+    ...(reminders.length ? [{ key: "reminders", title: i18n.t("notifUpcomingReminders"), data: reminders }] : []),
+    ...(recent.length ? [{ key: "today", title: i18n.t("msgToday"), data: recent }] : []),
+    ...(earlier.length ? [{ key: "earlier", title: i18n.t("notifEarlier"), data: earlier }] : []),
   ];
 
   const renderNotification = (n, index, total) => (
@@ -136,17 +159,14 @@ const NotificationsScreen = () => {
       ]}
     >
       <View style={styles.avatarWrap}>
-        <Image
-          source={n.actor?.profileImage ? { uri: n.actor.profileImage } : images.doctor03}
-          style={styles.avatar}
-        />
+        <Avatar uri={n.actor?.profileImage} name={n.actor?.username} size={46} />
         <View style={[styles.typeBadge, { backgroundColor: accentColor }]}>
           <Ionicons name={ICONS[n.type] || "notifications"} size={11} color="#FFFFFF" />
         </View>
       </View>
       <View style={styles.text}>
         <Text style={[styles.title, !n.readAt && styles.titleUnread]} numberOfLines={2}>
-          {n.title}
+          {notificationTitle(n)}
         </Text>
         {!!n.body && (
           <Text style={styles.body} numberOfLines={2}>
@@ -181,7 +201,7 @@ const NotificationsScreen = () => {
           {r.body}
         </Text>
         <Text style={styles.time}>
-          {formatDateFr(r.date)} à {pad(r.date.getHours())}:{pad(r.date.getMinutes())}
+          {formatDateFr(r.date)} {i18n.t("notifAt")} {pad(r.date.getHours())}:{pad(r.date.getMinutes())}
         </Text>
       </View>
       <Ionicons name="chevron-forward" size={18} color="#C9C3CC" />
@@ -191,7 +211,7 @@ const NotificationsScreen = () => {
   return (
     <View style={[styles.container, { backgroundColor: surface }]}>
       <DecorativeBlobs />
-      <AppHeader navigation={navigation} title="Notifications" showBack absolute />
+      <AppHeader navigation={navigation} title={i18n.t("notifTitle")} showBack absolute />
       <SectionList
         onScroll={handleHeaderScroll}
         scrollEventThrottle={16}
@@ -217,7 +237,7 @@ const NotificationsScreen = () => {
               <Text style={styles.toolbarText}>
                 {unreadCount} non lue{unreadCount > 1 ? "s" : ""}
               </Text>
-              <GhostButton title="Tout marquer comme lu" size="sm" onPress={readAll} />
+              <GhostButton title={i18n.t("notifReadAll")} size="sm" onPress={readAll} />
             </View>
           ) : null
         }
@@ -245,11 +265,9 @@ const NotificationsScreen = () => {
               <View style={[styles.emptyIcon, { backgroundColor: accentContainer }]}>
                 <Ionicons name="notifications-off-outline" size={26} color={accentColor} />
               </View>
-              <Text style={styles.emptyTitle}>Rien pour l’instant</Text>
+              <Text style={styles.emptyTitle}>{i18n.t("notifEmptyTitle")}</Text>
               <Text style={styles.emptyText}>
-                {user
-                  ? "Les réactions, commentaires, réponses et messages que vous recevez apparaîtront ici, avec vos prochains rappels."
-                  : "Connectez-vous pour recevoir les réactions, commentaires et messages. Vos rappels programmés apparaissent ici."}
+                {user ? i18n.t("notifEmptySignedIn") : i18n.t("notifEmptySignedOut")}
               </Text>
             </View>
           )

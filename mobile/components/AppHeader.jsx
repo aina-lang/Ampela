@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Avatar from "@/components/ui/Avatar";
 import {
   View,
   Text,
@@ -7,11 +8,12 @@ import {
   Platform,
   Animated,
   StyleSheet,
-  Image,
-} from "react-native";
+  } from "react-native";
 import { SIZES } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useSelector } from "@legendapp/state/react";
+import { userState } from "@/legendstate/AmpelaStates";
 import { useDiscoveryTheme } from "@/components/discovery";
 import { useHeaderScrolled, setHeaderScrolled } from "@/hooks/useHeaderScroll";
 
@@ -57,6 +59,7 @@ const AppHeader = ({
   scrolledTitleColor,
   // Conversation : avatar de l'interlocutrice et profession sous le titre.
   avatar,
+  avatarName,
   subtitle,
   // Conservé pour compatibilité, ignoré par le nouveau design.
   bgColor,
@@ -65,6 +68,8 @@ const AppHeader = ({
   const fillColor = scrolledBackgroundColor || accentContainer;
   const scrolled = useHeaderScrolled();
   const router = useRouter();
+  const profileImage = useSelector(() => userState.profileImage.get());
+  const username = useSelector(() => userState.username.get());
 
   // Après un rechargement ou un lien direct, l'écran peut être le premier
   // de l'historique : on retombe alors sur l'accueil au lieu d'un
@@ -134,26 +139,28 @@ const AppHeader = ({
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              style={[styles.iconButton, buttonBg]}
-              onPress={() => navigation.openDrawer()}
+              style={[styles.avatarButton, buttonBg]}
+              onPress={() => router.push("/(drawer)/profile")}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel="Profil"
             >
-              <View style={styles.burger}>
-                <View style={[styles.burgerLine, { backgroundColor: accentColor }]} />
-                <View
-                  style={[
-                    styles.burgerLine,
-                    { width: 13, backgroundColor: accentColor },
-                  ]}
-                />
-              </View>
+              <Avatar
+                uri={profileImage}
+                name={username}
+                size={SIZES.scale(48)}
+                borderWidth={2}
+                borderColor={accentContainer}
+              />
             </TouchableOpacity>
           )}
 
-          {!!avatar && (
-            <Image
-              source={typeof avatar === "string" ? { uri: avatar } : avatar}
-              style={[styles.avatar, { borderColor: accentContainer }]}
+          {(!!avatar || !!avatarName) && (
+            <Avatar
+              uri={avatar}
+              name={avatarName}
+              size={38}
+              borderWidth={2}
+              borderColor={accentContainer}
             />
           )}
           {!!title && (
@@ -235,10 +242,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
+  avatarButton: {
+    width: SIZES.scale(48),
+    height: SIZES.scale(48),
+    borderRadius: SIZES.scale(24),
+    justifyContent: "center",
+    alignItems: "center",
+  },
   iconButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: SIZES.scale(42),
+    height: SIZES.scale(42),
+    borderRadius: SIZES.scale(21),
     justifyContent: "center",
     alignItems: "center",
   },
@@ -259,21 +273,6 @@ const styles = StyleSheet.create({
     fontFamily: "SBold",
     fontSize: 9,
     color: "#FFFFFF",
-  },
-  burger: {
-    width: 20,
-    gap: 5,
-  },
-  burgerLine: {
-    height: 2.5,
-    width: 20,
-    borderRadius: 2,
-  },
-  avatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 2,
   },
   titleBlock: {
     flexShrink: 1,

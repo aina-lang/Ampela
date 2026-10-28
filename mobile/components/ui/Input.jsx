@@ -79,8 +79,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 999,
-    paddingHorizontal: 20,
-    height: 56,
+    paddingHorizontal: SIZES.scale(20),
+    height: SIZES.scale(56),
   },
   // Le multiligne garde des coins arrondis classiques (une pilule ne
   // fonctionne pas sur un bloc haut).

@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import Avatar from "@/components/ui/Avatar";
+import i18n from "@/constants/i18n";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
-import { SIZES, images } from "@/constants";
+import { SIZES } from "@/constants";
 import { likePost, unlikePost } from "@/services/forumAPI";
 import { getCurrentUser } from "@/services/api";
 import { Ionicons } from "@expo/vector-icons";
@@ -38,12 +40,21 @@ const ForumItem = ({ post, onChange }) => {
   const handleLikeIconPress = async () => {
     if (!user || !post?.id || isDisabled) return;
     setIsDisabled(true);
+    // Optimiste : la réaction s'affiche tout de suite, le serveur confirme
+    // ensuite (et on revient en arrière s'il refuse).
+    const previous = post;
+    onChange?.({
+      ...post,
+      likedByMe: !post.likedByMe,
+      likeCount: Math.max(0, (post.likeCount ?? 0) + (post.likedByMe ? -1 : 1)),
+    });
     try {
-      const updated = post.likedByMe ? await unlikePost(post.id) : await likePost(post.id);
+      const updated = previous.likedByMe ? await unlikePost(post.id) : await likePost(post.id);
       onChange?.(updated);
     } catch (error) {
-      console.error("Erreur lors de la mise à jour du like : ", error);
-      toast.error("Impossible d'enregistrer votre réaction.");
+      console.log("Like failed:", error?.message ?? error);
+      onChange?.(previous);
+      toast.error(i18n.t("forumReactionFailed"));
     } finally {
       setIsDisabled(false);
     }
@@ -65,19 +76,16 @@ const ForumItem = ({ post, onChange }) => {
       {/* En-tête : avatar cerclé, auteur, profession, date relative */}
       <View style={styles.header}>
         <View style={[styles.avatarRing, { borderColor: accentContainer }]}>
-          <Image
-            source={post.authorImage ? { uri: post.authorImage } : images.doctor03}
-            style={styles.avatar}
-          />
+          <Avatar uri={post.authorImage} name={post.authorName} fill fontSize={17} />
         </View>
         <View style={styles.headerText}>
           <Text style={styles.authorName} numberOfLines={1}>
-            {post.authorName || "Anonyme"}
+            {post.authorName || i18n.t("anonymous")}
           </Text>
           <Text style={styles.meta} numberOfLines={1}>
             {[
               post.authorRole === "doctor"
-                ? [post.authorProfession, "Professionnelle de santé"].filter(Boolean).join(" · ")
+                ? [post.authorProfession, i18n.t("roleDoctor")].filter(Boolean).join(" · ")
                 : null,
               relativeDate(post.createdAt),
             ]
@@ -127,7 +135,7 @@ const ForumItem = ({ post, onChange }) => {
             size={18}
           />
           <Text style={[styles.actionText, commentsOpen && { color: accentColor }]}>
-            {post.commentCount ?? 0} commentaire{(post.commentCount ?? 0) > 1 ? "s" : ""}
+            {i18n.t("forumCommentCount", { count: post.commentCount ?? 0 })}
           </Text>
         </TouchableOpacity>
       </View>

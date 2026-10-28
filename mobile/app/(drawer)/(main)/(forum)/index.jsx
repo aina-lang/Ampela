@@ -1,4 +1,5 @@
 import { handleHeaderScroll } from "@/hooks/useHeaderScroll";
+import { useCache, writeCache } from "@/services/localCache";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
@@ -23,8 +24,12 @@ import { useModal } from "@/hooks/ModalProvider";
 import { useAuth } from "@/hooks/AuthContext";
 import { SecondaryButton } from "@/components/ui";
 import { listPosts } from "@/services/forumAPI";
+import { subscribeToMessageEvents } from "@/services/messagesAPI";
 import { useNetInfo } from "@react-native-community/netinfo";
 import { useDiscoveryTheme } from "@/components/discovery";
+import i18n from "@/constants/i18n";
+import { useSelector } from "@legendapp/state/react";
+import { preferenceState } from "@/legendstate/AmpelaStates";
 
 const Index = () => {
   const { user } = useAuth();
@@ -37,19 +42,37 @@ const Index = () => {
   const { isConnected, isInternetReachable } = useNetInfo();
 
   const [refreshing, setRefreshing] = useState(false);
-  const canLoad = !!user && isConnected && isInternetReachable;
+  // Le forum se lit sans compte ; un compte sert à poser, réagir, commenter.
+  const canLoad = isConnected && isInternetReachable;
+  useSelector(() => preferenceState.language.get());
+
+  // Local d'abord : la dernière liste connue s'affiche tout de suite.
+  const cachedPosts = useCache("forum:posts");
+  useEffect(() => {
+    if (!cachedPosts || posts.length > 0) return undefined;
+    const timer = setTimeout(() => {
+      setPosts(cachedPosts);
+      setIsLoading(false);
+    }, 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cachedPosts]);
 
   const loadPosts = useCallback(async () => {
     if (!canLoad) return;
     try {
-      setPosts(await listPosts());
+      const fresh = await listPosts();
+      setPosts(fresh);
+      writeCache("forum:posts", fresh);
     } catch (error) {
       console.error("Posts loading error:", error);
     } finally {
       setIsLoading(false);
       setRefreshing(false);
     }
-  }, [canLoad]);
+    // user?.id : après connexion, « likedByMe » doit être rechargé.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canLoad, user?.id]);
 
   // Rechargé à chaque retour sur l'écran (après un nouveau post, etc.).
   useFocusEffect(
@@ -68,6 +91,30 @@ const Index = () => {
   const handlePostChange = useCallback((updated) => {
     setPosts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
   }, []);
+
+  // Temps réel : nouvelles publications, compteurs et suppressions des
+  // autres membres arrivent sans recharger. Le cache suit.
+  useEffect(() => {
+    if (!user) return undefined;
+    return subscribeToMessageEvents((event, payload) => {
+      setPosts((prev) => {
+        let next = prev;
+        if (event === "post:new" && !prev.some((p) => p.id === payload.id)) {
+          next = [payload, ...prev];
+        } else if (event === "post:updated") {
+          next = prev.map((p) =>
+            p.id === payload.id
+              ? { ...p, likeCount: payload.likeCount ?? p.likeCount, commentCount: payload.commentCount ?? p.commentCount }
+              : p
+          );
+        } else if (event === "post:deleted") {
+          next = prev.filter((p) => p.id !== payload.id);
+        }
+        if (next !== prev) writeCache("forum:posts", next);
+        return next;
+      });
+    });
+  }, [user]);
 
   // Invitation à se connecter : une seule fois par ouverture de l'écran,
   // l'utilisatrice peut ensuite la fermer et rester sur le forum.
@@ -102,7 +149,7 @@ const Index = () => {
               </View>
               {user && (
                 <TouchableOpacity
-                  accessibilityLabel="Poser une question"
+                  accessibilityLabel={i18n.t("forumAskQuestion")}
                   activeOpacity={0.85}
                   onPress={() => router.push("/(drawer)/(forum)/addpost")}
                   style={[styles.askButton, { backgroundColor: accentColor }]}
@@ -113,7 +160,7 @@ const Index = () => {
             </View>
           </View>
           <View style={{ height: 8 }} />
-          {!isConnected || !isInternetReachable ? (
+          {(!isConnected || !isInternetReachable) && posts.length === 0 ? (
             <View style={styles.offlineContainer}>
               <MaterialCommunityIcons
                 name="wifi-off"
@@ -121,28 +168,7 @@ const Index = () => {
                 color="red"
                 style={styles.icon}
               />
-              <Text style={styles.text}>Hors ligne</Text>
-            </View>
-          ) : !user ? (
-            <View style={styles.signedOutContainer}>
-              <MaterialCommunityIcons
-                name="account-heart-outline"
-                size={40}
-                color={accentColor}
-                style={styles.icon}
-              />
-              <Text style={styles.signedOutTitle}>
-                Le forum est réservé aux membres
-              </Text>
-              <Text style={styles.signedOutText}>
-                Connectez-vous avec votre e-mail pour lire et poser des
-                questions.
-              </Text>
-              <SecondaryButton
-                title="Se connecter"
-                onPress={() => openModal(<AuthContent />)}
-                style={{ marginTop: 16 }}
-              />
+              <Text style={styles.text}>{i18n.t("forumOffline")}</Text>
             </View>
           ) : isLoading ? (
             <ForumSkeleton />
@@ -163,6 +189,25 @@ const Index = () => {
                 <ForumItem post={item} onChange={handlePostChange} />
               )}
               keyExtractor={(item) => item.id}
+              ListHeaderComponent={
+                !user ? (
+                  <View style={styles.signedOutContainer}>
+                    <MaterialCommunityIcons
+                      name="account-heart-outline"
+                      size={28}
+                      color={accentColor}
+                      style={styles.icon}
+                    />
+                    <Text style={styles.signedOutTitle}>{i18n.t("forumSignedOutTitle")}</Text>
+                    <Text style={styles.signedOutText}>{i18n.t("forumSignedOutText")}</Text>
+                    <SecondaryButton
+                      title={i18n.t("forumSignIn")}
+                      onPress={() => openModal(<AuthContent />)}
+                      style={{ marginTop: 12 }}
+                    />
+                  </View>
+                ) : null
+              }
               refreshing={refreshing}
               onRefresh={handleRefresh}
               showsVerticalScrollIndicator={false}
@@ -196,11 +241,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   signedOutContainer: {
-    flex: 1,
     alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 40,
-    paddingBottom: 120,
+    paddingHorizontal: 24,
+    paddingVertical: 18,
+    marginBottom: 12,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.7)",
   },
   signedOutTitle: {
     fontFamily: "SBold",

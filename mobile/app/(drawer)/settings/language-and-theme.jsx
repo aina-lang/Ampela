@@ -13,6 +13,7 @@ import { SIZES, COLORS, images } from "@/constants";
 import { useNavigation } from "expo-router";
 import i18n from "@/constants/i18n";
 import { preferenceState, updatePreference } from "@/legendstate/AmpelaStates";
+import { scheduleSync } from "@/services/sync";
 import { useSelector } from "@legendapp/state/react";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
@@ -61,7 +62,7 @@ const ThemeCard = ({ themeKey, label, desc, image, selected, onSelect }) => {
     <TouchableOpacity
       activeOpacity={0.85}
       onPress={() => onSelect(themeKey)}
-      style={styles.themeCard}
+      style={[styles.themeCard, { borderColor: selected ? cardAccent : "transparent" }]}
     >
       <View style={styles.themeImageWrapper}>
         <Image source={image} style={styles.themeImage} resizeMode="cover" />
@@ -95,10 +96,12 @@ const LanguageAndThemeScreen = () => {
   const changeLanguage = (lang) => {
     // i18n suit automatiquement preferenceState.language (constants/i18n.js).
     updatePreference({ language: lang });
+    scheduleSync();
   };
 
   const handleThemeChange = (themeKey) => {
     updatePreference({ theme: themeKey });
+    scheduleSync();
   };
 
   return (
@@ -108,7 +111,7 @@ const LanguageAndThemeScreen = () => {
 
       <AppHeader
         navigation={navigation}
-        title="Langue et thème"
+        title={i18n.t("profileLanguageTheme")}
         showBack
         absolute
       />
@@ -121,7 +124,7 @@ const LanguageAndThemeScreen = () => {
       >
         <View style={styles.content}>
           <View style={styles.sectionLabel}>
-            <Text style={styles.sectionLabelText}>Choisissez votre langue</Text>
+            <Text style={styles.sectionLabelText}>{i18n.t("settingsChooseLanguage")}</Text>
           </View>
           <View style={styles.cardsWrapper}>
             <LanguageCard
@@ -143,14 +146,14 @@ const LanguageAndThemeScreen = () => {
           </View>
 
           <View style={styles.sectionLabel}>
-            <Text style={styles.sectionLabelText}>Choisissez votre thème</Text>
+            <Text style={styles.sectionLabelText}>{i18n.t("onboardingChooseTheme")}</Text>
           </View>
 
           <View style={styles.themeCardsWrapper}>
             <ThemeCard
               themeKey="pink"
               label="Anna’s Rose"
-              desc="Rose"
+              desc={i18n.t("themePink")}
               image={images.pinkTheme}
               selected={theme === "pink"}
               onSelect={handleThemeChange}
@@ -158,7 +161,7 @@ const LanguageAndThemeScreen = () => {
             <ThemeCard
               themeKey="orange"
               label="Linda Sunset"
-              desc="Orange"
+              desc={i18n.t("themeOrange")}
               image={images.orangeTheme}
               selected={theme === "orange"}
               onSelect={handleThemeChange}
@@ -207,6 +210,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.neutral100,
     overflow: "hidden",
     position: "relative",
+    // Bordure couleur du thème sur la carte sélectionnée
+    borderWidth: 2.5,
   },
   themeImageWrapper: {
     position: "relative",

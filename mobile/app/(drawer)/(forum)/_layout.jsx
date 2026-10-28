@@ -1,4 +1,5 @@
 import React from "react";
+import i18n from "@/constants/i18n";
 import { Stack, useNavigation } from "expo-router";
 import AppHeader from "@/components/AppHeader";
 
@@ -10,7 +11,7 @@ const Layout = () => {
         header: ({ route }) => (
           <AppHeader
             navigation={navigation}
-            title={route.name === "post" ? "Question" : "Poser une question"}
+            title={route.name === "post" ? i18n.t("forumQuestion") : i18n.t("forumAskQuestion")}
             showBack
             absolute
           />

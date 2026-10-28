@@ -1,4 +1,6 @@
 import * as FileSystem from "expo-file-system/legacy";
+import { clearCache } from "@/services/localCache";
+import i18n from "@/constants/i18n";
 import { sessionState } from "@/legendstate/AmpelaStates";
 
 /**
@@ -19,8 +21,7 @@ export class ApiError extends Error {
   }
 }
 
-const NETWORK_ERROR =
-  "Impossible de contacter le serveur. Vérifiez votre connexion.";
+const NETWORK_ERROR = () => i18n.t("networkError");
 
 /** Message lisible renvoyé par NestJS (string ou tableau de validation). */
 const readMessage = (body, fallback) => {
@@ -49,7 +50,7 @@ export async function api(path, { method = "GET", body, auth = true } = {}) {
   try {
     response = await fetch(`${API_URL}${path}`, { method, headers, body: payload });
   } catch (error) {
-    throw new ApiError(NETWORK_ERROR, 0, error);
+    throw new ApiError(NETWORK_ERROR(), 0, error);
   }
 
   const text = await response.text();
@@ -105,7 +106,7 @@ async function uploadMultipart(path, uri, name, type) {
       },
     });
   } catch (error) {
-    throw new ApiError(NETWORK_ERROR, 0, error);
+    throw new ApiError(NETWORK_ERROR(), 0, error);
   }
   let data = null;
   try {
@@ -165,6 +166,8 @@ export const updateSessionUser = (patch) => {
 };
 
 export const clearSession = () => {
+  // Les données en ligne mises en cache appartiennent à la session.
+  clearCache();
   sessionState.set({ token: null, user: null });
 };
 

@@ -255,6 +255,11 @@ export const getAllCycle = async () => {
   return db.getAllAsync("SELECT * FROM cycles_menstruels");
 };
 
+/** Vide la table des cycles (remplacement par la version cloud). */
+export const deleteAllCycles = async () => {
+  await db.runAsync("DELETE FROM cycles_menstruels");
+};
+
 export const deleteCycleById = async (id) => {
   try {
     return await db.runAsync("DELETE FROM cycles_menstruels WHERE id = ?", [id]);

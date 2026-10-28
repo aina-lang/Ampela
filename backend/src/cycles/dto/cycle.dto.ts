@@ -1,5 +1,14 @@
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsString, MaxLength, ValidateNested } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsOptional,
+  IsString,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
 
 export class CycleDto {
   @IsString() @MaxLength(40) month!: string;
@@ -18,4 +27,15 @@ export class UpsertCyclesDto {
   @ValidateNested({ each: true })
   @Type(() => CycleDto)
   cycles!: CycleDto[];
+
+  /** true : les cycles absents de l'envoi sont supprimés (jeu complet). */
+  @IsOptional() @IsBoolean()
+  replace?: boolean;
+
+  /**
+   * Horodatage (ISO) du jeu de cycles local. Plus ancien que celui
+   * enregistré → l'envoi est ignoré (réponse { skipped: true }).
+   */
+  @IsOptional() @IsDateString()
+  updatedAt?: string;
 }

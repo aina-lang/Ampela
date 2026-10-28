@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import i18n from "@/constants/i18n";
 import {
   View,
   Text,
@@ -58,16 +59,16 @@ const AddPost = () => {
           photoUrl = await uploadImage(photo);
         } catch (error) {
           console.error("Photo upload failed: ", error);
-          toast.error("L'envoi de la photo a échoué. Vérifiez votre connexion puis réessayez.");
+          toast.error(i18n.t("forumPhotoUploadFailed"));
           return;
         }
       }
       await createPost({ title: title.trim(), description: description.trim(), photos: photoUrl });
-      toast.success("Votre question est publiée.");
+      toast.success(i18n.t("forumQuestionPublished"));
       navigation.goBack();
     } catch (error) {
       console.error("Error creating post: ", error);
-      toast.error(error.message || "Impossible de publier pour le moment.");
+      toast.error(error.message || i18n.t("forumPublishFailed"));
     } finally {
       setLoading(false);
     }
@@ -89,16 +90,12 @@ const AddPost = () => {
             <View style={[styles.introIcon, { backgroundColor: "#FFFFFF" }]}>
               <Ionicons name="people-outline" size={20} color={accentColor} />
             </View>
-            <Text style={styles.introText}>
-              Votre question est visible par toutes les membres sous votre
-              pseudo. Évitez les informations qui permettraient de vous
-              identifier.
-            </Text>
+            <Text style={styles.introText}>{i18n.t("forumAskIntro")}</Text>
           </DiscoveryCard>
 
           <DiscoveryCard style={styles.formCard}>
             <View style={styles.labelRow}>
-              <Text style={styles.label}>Titre</Text>
+              <Text style={styles.label}>{i18n.t("forumTitleLabel")}</Text>
               <Text style={styles.counter}>
                 {title.length}/{TITLE_MAX}
               </Text>
@@ -106,14 +103,14 @@ const AddPost = () => {
             <Input
               value={title}
               onChangeText={setTitle}
-              placeholder="En une phrase, de quoi s'agit-il ?"
+              placeholder={i18n.t("forumTitlePlaceholder")}
               maxLength={TITLE_MAX}
               editable={!loading}
               containerStyle={styles.field}
             />
 
             <View style={styles.labelRow}>
-              <Text style={styles.label}>Description</Text>
+              <Text style={styles.label}>{i18n.t("forumDescriptionLabel")}</Text>
               <Text style={styles.counter}>
                 {description.length}/{DESCRIPTION_MAX}
               </Text>
@@ -121,7 +118,7 @@ const AddPost = () => {
             <Input
               value={description}
               onChangeText={setDescription}
-              placeholder="Décrivez votre situation, depuis quand, ce que vous avez déjà essayé…"
+              placeholder={i18n.t("forumDescriptionPlaceholder")}
               multiline
               maxLength={DESCRIPTION_MAX}
               editable={!loading}
@@ -129,7 +126,7 @@ const AddPost = () => {
               inputStyle={styles.multilineInput}
             />
 
-            <Text style={styles.label}>Photo (optionnel)</Text>
+            <Text style={styles.label}>{i18n.t("forumPhotoOptional")}</Text>
             {photo ? (
               <View style={styles.photoWrapper}>
                 <Image source={{ uri: photo }} style={styles.photo} />
@@ -141,7 +138,7 @@ const AddPost = () => {
                     activeOpacity={0.8}
                   >
                     <Ionicons name="swap-horizontal" size={16} color={accentColor} />
-                    <Text style={[styles.photoChipText, { color: accentColor }]}>Changer</Text>
+                    <Text style={[styles.photoChipText, { color: accentColor }]}>{i18n.t("forumPhotoChange")}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => setPhoto(null)}
@@ -150,7 +147,7 @@ const AddPost = () => {
                     activeOpacity={0.8}
                   >
                     <Ionicons name="trash-outline" size={16} color="#E24C6B" />
-                    <Text style={[styles.photoChipText, { color: "#E24C6B" }]}>Retirer</Text>
+                    <Text style={[styles.photoChipText, { color: "#E24C6B" }]}>{i18n.t("forumPhotoRemove")}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -163,9 +160,9 @@ const AddPost = () => {
               >
                 <Ionicons name="image-outline" size={26} color={accentColor} />
                 <Text style={[styles.photoPickerText, { color: accentColor }]}>
-                  Ajouter une photo
+                  {i18n.t("forumPhotoAdd")}
                 </Text>
-                <Text style={styles.photoPickerHint}>JPG ou PNG, 8 Mo max.</Text>
+                <Text style={styles.photoPickerHint}>{i18n.t("forumPhotoHint")}</Text>
               </TouchableOpacity>
             )}
           </DiscoveryCard>
@@ -174,7 +171,7 @@ const AddPost = () => {
         {/* Action principale toujours visible en bas */}
         <View style={styles.footer}>
           <PrimaryButton
-            title="Publier ma question"
+            title={i18n.t("forumPublish")}
             onPress={submitPost}
             disabled={!canPublish}
             loading={loading}

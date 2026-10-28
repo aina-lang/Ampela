@@ -16,6 +16,9 @@ import {
   fetchDoctorStatus,
 } from "@/services/otpAuth";
 import { useRouter } from "expo-router";
+import i18n from "@/constants/i18n";
+import { useSelector } from "@legendapp/state/react";
+import { preferenceState } from "@/legendstate/AmpelaStates";
 import { Ionicons } from "@expo/vector-icons";
 import {
   PrimaryButton,
@@ -39,6 +42,8 @@ const Login = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { accentColor, surface } = useDiscoveryTheme();
+  // Suit la langue choisie (re-rendu des textes traduits).
+  useSelector(() => preferenceState.language.get());
 
   const [step, setStep] = useState("email"); // "email" | "code"
   const [email, setEmail] = useState("");
@@ -59,9 +64,9 @@ const Login = () => {
   const handleEmailChange = (text) => {
     setEmail(text);
     if (!text) {
-      setEmailError("Veuillez saisir votre adresse e-mail");
+      setEmailError(i18n.t("loginEmailRequired"));
     } else if (!validateEmail(text)) {
-      setEmailError("Veuillez saisir une adresse e-mail valide");
+      setEmailError(i18n.t("loginEmailInvalid"));
     } else {
       setEmailError("");
     }
@@ -76,7 +81,7 @@ const Login = () => {
       setCode("");
       setCodeError("");
       setResendIn(60);
-      toast.info(`Code envoyé à ${email.trim()}`);
+      toast.info(i18n.t("loginCodeSent", { email: email.trim() }));
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -87,7 +92,7 @@ const Login = () => {
   const handleVerify = async (submitted) => {
     const otp = typeof submitted === "string" ? submitted : code;
     if (otp.length !== 6) {
-      setCodeError("Le code contient 6 chiffres");
+      setCodeError(i18n.t("loginCodeLength"));
       return;
     }
     setIsLoading(true);
@@ -95,14 +100,14 @@ const Login = () => {
       await verifyOtpAndSignIn(email.trim(), otp);
       const profile = await fetchCloudProfile();
       if (profile) {
-        toast.success(`Bon retour, ${profile.username} !`);
+        toast.success(i18n.t("loginWelcomeBack", { name: profile.username }));
         router.replace("/(drawer)/(main)");
         return;
       }
       // Pas encore professionnelle vérifiée : l'accès dépend d'une invitation.
       const status = await fetchDoctorStatus();
       if (status.invited) {
-        toast.info("Bienvenue ! Complétons votre profil professionnel.");
+        toast.info(i18n.t("loginCreateProfile"));
         router.replace("/(discovery)/profile");
       } else {
         router.replace("/(discovery)/access");
@@ -134,19 +139,19 @@ const Login = () => {
           {step === "email" ? (
             <>
               <DiscoveryHeader
-                eyebrow="Espace professionnel"
-                title="Connectez-vous"
-                subtitle="Pas de mot de passe : votre e-mail professionnel suffit. Un code à 6 chiffres vous connecte sur n'importe quel téléphone."
+                eyebrow={i18n.t("loginEyebrow")}
+                title={i18n.t("loginTitle")}
+                subtitle={i18n.t("loginSubtitle")}
                 accentColor={accentColor}
               />
 
               <View style={styles.centerZone}>
                 <View style={styles.formCard}>
-                  <Text style={styles.formTitle}>Votre e-mail</Text>
+                  <Text style={styles.formTitle}>{i18n.t("loginFormTitle")}</Text>
 
                   <Input
                     icon={<Ionicons name="mail" size={20} color="#A9A4AE" />}
-                    placeholder="Email"
+                    placeholder={i18n.t("loginEmailPlaceholder")}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
@@ -157,7 +162,7 @@ const Login = () => {
                   />
 
                   <PrimaryButton
-                    title="Recevoir un code"
+                    title={i18n.t("loginReceiveCode")}
                     onPress={handleSendCode}
                     disabled={!email || !!emailError || isLoading}
                     loading={isLoading}
@@ -170,15 +175,15 @@ const Login = () => {
           ) : (
             <>
               <DiscoveryHeader
-                eyebrow="Vérification"
-                title="Entrez votre code"
-                subtitle={`Un code à 6 chiffres a été envoyé à ${email.trim()}. Il expire dans 10 minutes.`}
+                eyebrow={i18n.t("loginVerifyEyebrow")}
+                title={i18n.t("loginVerifyTitle")}
+                subtitle={i18n.t("loginVerifySubtitle", { email: email.trim() })}
                 accentColor={accentColor}
               />
 
               <View style={styles.centerZone}>
                 <View style={styles.formCard}>
-                  <Text style={styles.formTitle}>Code de connexion</Text>
+                  <Text style={styles.formTitle}>{i18n.t("loginCodeLabel")}</Text>
 
                   <OtpInput
                     value={code}
@@ -192,7 +197,7 @@ const Login = () => {
                   />
 
                   <PrimaryButton
-                    title="Valider"
+                    title={i18n.t("loginValidate")}
                     onPress={handleVerify}
                     disabled={code.length !== 6 || isLoading}
                     loading={isLoading}
@@ -203,8 +208,8 @@ const Login = () => {
                 <GhostButton
                   title={
                     resendIn > 0
-                      ? `Renvoyer le code (${resendIn}s)`
-                      : "Renvoyer le code"
+                      ? i18n.t("loginResendIn", { seconds: resendIn })
+                      : i18n.t("loginResend")
                   }
                   size="sm"
                   disabled={resendIn > 0 || isLoading}
@@ -212,7 +217,7 @@ const Login = () => {
                   style={{ marginTop: 18 }}
                 />
                 <GhostButton
-                  title="Changer d'e-mail"
+                  title={i18n.t("loginChangeEmail")}
                   size="sm"
                   onPress={() => setStep("email")}
                   disabled={isLoading}

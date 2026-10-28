@@ -1,4 +1,6 @@
 import { handleHeaderScroll } from "@/hooks/useHeaderScroll";
+import { useCache, writeCache } from "@/services/localCache";
+import i18n from "@/constants/i18n";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { View, StyleSheet, FlatList, Text, TouchableOpacity, RefreshControl } from "react-native";
 import { SIZES } from "@/constants";
@@ -57,9 +59,9 @@ const MessagesScreen = () => {
       setUsers((prev) =>
         prev.map((u) => (u.id === toClear.id ? { ...u, lastMessage: null, unreadCount: 0 } : u))
       );
-      toast.success("Conversation supprimée.");
+      toast.success(i18n.t("msgConversationDeleted"));
     } catch (error) {
-      toast.error(error.message || "Suppression impossible.");
+      toast.error(error.message || i18n.t("forumDeleteFailed"));
     } finally {
       setClearing(false);
       setToClear(null);
@@ -76,12 +78,31 @@ const MessagesScreen = () => {
     }
   };
 
+  // Local d'abord : dernière liste connue affichée tout de suite.
+  const cachedUsers = useCache("messages:conversations");
+  useEffect(() => {
+    if (!cachedUsers || users.length > 0) return undefined;
+    const timer = setTimeout(() => {
+      setUsers(cachedUsers);
+      setLoading(false);
+    }, 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cachedUsers]);
+
+  const refreshConversations = async () => {
+    const fresh = await listConversations();
+    setUsers(fresh);
+    writeCache("messages:conversations", fresh);
+    return fresh;
+  };
+
   const getUsers = async () => {
-    setLoading(true);
+    if (users.length === 0) setLoading(true);
     try {
       // L'API renvoie les autres membres avec le dernier message échangé,
       // déjà triées par conversation la plus récente.
-      setUsers(await listConversations());
+      await refreshConversations();
     } catch (error) {
       console.error("Error loading conversations:", error);
     } finally {
@@ -106,7 +127,7 @@ const MessagesScreen = () => {
         return;
       }
       if (user && isConnected && isInternetReachable) {
-        listConversations().then(setUsers).catch(() => {});
+        refreshConversations().catch(() => {});
       }
     }, [user, isConnected, isInternetReachable])
   );
@@ -153,8 +174,8 @@ const MessagesScreen = () => {
   // La messagerie est réservée aux échanges avec les professionnelles de santé
   // (pas de discussion entre utilisatrices) : l'API ne renvoie qu'elles.
   const TABS = [
-    { key: "conversations", label: "Conversations", icon: "chatbubbles-outline" },
-    { key: "doctors", label: "Professionnelles de santé", icon: "medkit-outline" },
+    { key: "conversations", label: i18n.t("msgTabConversations"), icon: "chatbubbles-outline" },
+    { key: "doctors", label: i18n.t("msgTabDoctors"), icon: "medkit-outline" },
   ];
   const dataByTab = {
     conversations: visibleUsers.filter((u) => u.lastMessage),
@@ -163,17 +184,17 @@ const MessagesScreen = () => {
   const listData = loading || offline ? [] : dataByTab[tab] ?? [];
   const unreadTotal = users.reduce((n, u) => n + (u.unreadCount ?? 0), 0);
   const emptyText = searchText
-    ? "Aucune professionnelle ne correspond à votre recherche."
-    :    tab === "conversations"
-      ? "Aucune conversation pour l’instant. Choisissez une professionnelle de santé pour écrire."
-      : "Aucune professionnelle de santé disponible pour l’instant.";
+    ? i18n.t("msgNoSearchResult")
+    : tab === "conversations"
+      ? i18n.t("msgNoConversation")
+      : i18n.t("msgNoDoctor");
 
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      setUsers(await listConversations());
+      await refreshConversations();
     } catch (_error) {
-      toast.error("Impossible d’actualiser la liste.");
+      toast.error(i18n.t("msgRefreshFailed"));
     } finally {
       setRefreshing(false);
     }
@@ -287,9 +308,9 @@ const MessagesScreen = () => {
         visible={!!toClear}
         icon="trash-outline"
         danger
-        title={`Supprimer la conversation avec ${toClear?.username ?? ""} ?`}
-        message="Les messages seront effacés de votre côté uniquement. Votre interlocutrice garde les siens."
-        confirmLabel="Supprimer"
+        title={i18n.t("msgDeleteConversationWith", { name: toClear?.username ?? "" })}
+        message={i18n.t("msgDeleteConversationMessage")}
+        confirmLabel={i18n.t("forumDelete")}
         loading={clearing}
         onConfirm={handleClearConversation}
         onCancel={() => setToClear(null)}

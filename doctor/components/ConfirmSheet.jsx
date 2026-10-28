@@ -83,9 +83,9 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   icon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: SIZES.scale(60),
+    height: SIZES.scale(60),
+    borderRadius: SIZES.scale(30),
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,

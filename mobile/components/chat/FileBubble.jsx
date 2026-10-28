@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import i18n from "@/constants/i18n";
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { toast } from "@/components/ui";
@@ -28,7 +29,7 @@ const FileBubble = ({ url, name, size, mine, accentColor }) => {
     try {
       await downloadToDevice(url, name);
     } catch (error) {
-      toast.error(error.message || "Téléchargement impossible.");
+      toast.error(error.message || i18n.t("msgDownloadFailed"));
     } finally {
       setSaving(false);
     }
@@ -40,10 +41,10 @@ const FileBubble = ({ url, name, size, mine, accentColor }) => {
       </View>
       <View style={styles.text}>
         <Text style={[styles.name, { color: fg }]} numberOfLines={2}>
-          {name || "Fichier"}
+          {name || i18n.t("msgFile")}
         </Text>
         <Text style={[styles.meta, { color: mine ? "rgba(255,255,255,0.8)" : "#8E8793" }]}>
-          {[formatSize(size), "Télécharger"].filter(Boolean).join(" · ")}
+          {[formatSize(size), i18n.t("msgDownload")].filter(Boolean).join(" · ")}
         </Text>
       </View>
       {saving ? (

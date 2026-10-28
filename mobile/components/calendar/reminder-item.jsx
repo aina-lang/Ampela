@@ -14,9 +14,12 @@ import {
   reminderState,
   updateReminder,
   cycleMenstruelState,
+  preferenceState,
 } from "@/legendstate/AmpelaStates";
+import i18n from "@/constants/i18n";
 import {
   REMINDER_KIND,
+  REMINDER_LABEL_KEY,
   FREQUENCY_OPTIONS,
   scheduleReminder as scheduleReminderNotifications,
   cancelReminder as cancelReminderNotifications,
@@ -24,6 +27,7 @@ import {
 } from "@/services/reminders";
 import { useDiscoveryTheme } from "@/components/discovery";
 import { NeutralButton, PrimaryButton, WheelPicker, toast } from "@/components/ui";
+import { scheduleSync } from "@/services/sync";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const MINUTES = Array.from({ length: 60 }, (_, i) => i);
@@ -38,6 +42,9 @@ const ReminderItem = ({ as, onRegister }) => {
   const saved = useSelector(() => reminderState[as].get()) || {};
   const cycles = useSelector(() => cycleMenstruelState.get().cyclesData) || [];
   const kind = REMINDER_KIND[as] ?? "pill";
+  // Libellé affiché, traduit (re-rendu au changement de langue).
+  useSelector(() => preferenceState.language.get());
+  const label = i18n.t(REMINDER_LABEL_KEY[as] ?? "priseDePilule");
   const isEventReminder = kind !== "pill";
   const isEnabled = !!saved.enabled;
   const hour = saved.hour ?? 8;
@@ -51,9 +58,10 @@ const ReminderItem = ({ as, onRegister }) => {
   const [tempMinute, setTempMinute] = useState(minute);
   const [tempFrequency, setTempFrequency] = useState(frequency);
 
-  const frequencyLabel = (value) =>
-    FREQUENCY_OPTIONS.find((o) => o.value === value)?.label?.toLowerCase() ??
-    "quotidien";
+  const frequencyLabel = (value) => {
+    const option = FREQUENCY_OPTIONS.find((o) => o.value === value) ?? FREQUENCY_OPTIONS[0];
+    return i18n.t(option.labelKey).toLowerCase();
+  };
 
   const schedule = (config) => scheduleReminderNotifications(as, config, cycles);
   const cancel = () => cancelReminderNotifications(saved);
@@ -63,39 +71,37 @@ const ReminderItem = ({ as, onRegister }) => {
       try {
         const ids = await schedule({ hour, minute, frequency });
         if (!ids) {
-          toast.warning("Autorisez les notifications pour activer les rappels.");
+          toast.warning(i18n.t("reminderAllowNotifications"));
           return;
         }
-        updateReminder(as, {
-          enabled: true,
-          notificationIds: ids,
-          notificationId: null,
-          hour,
-          minute,
-          frequency,
-          scheduledAt: Date.now(),
-        });
+        updateReminder(
+          as,
+          { enabled: true, notificationIds: ids, notificationId: null, hour, minute, frequency, scheduledAt: Date.now() },
+          { touch: true }
+        );
+        scheduleSync();
         if (!isEventReminder) {
           toast.success(
             frequency === "quotidien"
-              ? `Rappel « ${as} » activé, chaque jour à ${pad(hour)}:${pad(minute)}, avec le jour de votre cycle.`
-              : `Rappel « ${as} » activé, ${frequencyLabel(frequency)} à ${pad(hour)}:${pad(minute)}.`
+              ? i18n.t("reminderEnabledDaily", { label, time: `${pad(hour)}:${pad(minute)}` })
+              : i18n.t("reminderEnabledFrequency", { label, frequency: frequencyLabel(frequency), time: `${pad(hour)}:${pad(minute)}` })
           );
         } else if (ids.length && nextEvent) {
           toast.success(
-            `Rappel « ${as} » activé. Prochaine notification : ${nextEvent} à ${pad(hour)}:${pad(minute)}.`
+            i18n.t("reminderEnabledNext", { label, next: nextEvent, time: `${pad(hour)}:${pad(minute)}` })
           );
         } else {
-          toast.success(`Rappel « ${as} » activé : aucune date à venir pour l'instant.`);
+          toast.success(i18n.t("reminderEnabledNoDate", { label }));
         }
       } catch (error) {
         console.error("Failed to schedule reminder:", error);
-        toast.error("Impossible d'activer le rappel.");
+        toast.error(i18n.t("reminderEnableFailed"));
       }
     } else {
       await cancel();
-      updateReminder(as, { enabled: false, notificationIds: [], notificationId: null });
-      toast.info(`Rappel « ${as} » désactivé.`);
+      updateReminder(as, { enabled: false, notificationIds: [], notificationId: null }, { touch: true });
+      scheduleSync();
+      toast.info(i18n.t("reminderDisabled", { label }));
     }
   };
 
@@ -127,7 +133,8 @@ const ReminderItem = ({ as, onRegister }) => {
         notificationIds: ids,
         scheduledAt: Date.now(),
         notificationId: null,
-      });
+      }, { touch: true });
+      scheduleSync();
     } catch (error) {
       console.error("Failed to reschedule reminder:", error);
     }
@@ -150,7 +157,7 @@ const ReminderItem = ({ as, onRegister }) => {
             { color: isSelected ? COLORS.neutral100 : "#5A525F" },
           ]}
         >
-          {item.label}
+          {i18n.t(item.labelKey)}
         </Text>
       </TouchableOpacity>
     );
@@ -164,7 +171,7 @@ const ReminderItem = ({ as, onRegister }) => {
         activeOpacity={0.85}
       >
         <View style={styles.left}>
-          <Text style={styles.title}>{as}</Text>
+          <Text style={styles.title}>{label}</Text>
           <Text style={styles.subtitle}>
             {pad(hour)}:{pad(minute)} · {frequencyLabel(frequency)}
           </Text>
@@ -186,9 +193,9 @@ const ReminderItem = ({ as, onRegister }) => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>{as}</Text>
+            <Text style={styles.modalTitle}>{label}</Text>
 
-            <Text style={styles.sectionLabel}>Heure du rappel</Text>
+            <Text style={styles.sectionLabel}>{i18n.t("reminderTime")}</Text>
             {/* Roues heure / minute, comme un sélecteur d'heure natif */}
             <View style={styles.wheelRow}>
               <WheelPicker
@@ -206,7 +213,7 @@ const ReminderItem = ({ as, onRegister }) => {
               />
             </View>
 
-            <Text style={styles.sectionLabel}>Périodicité</Text>
+            <Text style={styles.sectionLabel}>{i18n.t("reminderFrequency")}</Text>
             <FlatList
               data={FREQUENCY_OPTIONS}
               renderItem={renderFrequencyItem}
@@ -217,12 +224,12 @@ const ReminderItem = ({ as, onRegister }) => {
 
             <View style={styles.modalActions}>
               <NeutralButton
-                title="Annuler"
+                title={i18n.t("annuler")}
                 onPress={() => setModalVisible(false)}
                 style={{ flex: 1 }}
               />
               <PrimaryButton
-                title="Terminer"
+                title={i18n.t("predictionsFinish")}
                 onPress={handleConfirm}
                 style={{ flex: 1 }}
               />

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import i18n from "@/constants/i18n";
 import {
   View,
   Text,
@@ -77,7 +78,7 @@ const MediaScreen = () => {
         .catch(() => {
           if (!cancelled) {
             setItems([]);
-            toast.error("Impossible de charger l'historique.");
+            toast.error(i18n.t("msgMediaLoadFailed"));
           }
         });
     }, 0);
@@ -87,10 +88,10 @@ const MediaScreen = () => {
     };
   }, [target?.id, tab]);
 
-  const open = (url) => Linking.openURL(url).catch(() => toast.error("Ouverture impossible."));
+  const open = (url) => Linking.openURL(url).catch(() => toast.error(i18n.t("msgOpenFailed")));
   const download = (item) =>
     downloadAttachment(item).catch((error) =>
-      toast.error(error.message || "Téléchargement impossible.")
+      toast.error(error.message || i18n.t("msgDownloadFailed"))
     );
 
   const renderItem = ({ item }) => {
@@ -129,7 +130,7 @@ const MediaScreen = () => {
         </View>
         <View style={styles.rowText}>
           <Text style={styles.rowTitle} numberOfLines={2}>
-            {isAudio ? `Message vocal · ${fmtDuration(item.durationMs)}` : item.attachmentName || "Fichier"}
+            {isAudio ? `${i18n.t("msgVoiceMessage")} · ${fmtDuration(item.durationMs)}` : item.attachmentName || i18n.t("msgFile")}
           </Text>
           <Text style={styles.rowMeta} numberOfLines={1}>
             {[item.user?.username, relativeDate(item.createdAt), formatSize(item.attachmentSize)]
@@ -187,7 +188,7 @@ const MediaScreen = () => {
                 <Ionicons name={TABS.find((t) => t.key === tab).icon} size={26} color={accentColor} />
               </View>
               <Text style={styles.emptyText}>
-                {"Rien à afficher pour l'instant dans cette conversation."}
+                {i18n.t("msgMediaEmpty")}
               </Text>
             </View>
           )

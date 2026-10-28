@@ -53,6 +53,18 @@ export const roomIdFor = (a, b) => [a, b].sort().join("_");
 // jeton change. Les abonnés reçoivent chaque message `message:new`.
 // ---------------------------------------------------------------------------
 
+const REALTIME_EVENTS = [
+  "message:updated",
+  "message:read",
+  "notification:new",
+  "post:new",
+  "post:updated",
+  "post:deleted",
+  "comment:new",
+  "comment:updated",
+  "comment:deleted",
+];
+
 let socket = null;
 let socketToken = null;
 const listeners = new Set();
@@ -76,16 +88,13 @@ const ensureSocket = () => {
   socket.on("message:new", (message) => {
     listeners.forEach((listener) => listener(message));
   });
-  // Modification / suppression et accusés de lecture.
-  socket.on("message:updated", (message) => {
-    eventListeners.forEach((listener) => listener("message:updated", message));
-  });
-  socket.on("message:read", (payload) => {
-    eventListeners.forEach((listener) => listener("message:read", payload));
-  });
-  socket.on("notification:new", (payload) => {
-    eventListeners.forEach((listener) => listener("notification:new", payload));
-  });
+  // Messagerie (modification, suppression, accusés), notifications et
+  // forum (publications, réactions, commentaires) : relayés tels quels.
+  for (const event of REALTIME_EVENTS) {
+    socket.on(event, (payload) => {
+      eventListeners.forEach((listener) => listener(event, payload));
+    });
+  }
   return socket;
 };
 

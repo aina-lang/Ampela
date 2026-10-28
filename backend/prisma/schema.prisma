@@ -27,10 +27,19 @@ model User {
   durationMenstruation Int?
   cycleDuration        Int?
   profileImage         String?
+  /// Synchronisation « le plus récent gagne » : horodatage de la dernière
+  /// modification du profil (pseudo, photo, infos de cycle), des
+  /// préférences (langue, thème) et du jeu de cycles, tel que déclaré par
+  /// l'appareil qui a fait la modification.
+  profileUpdatedAt     DateTime?
+  preferences          Json?
+  preferencesUpdatedAt DateTime?
+  cyclesUpdatedAt      DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
-  cycles   Cycle[]
+  cycles    Cycle[]
+  reminders Reminder[]
   posts    Post[]
   likes    Like[]
   comments Comment[]
@@ -104,6 +113,24 @@ model Cycle {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, key])
+}
+
+/// Rappel configuré par l'utilisatrice (« Début des règles », « Jour
+/// d'ovulation », « Prise de pilule »). Fusion par rappel : la version la
+/// plus récente (updatedAt déclaré par l'appareil) l'emporte.
+model Reminder {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  enabled   Boolean  @default(false)
+  hour      Int      @default(8)
+  minute    Int      @default(0)
+  frequency String   @default("quotidien")
+  updatedAt DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
 }
 
 model Post {

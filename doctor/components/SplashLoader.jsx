@@ -1,44 +1,32 @@
 import React, { useEffect } from "react";
-import {
-  View,
-  Text,
-  Image,
-  ActivityIndicator,
-  StyleSheet,
-} from "react-native";
+import { View, Text, Image, ActivityIndicator, StyleSheet } from "react-native";
 import * as SplashScreen from "expo-splash-screen";
 import { SIZES } from "@/constants";
+import { useDiscoveryTheme } from "@/components/discovery";
 
-// Même couleur que le splash natif (app.json → splash.backgroundColor)
-// pour que le passage natif → JS soit invisible.
-const SPLASH_BACKGROUND = "#FF7575";
 const ICON_SIZE = 132;
 
 /**
- * Écran de chargement JS qui prend le relais du splash natif : icône de
- * l'app au centre, indicateur de chargement en bas. Affiché tant que les
- * polices, la base locale et la navigation ne sont pas prêtes.
+ * Écran de chargement JS qui prend le relais du splash natif, pixel pour
+ * pixel : fond blanc et icône de l'app (le splash natif ne peut pas suivre
+ * le thème), puis indicateur et texte aux couleurs du thème courant.
  */
 const SplashLoader = ({ label = "Chargement…" }) => {
+  const { accentColor } = useDiscoveryTheme();
+
   useEffect(() => {
-    // Dès que cet écran est monté, on retire le splash natif : il est
-    // remplacé pixel pour pixel par celui-ci.
+    // Dès que cet écran est monté, on retire le splash natif.
     SplashScreen.hideAsync().catch(() => {});
   }, []);
 
   return (
     <View style={styles.container}>
       <View style={styles.center}>
-        <Image
-          source={require("../assets/images/logo/logo-1.png")}
-          style={styles.icon}
-          resizeMode="contain"
-        />
+        <Image source={require("../assets/images/splash-icon.png")} style={styles.icon} resizeMode="contain" />
       </View>
-
       <View style={styles.footer}>
-        <ActivityIndicator size="small" color="#FFFFFF" />
-        <Text style={styles.label}>{label}</Text>
+        <ActivityIndicator size="small" color={accentColor} />
+        <Text style={[styles.label, { color: accentColor }]}>{label}</Text>
       </View>
     </View>
   );
@@ -47,7 +35,7 @@ const SplashLoader = ({ label = "Chargement…" }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: SPLASH_BACKGROUND,
+    backgroundColor: "#FFFFFF",
   },
   center: {
     flex: 1,
@@ -55,8 +43,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   icon: {
-    width: ICON_SIZE,
-    height: ICON_SIZE,
+    width: ICON_SIZE * 2,
+    height: ICON_SIZE * 2,
   },
   footer: {
     alignItems: "center",
@@ -64,7 +52,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   label: {
-    color: "rgba(255,255,255,0.9)",
+    fontFamily: "SBold",
     fontSize: SIZES.small,
     letterSpacing: 0.4,
   },

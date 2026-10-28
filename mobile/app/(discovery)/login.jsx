@@ -9,15 +9,17 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SIZES } from "@/constants";
-import { updateUser } from "@/legendstate/AmpelaStates";
-import { addUser, getUser, setFirstLaunchFalse } from "@/services/database";
-import { downloadCycles } from "@/services/sync";
+import { setFirstLaunchFalse } from "@/services/database";
+import { syncAll } from "@/services/sync";
 import {
   requestOtp,
   verifyOtpAndSignIn,
   fetchCloudProfile,
 } from "@/services/otpAuth";
 import { useRouter } from "expo-router";
+import i18n from "@/constants/i18n";
+import { useSelector } from "@legendapp/state/react";
+import { preferenceState } from "@/legendstate/AmpelaStates";
 import { Ionicons } from "@expo/vector-icons";
 import {
   PrimaryButton,
@@ -43,6 +45,8 @@ const Login = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { accentColor, surface } = useDiscoveryTheme();
+  // Suit la langue choisie (re-rendu des textes traduits).
+  useSelector(() => preferenceState.language.get());
 
   const [step, setStep] = useState("email"); // "email" | "code"
   const [email, setEmail] = useState("");
@@ -63,9 +67,9 @@ const Login = () => {
   const handleEmailChange = (text) => {
     setEmail(text);
     if (!text) {
-      setEmailError("Veuillez saisir votre adresse e-mail");
+      setEmailError(i18n.t("loginEmailRequired"));
     } else if (!validateEmail(text)) {
-      setEmailError("Veuillez saisir une adresse e-mail valide");
+      setEmailError(i18n.t("loginEmailInvalid"));
     } else {
       setEmailError("");
     }
@@ -80,7 +84,7 @@ const Login = () => {
       setCode("");
       setCodeError("");
       setResendIn(60);
-      toast.info(`Code envoyé à ${email.trim()}`);
+      toast.info(i18n.t("loginCodeSent", { email: email.trim() }));
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -88,35 +92,10 @@ const Login = () => {
     }
   };
 
-  const restoreProfileLocally = async (profile) => {
-    const localUser = await getUser();
-    if (!localUser) {
-      await addUser(
-        profile.username ?? "",
-        profile.profession ?? null,
-        profile.lastMenstruationDate ?? null,
-        profile.durationMenstruation ?? null,
-        profile.cycleDuration ?? null,
-        profile.email ?? email.trim(),
-        profile.profileImage ?? null
-      );
-    }
-    updateUser({
-      id: 1,
-      username: profile.username ?? "",
-      profession: profile.profession ?? "",
-      lastMenstruationDate: profile.lastMenstruationDate ?? null,
-      durationMenstruation: profile.durationMenstruation ?? null,
-      cycleDuration: profile.cycleDuration ?? null,
-      email: profile.email ?? email.trim(),
-      profileImage: profile.profileImage ?? null,
-    });
-  };
-
   const handleVerify = async (submitted) => {
     const otp = typeof submitted === "string" ? submitted : code;
     if (otp.length !== 6) {
-      setCodeError("Le code contient 6 chiffres");
+      setCodeError(i18n.t("loginCodeLength"));
       return;
     }
     setIsLoading(true);
@@ -125,20 +104,16 @@ const Login = () => {
       const profile = await fetchCloudProfile();
 
       if (profile) {
-        // Compte existant : on restaure tout sur cet appareil.
-        await restoreProfileLocally(profile);
-        try {
-          await downloadCycles();
-        } catch (syncError) {
-          console.error("Cycle download failed:", syncError);
-        }
+        // Compte existant : profil, préférences, cycles et rappels sont
+        // restaurés sur cet appareil (le plus récent gagne).
+        await syncAll();
         await setFirstLaunchFalse();
-        toast.success("Bon retour ! Vos données ont été restaurées.");
+        toast.success(i18n.t("loginWelcomeBack"));
         router.replace("/(drawer)/(main)");
       } else {
         // Nouvel e-mail : on crée le profil via l'onboarding, en restant
         // connectée pour que tout se synchronise à la fin.
-        toast.info("Bienvenue ! Créons votre profil.");
+        toast.info(i18n.t("loginCreateProfile"));
         router.replace("/(discovery)/username");
       }
     } catch (error) {
@@ -168,19 +143,19 @@ const Login = () => {
           {step === "email" ? (
             <>
               <DiscoveryHeader
-                eyebrow="Bienvenue"
-                title="Synchroniser ou commencer"
-                subtitle="Pas de mot de passe : votre e-mail suffit. Un code à 6 chiffres vous connecte et retrouve vos données sur n'importe quel téléphone."
+                eyebrow={i18n.t("loginEyebrow")}
+                title={i18n.t("loginTitle")}
+                subtitle={i18n.t("loginSubtitle")}
                 accentColor={accentColor}
               />
 
               <View style={styles.centerZone}>
                 <View style={styles.formCard}>
-                  <Text style={styles.formTitle}>Déjà un compte ?</Text>
+                  <Text style={styles.formTitle}>{i18n.t("loginFormTitle")}</Text>
 
                   <Input
                     icon={<Ionicons name="mail" size={20} color="#A9A4AE" />}
-                    placeholder="Email"
+                    placeholder={i18n.t("loginEmailPlaceholder")}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
@@ -191,7 +166,7 @@ const Login = () => {
                   />
 
                   <PrimaryButton
-                    title="Recevoir un code"
+                    title={i18n.t("loginReceiveCode")}
                     onPress={handleSendCode}
                     disabled={!email || !!emailError || isLoading}
                     loading={isLoading}
@@ -201,12 +176,12 @@ const Login = () => {
 
                 <View style={styles.dividerRow}>
                   <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>ou</Text>
+                  <Text style={styles.dividerText}>{i18n.t("loginOr")}</Text>
                   <View style={styles.dividerLine} />
                 </View>
 
                 <SecondaryButton
-                  title="Je suis nouvelle"
+                  title={i18n.t("loginNew")}
                   onPress={() => router.push("/(discovery)/username")}
                 />
               </View>
@@ -214,15 +189,15 @@ const Login = () => {
           ) : (
             <>
               <DiscoveryHeader
-                eyebrow="Vérification"
-                title="Entrez votre code"
-                subtitle={`Un code à 6 chiffres a été envoyé à ${email.trim()}. Il expire dans 10 minutes.`}
+                eyebrow={i18n.t("loginVerifyEyebrow")}
+                title={i18n.t("loginVerifyTitle")}
+                subtitle={i18n.t("loginVerifySubtitle", { email: email.trim() })}
                 accentColor={accentColor}
               />
 
               <View style={styles.centerZone}>
                 <View style={styles.formCard}>
-                  <Text style={styles.formTitle}>Code de connexion</Text>
+                  <Text style={styles.formTitle}>{i18n.t("loginCodeLabel")}</Text>
 
                   <OtpInput
                     value={code}
@@ -236,7 +211,7 @@ const Login = () => {
                   />
 
                   <PrimaryButton
-                    title="Valider"
+                    title={i18n.t("loginValidate")}
                     onPress={handleVerify}
                     disabled={code.length !== 6 || isLoading}
                     loading={isLoading}
@@ -247,8 +222,8 @@ const Login = () => {
                 <GhostButton
                   title={
                     resendIn > 0
-                      ? `Renvoyer le code (${resendIn}s)`
-                      : "Renvoyer le code"
+                      ? i18n.t("loginResendIn", { seconds: resendIn })
+                      : i18n.t("loginResend")
                   }
                   size="sm"
                   disabled={resendIn > 0 || isLoading}
@@ -256,7 +231,7 @@ const Login = () => {
                   style={{ marginTop: 18 }}
                 />
                 <GhostButton
-                  title="Changer d'e-mail"
+                  title={i18n.t("loginChangeEmail")}
                   size="sm"
                   onPress={() => setStep("email")}
                   disabled={isLoading}

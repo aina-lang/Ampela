@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDiscoveryTheme } from "@/components/discovery";
 
-const BAR_HEIGHT = 64;
+const BAR_HEIGHT = SIZES.scale(64);
 const BAR_PADDING_H = 8;
 const INDICATOR_HEIGHT = 46;
 

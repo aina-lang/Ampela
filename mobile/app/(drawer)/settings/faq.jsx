@@ -1,6 +1,5 @@
 import { handleHeaderScroll } from "@/hooks/useHeaderScroll";
 import { DecorativeBlobs } from "@/components/ui";
-import { useEffect, useState } from "react";
 import { View, StyleSheet, ScrollView, Text } from "react-native";
 import { SIZES, COLORS } from "@/constants";
 import AppHeader, { HEADER_HEIGHT } from "@/components/AppHeader";
@@ -8,6 +7,8 @@ import FaqItem from "@/components/settings/faq-item";
 import faqdata from "@/constants/faqdata";
 import { useNavigation } from "expo-router";
 import i18n from "@/constants/i18n";
+import { useSelector } from "@legendapp/state/react";
+import { preferenceState } from "@/legendstate/AmpelaStates";
 import { useDiscoveryTheme } from "@/components/discovery";
 import DiscoveryCard from "@/components/discovery/DiscoveryCard";
 
@@ -15,17 +16,19 @@ const FaqScreen = () => {
   const data = faqdata;
   const navigation = useNavigation();
   const { surface } = useDiscoveryTheme();
+  // Re-rendu au changement de langue (les questions passent par i18n).
+  useSelector(() => preferenceState.language.get());
   return (
     <View style={[styles.container, { backgroundColor: surface }]}>
       <DecorativeBlobs />
-      <AppHeader navigation={navigation} title="F.A.Q" showBack absolute />
+      <AppHeader navigation={navigation} title={i18n.t("faq")} showBack absolute />
       <ScrollView
         onScroll={handleHeaderScroll}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <Text style={styles.sectionTitle}>Questions fréquentes</Text>
+        <Text style={styles.sectionTitle}>{i18n.t("faqFrequentQuestions")}</Text>
         
           {data.map((d) => (
             <FaqItem

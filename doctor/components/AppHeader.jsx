@@ -9,9 +9,11 @@ import {
   StyleSheet,
   Image,
 } from "react-native";
-import { SIZES } from "@/constants";
+import { SIZES, images } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useSelector } from "@legendapp/state/react";
+import { userState } from "@/legendstate/AmpelaStates";
 import { useDiscoveryTheme } from "@/components/discovery";
 import { useHeaderScrolled, setHeaderScrolled } from "@/hooks/useHeaderScroll";
 
@@ -65,6 +67,7 @@ const AppHeader = ({
   const fillColor = scrolledBackgroundColor || accentContainer;
   const scrolled = useHeaderScrolled();
   const router = useRouter();
+  const profileImage = useSelector(() => userState.profileImage.get());
 
   // Après un rechargement ou un lien direct, l'écran peut être le premier
   // de l'historique : on retombe alors sur l'accueil au lieu d'un
@@ -135,18 +138,14 @@ const AppHeader = ({
           ) : (
             <TouchableOpacity
               style={[styles.iconButton, buttonBg]}
-              onPress={() => navigation.openDrawer()}
+              onPress={() => router.push("/(drawer)/profile")}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel="Profil"
             >
-              <View style={styles.burger}>
-                <View style={[styles.burgerLine, { backgroundColor: accentColor }]} />
-                <View
-                  style={[
-                    styles.burgerLine,
-                    { width: 13, backgroundColor: accentColor },
-                  ]}
-                />
-              </View>
+              <Image
+                source={profileImage ? { uri: profileImage } : images.doctor01}
+                style={[styles.headerAvatar, { borderColor: accentContainer }]}
+              />
             </TouchableOpacity>
           )}
 
@@ -235,10 +234,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
+  headerAvatar: {
+    width: SIZES.scale(42),
+    height: SIZES.scale(42),
+    borderRadius: SIZES.scale(21),
+    borderWidth: 2,
+  },
   iconButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: SIZES.scale(42),
+    height: SIZES.scale(42),
+    borderRadius: SIZES.scale(21),
     justifyContent: "center",
     alignItems: "center",
   },
@@ -259,15 +264,6 @@ const styles = StyleSheet.create({
     fontFamily: "SBold",
     fontSize: 9,
     color: "#FFFFFF",
-  },
-  burger: {
-    width: 20,
-    gap: 5,
-  },
-  burgerLine: {
-    height: 2.5,
-    width: 20,
-    borderRadius: 2,
   },
   avatar: {
     width: 38,

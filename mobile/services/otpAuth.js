@@ -1,6 +1,6 @@
-import { apiGet, apiPatch, apiPost, setSession } from "@/services/api";
-import { userState } from "@/legendstate/AmpelaStates";
-import { syncCycles } from "@/services/sync";
+import { apiGet, apiPost, setSession } from "@/services/api";
+import { userState, updateUser, cycleMenstruelState, touchCycles } from "@/legendstate/AmpelaStates";
+import { syncAll, scheduleSync } from "@/services/sync";
 
 /** Demande l'envoi d'un code à 6 chiffres à l'adresse donnée. */
 export async function requestOtp(email) {
@@ -31,32 +31,20 @@ export async function fetchCloudProfile() {
   return profile;
 }
 
-/** Convertit le profil local (Legend State) en données pour l'API. */
-const profileFromLocal = () => {
-  const local = userState.get();
-  return {
-    username: local.username ?? "",
-    // Rôle et spécialité : réservés à l'application des professionnelles
-    // de santé (même backend) ; l'app Ampela ne les modifie jamais.
-    lastMenstruationDate: local.lastMenstruationDate ?? null,
-    durationMenstruation: local.durationMenstruation ?? null,
-    cycleDuration: local.cycleDuration ?? null,
-    profileImage: local.profileImage ?? null,
-  };
-};
-
 /**
- * Envoie le profil local dans le cloud puis synchronise les cycles. À
- * appeler après la première connexion depuis un appareil qui possède
- * déjà des données locales, ou à la fin de l'onboarding.
+ * Première synchronisation depuis un appareil qui possède déjà des données
+ * locales (fin de l'onboarding, ou connexion avec un e-mail sans profil
+ * cloud) : les données locales sont datées de maintenant pour qu'elles
+ * soient bien envoyées, puis tout est synchronisé.
  */
 export async function createCloudProfileFromLocal() {
-  const profile = await apiPatch("/users/me", profileFromLocal());
-  await syncCycles();
-  return profile;
+  if (!userState.profileUpdatedAt.get()) updateUser({}, { touch: true });
+  if (!cycleMenstruelState.cyclesUpdatedAt.get()) touchCycles();
+  await syncAll();
 }
 
-/** Met à jour le profil cloud (si connectée) après une modification locale. */
-export async function pushProfileToCloud() {
-  return apiPatch("/users/me", profileFromLocal());
-}
+/** Après une modification locale : synchronisation groupée en arrière-plan. */
+export const pushProfileToCloud = () => {
+  scheduleSync();
+  return Promise.resolve();
+};

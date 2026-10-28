@@ -25,16 +25,29 @@ const FONT = {
   bold: "Bold",
 };
 
+// Échelle responsive : les tailles sont définies pour un écran de 375 px de
+// large et s'adaptent à l'écran réel (bornée entre 85 % et 125 % pour rester
+// lisible sur les très petits et très grands téléphones).
+const BASE_WIDTH = 375;
+const ratio = Math.min(Math.max(width / BASE_WIDTH, 0.85), 1.25);
+/** Mise à l'échelle proportionnelle (dimensions : boutons, champs, icônes). */
+const scale = (size) => Math.round(size * ratio);
+/** Mise à l'échelle modérée (polices : la moitié de l'écart). */
+const ms = (size, factor = 0.5) => Math.round(size + (size * ratio - size) * factor);
+
 const SIZES = {
-  xSmall: 10,
-  small: 13,
-  medium: 15,
-  xmedium: 17,
-  large: 20,
-  xLarge: 24,
-  xxLarge: 34,
+  xSmall: ms(10),
+  small: ms(13),
+  medium: ms(15),
+  xmedium: ms(17),
+  large: ms(20),
+  xLarge: ms(24),
+  xxLarge: ms(34),
   height: height,
   width: width,
+  ratio,
+  scale,
+  ms,
 };
 
 const SHADOWS = {

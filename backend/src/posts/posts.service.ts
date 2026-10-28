@@ -2,14 +2,16 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { MessagesGateway } from '../messages/messages.gateway';
 import { isVerifiedDoctor, publicUserSelect } from '../users/users.service';
 import { CreatePostDto } from './dto/create-post.dto';
 
-const postInclude = (userId: string) =>
+// userId absent (lecture anonyme) : aucun like ne peut être « le mien ».
+const postInclude = (userId?: string) =>
   ({
     author: { select: publicUserSelect },
     _count: { select: { likes: true, comments: true } },
-    likes: { where: { userId }, select: { id: true } },
+    likes: { where: { userId: userId ?? '' }, select: { id: true } },
   }) satisfies Prisma.PostInclude;
 
 type PostRow = Prisma.PostGetPayload<{ include: ReturnType<typeof postInclude> }>;
@@ -37,9 +39,24 @@ export class PostsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly realtime: MessagesGateway,
   ) {}
 
-  async list(userId: string) {
+  /** Compteurs publics d'une publication, diffusés à toutes en temps réel. */
+  private async broadcastCounts(postId: string) {
+    const post = await this.prisma.post.findUnique({
+      where: { id: postId },
+      select: { id: true, _count: { select: { likes: true, comments: true } } },
+    });
+    if (!post) return;
+    this.realtime.broadcast('post:updated', {
+      id: post.id,
+      likeCount: post._count.likes,
+      commentCount: post._count.comments,
+    });
+  }
+
+  async list(userId?: string) {
     const posts = await this.prisma.post.findMany({
       orderBy: { createdAt: 'desc' },
       take: 200,
@@ -48,7 +65,7 @@ export class PostsService {
     return posts.map(toView);
   }
 
-  async getOne(userId: string, postId: string) {
+  async getOne(userId: string | undefined, postId: string) {
     const post = await this.prisma.post.findUnique({
       where: { id: postId },
       include: postInclude(userId),
@@ -62,7 +79,9 @@ export class PostsService {
       data: { ...dto, authorId: userId },
       include: postInclude(userId),
     });
-    return toView(post);
+    const view = toView(post);
+    this.realtime.broadcast('post:new', { ...view, likedByMe: false });
+    return view;
   }
 
   async remove(userId: string, postId: string) {
@@ -72,6 +91,7 @@ export class PostsService {
       throw new ForbiddenException('Seule l’autrice peut supprimer ce post.');
     }
     await this.prisma.post.delete({ where: { id: postId } });
+    this.realtime.broadcast('post:deleted', { id: postId });
     return { ok: true };
   }
 
@@ -97,11 +117,13 @@ export class PostsService {
         postId,
       });
     }
+    void this.broadcastCounts(postId);
     return view;
   }
 
   async unlike(userId: string, postId: string) {
     await this.prisma.like.deleteMany({ where: { userId, postId } });
+    void this.broadcastCounts(postId);
     return this.getOne(userId, postId);
   }
 
@@ -172,6 +194,8 @@ export class PostsService {
         });
       }
     }
+    this.realtime.broadcast('comment:new', { postId, comment });
+    void this.broadcastCounts(postId);
     return comment;
   }
 
@@ -185,11 +209,13 @@ export class PostsService {
     if (comment.authorId !== userId) {
       throw new ForbiddenException('Vous ne pouvez modifier que vos commentaires.');
     }
-    return this.prisma.comment.update({
+    const updated = await this.prisma.comment.update({
       where: { id: commentId },
       data: { content },
       include: { author: { select: publicUserSelect } },
     });
+    this.realtime.broadcast('comment:updated', { postId, comment: updated });
+    return updated;
   }
 
   /**
@@ -206,6 +232,8 @@ export class PostsService {
       throw new ForbiddenException('Vous ne pouvez supprimer que vos commentaires.');
     }
     await this.prisma.comment.delete({ where: { id: commentId } });
+    this.realtime.broadcast('comment:deleted', { postId, commentId });
+    void this.broadcastCounts(postId);
     return { ok: true };
   }
 }

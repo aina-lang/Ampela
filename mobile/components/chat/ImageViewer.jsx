@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import i18n from "@/constants/i18n";
 import {
   Modal,
   View,
@@ -40,7 +41,7 @@ const ImageViewer = ({ uri, title, onClose }) => {
       const ext = (uri.split(".").pop() || "jpg").toLowerCase().split("?")[0];
       await downloadToDevice(uri, `ampela-${Date.now()}.${ext}`, ext === "png" ? "image/png" : "image/jpeg");
     } catch (error) {
-      toast.error(error.message || "Téléchargement impossible.");
+      toast.error(error.message || i18n.t("msgDownloadFailed"));
     } finally {
       setSaving(false);
     }
@@ -69,7 +70,7 @@ const ImageViewer = ({ uri, title, onClose }) => {
               onLoadEnd={() => setLoading(false)}
               onError={() => {
                 setLoading(false);
-                toast.error("Image introuvable.");
+                toast.error(i18n.t("msgImageNotFound"));
               }}
             />
           </TouchableOpacity>
@@ -87,14 +88,14 @@ const ImageViewer = ({ uri, title, onClose }) => {
             <Ionicons name="close" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.title} numberOfLines={1}>
-            {title || "Photo"}
+            {title || i18n.t("msgPhoto")}
           </Text>
           <TouchableOpacity
             onPress={download}
             disabled={saving}
             style={styles.iconButton}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityLabel="Télécharger"
+            accessibilityLabel={i18n.t("msgDownload")}
           >
             {saving ? (
               <ActivityIndicator size="small" color="#FFFFFF" />

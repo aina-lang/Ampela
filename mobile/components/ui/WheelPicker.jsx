@@ -4,6 +4,9 @@ import { useDiscoveryTheme } from "@/components/discovery/DiscoveryTheme";
 
 const ITEM_HEIGHT = 44;
 const VISIBLE = 3; // nombre de lignes visibles (impair : une au centre)
+// Seules les lignes proches du centre sont montées (fenêtrage) : une roue
+// de 200+ années ne crée plus des centaines de vues animées à l'ouverture.
+const WINDOW = 8;
 
 /**
  * Roue de sélection 100 % JS (aucun module natif) : une liste qui
@@ -22,6 +25,22 @@ const WheelPicker = ({ items, value, onChange, format = String, width = 72 }) =>
 
   const initialIndex = Math.max(0, items.indexOf(value));
   const padding = ((VISIBLE - 1) / 2) * ITEM_HEIGHT;
+  // Index au centre de la fenêtre rendue ; mis à jour par pas de WINDOW/2
+  // pour ne pas re-rendre à chaque frame de défilement.
+  const [centerIndex, setCenterIndex] = useState(initialIndex);
+
+  const onScroll = useMemo(
+    () =>
+      Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+        useNativeDriver: true,
+        listener: (event) => {
+          const index = Math.round(event.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+          // Mise à jour fonctionnelle : React ignore l'appel si rien ne change.
+          setCenterIndex((prev) => (Math.abs(index - prev) >= WINDOW / 2 ? index : prev));
+        },
+      }),
+    [scrollY]
+  );
 
   // Positionne la roue sur la valeur courante dès que le contenu est
   // mesuré (un setTimeout(0) arrivait avant la mise en page et tombait
@@ -39,9 +58,13 @@ const WheelPicker = ({ items, value, onChange, format = String, width = 72 }) =>
     if (items[clamped] !== value) onChange?.(items[clamped]);
   };
 
+  const start = Math.max(0, centerIndex - WINDOW);
+  const end = Math.min(items.length - 1, centerIndex + WINDOW);
+
   const rendered = useMemo(
     () =>
-      items.map((item, index) => {
+      items.slice(start, end + 1).map((item, offset) => {
+        const index = start + offset;
         const center = index * ITEM_HEIGHT;
         const inputRange = [center - ITEM_HEIGHT, center, center + ITEM_HEIGHT];
         const opacity = scrollY.interpolate({
@@ -63,7 +86,7 @@ const WheelPicker = ({ items, value, onChange, format = String, width = 72 }) =>
           </Animated.View>
         );
       }),
-    [items, scrollY, format]
+    [items, scrollY, format, start, end]
   );
 
   return (
@@ -82,10 +105,7 @@ const WheelPicker = ({ items, value, onChange, format = String, width = 72 }) =>
         snapToInterval={ITEM_HEIGHT}
         decelerationRate="fast"
         contentContainerStyle={{ paddingVertical: padding }}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true }
-        )}
+        onScroll={onScroll}
         onContentSizeChange={handleContentSizeChange}
         onMomentumScrollEnd={handleSettle}
         nestedScrollEnabled
@@ -98,7 +118,10 @@ const WheelPicker = ({ items, value, onChange, format = String, width = 72 }) =>
         scrollEventThrottle={16}
         style={{ opacity: ready ? 1 : 0 }}
       >
+        {/* Espaceurs : la hauteur totale reste celle de toutes les lignes. */}
+        <View style={{ height: start * ITEM_HEIGHT }} />
         {rendered}
+        <View style={{ height: (items.length - 1 - end) * ITEM_HEIGHT }} />
       </Animated.ScrollView>
     </View>
   );

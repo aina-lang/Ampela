@@ -1,4 +1,7 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
+import { useCache, writeCache } from "@/services/localCache";
+import { getCurrentUser } from "@/services/api";
+import i18n from "@/constants/i18n";
 import { addComment, listComments, updateComment, deleteComment } from "@/services/forumAPI";
 import { toast } from "@/components/ui";
 
@@ -17,14 +20,25 @@ export const useComments = (postId, { onCountChange } = {}) => {
   const [pendingDelete, setPendingDelete] = useState(null);
   const [sending, setSending] = useState(false);
 
+  // Local d'abord : commentaires en cache affichés avant le rafraîchissement.
+  const cachedComments = useCache(`forum:comments:${postId}`);
+  useEffect(() => {
+    if (!cachedComments || comments !== null) return undefined;
+    const timer = setTimeout(() => setComments(cachedComments), 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cachedComments]);
+
   const load = useCallback(async () => {
     if (!postId) return;
     setLoading(true);
     try {
-      setComments(await listComments(postId));
+      const fresh = await listComments(postId);
+      setComments(fresh);
+      writeCache(`forum:comments:${postId}`, fresh);
     } catch (error) {
       console.error("Erreur lors du chargement des commentaires : ", error);
-      toast.error("Impossible de charger les commentaires.");
+      toast.error(i18n.t("forumCommentsLoadFailed"));
     } finally {
       setLoading(false);
     }
@@ -35,7 +49,7 @@ export const useComments = (postId, { onCountChange } = {}) => {
     setReplyTo(comment);
     // Réponse à une réponse : on cite la personne, le fil reste à un niveau.
     if (comment?.parentId) {
-      const mention = `@${comment.author?.username || "Anonyme"} `;
+      const mention = `@${comment.author?.username || i18n.t("anonymous")} `;
       setValue((current) => (current.startsWith("@") ? current : mention + current));
     }
   }, []);
@@ -56,29 +70,97 @@ export const useComments = (postId, { onCountChange } = {}) => {
     setValue("");
   }, []);
 
+  /** Événement temps réel d'un autre appareil : fusion sans doublon. */
+  const applyRemote = useCallback(
+    (event, payload) => {
+      setComments((current) => {
+        if (!current) return current;
+        if (event === "comment:new") {
+          if (current.some((c) => c.id === payload.comment.id)) return current;
+          const next = [...current, payload.comment];
+          writeCache(`forum:comments:${postId}`, next);
+          return next;
+        }
+        if (event === "comment:updated") {
+          const next = current.map((c) => (c.id === payload.comment.id ? payload.comment : c));
+          writeCache(`forum:comments:${postId}`, next);
+          return next;
+        }
+        if (event === "comment:deleted") {
+          const next = current.filter((c) => c.id !== payload.commentId && c.parentId !== payload.commentId);
+          writeCache(`forum:comments:${postId}`, next);
+          return next;
+        }
+        return current;
+      });
+    },
+    [postId]
+  );
+
   const send = useCallback(async () => {
     const content = value.trim();
     if (!content || !postId || sending) return;
     setSending(true);
+    const me = getCurrentUser();
     try {
       if (editing) {
-        const updated = await updateComment(postId, editing.id, content);
+        // Optimiste : le texte change tout de suite, retour arrière si refus.
+        const before = editing;
         setComments((current) =>
-          current ? current.map((c) => (c.id === updated.id ? updated : c)) : current
+          current ? current.map((c) => (c.id === before.id ? { ...c, content } : c)) : current
         );
         setEditing(null);
         setValue("");
-        toast.success("Commentaire modifié.");
+        try {
+          const updated = await updateComment(postId, before.id, content);
+          setComments((current) =>
+            current ? current.map((c) => (c.id === updated.id ? updated : c)) : current
+          );
+          toast.success(i18n.t("forumCommentEdited"));
+        } catch (error) {
+          setComments((current) =>
+            current ? current.map((c) => (c.id === before.id ? before : c)) : current
+          );
+          throw error;
+        }
       } else {
-        const comment = await addComment(postId, content, replyTo?.id ?? null);
+        // Optimiste : le commentaire apparaît immédiatement (grisé), puis
+        // est remplacé par la version du serveur.
+        const tempId = `tmp-${Date.now()}`;
+        const parentId = replyTo?.id ?? null;
+        const temp = {
+          id: tempId,
+          postId,
+          parentId,
+          content,
+          createdAt: new Date().toISOString(),
+          author: me ? { id: me.id, username: me.username, profileImage: me.profileImage } : null,
+          authorId: me?.id,
+          pending: true,
+        };
         setValue("");
         setReplyTo(null);
-        setComments((current) => (current ? [...current, comment] : current));
+        setComments((current) => (current ? [...current, temp] : [temp]));
         onCountChange?.(1);
+        try {
+          const comment = await addComment(postId, content, parentId);
+          setComments((current) => {
+            if (!current) return current;
+            const withoutTemp = current.filter((c) => c.id !== tempId);
+            const next = withoutTemp.some((c) => c.id === comment.id) ? withoutTemp : [...withoutTemp, comment];
+            writeCache(`forum:comments:${postId}`, next);
+            return next;
+          });
+        } catch (error) {
+          setComments((current) => (current ? current.filter((c) => c.id !== tempId) : current));
+          onCountChange?.(-1);
+          setValue(content);
+          throw error;
+        }
       }
     } catch (error) {
-      console.error("Erreur lors de l'envoi du commentaire : ", error);
-      toast.error(error.message || "Impossible d'envoyer le commentaire.");
+      console.log("Comment send failed:", error?.message ?? error);
+      toast.error(error.message || i18n.t("forumCommentSendFailed"));
     } finally {
       setSending(false);
     }
@@ -104,10 +186,10 @@ export const useComments = (postId, { onCountChange } = {}) => {
       if (editing?.id === target.id) cancelEdit();
       if (replyTo?.id === target.id || replyTo?.parentId === target.id) setReplyTo(null);
       onCountChange?.(-Math.max(removed, 1));
-      toast.success("Commentaire supprimé.");
+      toast.success(i18n.t("forumCommentDeleted"));
     } catch (error) {
       console.error("Erreur lors de la suppression du commentaire : ", error);
-      toast.error(error.message || "Suppression impossible.");
+      toast.error(error.message || i18n.t("forumDeleteFailed"));
     } finally {
       setPendingDelete(null);
       setSending(false);
@@ -133,5 +215,6 @@ export const useComments = (postId, { onCountChange } = {}) => {
     requestDelete,
     cancelDelete,
     confirmDelete,
+    applyRemote,
   };
 };

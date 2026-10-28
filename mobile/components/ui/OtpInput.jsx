@@ -102,7 +102,7 @@ const OtpInput = ({
   );
 };
 
-const CELL = 46;
+const CELL = SIZES.scale(46);
 
 const styles = StyleSheet.create({
   row: {

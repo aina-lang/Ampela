@@ -148,10 +148,7 @@ const OneArticle = () => {
                     key={img}
                     source={img}
                     resizeMode="contain"
-                    style={{
-                      width: img === images.imgVs1 ? 450 : 500,
-                      height: img === images.imgVs1 ? 420 : 500,
-                    }}
+                    style={styles.inlineImage}
                   />
                 ))
               : null
@@ -161,10 +158,7 @@ const OneArticle = () => {
                   key={img}
                   source={img}
                   resizeMode="contain"
-                  style={{
-                    width: img === images.imgVs1 ? 450 : 500,
-                    height: img === images.imgVs1 ? 420 : 450,
-                  }}
+                  style={styles.inlineImage}
                 />
               ))
             : null}
@@ -174,7 +168,7 @@ const OneArticle = () => {
             <Image
               source={img}
               resizeMode="contain"
-              style={{ width: 330, height: 330 }}
+              style={styles.inlineImage}
             />
           ) : null}
         </View>
@@ -231,14 +225,22 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     alignSelf: "center",
   },
+  // Illustrations du corps : pleine largeur de la carte, hauteur proportionnelle.
+  inlineImage: {
+    width: SIZES.width - 40,
+    height: SIZES.width - 40,
+    maxWidth: 520,
+    maxHeight: 520,
+    alignSelf: "center",
+  },
   bottomImageWrapper: {
     alignItems: "center",
     marginTop: "auto",
     paddingTop: 24,
   },
   bottomImage: {
-    width: 240,
-    height: 240,
+    width: SIZES.scale(240),
+    height: SIZES.scale(240),
   },
   cover: {
     alignItems: "center",

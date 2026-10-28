@@ -38,10 +38,10 @@ const CommentComposer = ({
         <View style={styles.replyBanner}>
           <Ionicons name="create-outline" size={14} color="#7A737F" />
           <Text style={styles.replyBannerText} numberOfLines={1}>
-            Modification de votre commentaire
+            {i18n.t("forumEditingComment")}
           </Text>
           <TouchableOpacity onPress={onCancelEdit} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
-            <Text style={[styles.cancel, { color: accentColor }]}>Annuler</Text>
+            <Text style={[styles.cancel, { color: accentColor }]}>{i18n.t("annuler")}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -49,10 +49,10 @@ const CommentComposer = ({
         <View style={styles.replyBanner}>
           <Ionicons name="return-down-forward-outline" size={14} color="#7A737F" />
           <Text style={styles.replyBannerText} numberOfLines={1}>
-            Réponse à {replyTo.author?.username || "Anonyme"}
+            {i18n.t("forumReplyingTo", { name: replyTo.author?.username || i18n.t("anonymous") })}
           </Text>
           <TouchableOpacity onPress={onCancelReply} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
-            <Text style={[styles.cancel, { color: accentColor }]}>Annuler</Text>
+            <Text style={[styles.cancel, { color: accentColor }]}>{i18n.t("annuler")}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -60,7 +60,7 @@ const CommentComposer = ({
         <TextInput
           ref={inputRef}
           multiline
-          placeholder={replyTo ? "Votre réponse…" : i18n.t("ecrireUnCommentaire")}
+          placeholder={replyTo ? i18n.t("forumYourReply") : i18n.t("ecrireUnCommentaire")}
           placeholderTextColor="#A9A4AE"
           style={styles.input}
           value={value}
@@ -73,7 +73,7 @@ const CommentComposer = ({
           onPress={onSend}
           disabled={!canSend}
           activeOpacity={0.85}
-          accessibilityLabel="Envoyer"
+          accessibilityLabel={i18n.t("forumSend")}
           style={[styles.send, { backgroundColor: canSend ? accentColor : "#E4DEE6" }]}
         >
           <Ionicons name={editing ? "checkmark" : "send"} size={16} color="#FFFFFF" />

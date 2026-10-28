@@ -17,6 +17,9 @@ export class CyclesController {
 
   @Put()
   upsert(@CurrentUser() user: JwtPayload, @Body() dto: UpsertCyclesDto) {
-    return this.cycles.upsertMany(user.sub, dto.cycles);
+    return this.cycles.upsertMany(user.sub, dto.cycles, {
+      replace: dto.replace,
+      updatedAt: dto.updatedAt,
+    });
   }
 }

@@ -2,9 +2,11 @@ import { handleHeaderScroll } from "@/hooks/useHeaderScroll";
 import { View, ScrollView, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, SIZES } from "@/constants";
+import i18n from "@/constants/i18n";
 import BackgroundContainer from "@/components/background-container";
 import IndicationCalendar from "@/components/calendar/indication-calendar";
-import { Calendar, LocaleConfig } from "react-native-calendars";
+import { Calendar } from "react-native-calendars";
+import { LocaleConfig, monthNames as calendarMonthNames } from "@/constants/calendarLocale";
 import ReminderItem from "@/components/calendar/reminder-item";
 import MonthYearPicker from "@/components/calendar/MonthYearPicker";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,7 +18,6 @@ import {
   userState,
 } from "@/legendstate/AmpelaStates";
 import { useDiscoveryTheme } from "@/components/discovery";
-import { useVisitedRoute, clearVisitedRoute } from "@/hooks/useVisitedRoute";
 import AccountPromoSheet from "@/components/AccountPromoSheet";
 import {
   getOvulationDate,
@@ -26,41 +27,9 @@ import {
 import { useNavigation, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-LocaleConfig.locales["fr"] = {
-  monthNames: [
-    "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-    "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
-  ],
-  monthNamesShort: [
-    "Janv.", "Févr.", "Mars", "Avril", "Mai", "Juin",
-    "Juil.", "Août", "Sept.", "Oct.", "Nov.", "Déc.",
-  ],
-  dayNames: [
-    "Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi",
-  ],
-  dayNamesShort: ["Di.", "Lu.", "Ma.", "Me.", "Je.", "Ve.", "Sa."],
-  today: "Aujourd'hui",
-};
-
-LocaleConfig.locales["mg"] = {
-  monthNames: [
-    "Janoary", "Febroary", "Martsa", "Aprily", "May", "Jona",
-    "Jolay", "Aogositra", "Septambra", "Oktobra", "Novambra", "Desambra",
-  ],
-  monthNamesShort: [
-    "Jan.", "Febr.", "Mar.", "Apr.", "May", "Jona",
-    "Jolay.", "Aogo.", "Sept.", "Oct.", "Nov.", "Des.",
-  ],
-  dayNames: [
-    "Alahady", "Alatsinainy", "Talata", "Alarobia", "Alakamisy", "Zoma", "Sabotsy",
-  ],
-  dayNamesShort: ["Alh.", "Alt.", "Tal.", "Alr.", "Alk.", "Zo.", "Sa."],
-  today: "Androany",
-};
 
 const Index = () => {
   const navigation = useNavigation();
-  const visitedRoute = useVisitedRoute();
   const user = useSelector(() => userState.get());
   const { theme, language } = useSelector(() => preferenceState.get());
   const { cyclesData } = useSelector(() => cycleMenstruelState.get());
@@ -70,16 +39,14 @@ const Index = () => {
   // fenêtre mois/année ouverte en touchant le titre.
   const [visibleMonth, setVisibleMonth] = useState(() => moment().startOf("month"));
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
-  const monthNames =
-    LocaleConfig.locales[LocaleConfig.defaultLocale]?.monthNames ??
-    LocaleConfig.locales.fr.monthNames;
+  const monthNames = calendarMonthNames();
 
   const renderCalendarHeader = () => (
     <TouchableOpacity
       onPress={() => setMonthPickerOpen(true)}
       activeOpacity={0.7}
       style={styles.calendarHeader}
-      accessibilityLabel="Choisir le mois et l'année"
+      accessibilityLabel={i18n.t("calendarPickMonth")}
     >
       <Text style={styles.calendarHeaderText}>
         {monthNames[visibleMonth.month()]} {visibleMonth.year()}
@@ -88,23 +55,6 @@ const Index = () => {
     </TouchableOpacity>
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      const timer = setTimeout(() => {
-        if (visitedRoute) {
-          navigation.openDrawer();
-          clearVisitedRoute();
-        }
-      }, 100);
-
-      return () => clearTimeout(timer);
-    }, [navigation, visitedRoute])
-  );
-
-
-  useEffect(() => {
-    LocaleConfig.defaultLocale = language || "fr";
-  }, [language]);
 
   const cycles = useMemo(() => cyclesData || [], [cyclesData]);
 
@@ -285,7 +235,7 @@ const Index = () => {
           <View style={[styles.reminderCard,{
                 backgroundColor: discovery.surface,
               }]}>
-            <Text style={styles.reminderTitle}>Rappels</Text>
+            <Text style={styles.reminderTitle}>{i18n.t("rappels")}</Text>
             <View style={{ gap: 10 }}>
               <ReminderItem as="Début des règles" />
               <ReminderItem as="Jour d'ovulation" />

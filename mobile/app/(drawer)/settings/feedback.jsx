@@ -1,3 +1,5 @@
+import { handleHeaderScroll } from "@/hooks/useHeaderScroll";
+import i18n from "@/constants/i18n";
 import { DecorativeBlobs } from "@/components/ui";
 import AppHeader, { HEADER_HEIGHT } from "@/components/AppHeader";
 import { useNavigation } from "expo-router";
@@ -8,6 +10,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Linking,
+  ScrollView,
 } from "react-native";
 import { SIZES, COLORS } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
@@ -52,9 +55,14 @@ const Feedback = () => {
   return (
     <View style={[styles.container, { backgroundColor: surface }]}>
       <DecorativeBlobs />
-      <AppHeader navigation={navigation} title="Feed-back" showBack absolute />
-      <View style={styles.content}>
-        <Text style={[styles.title, { color: COLORS.primary }]}>Contactez les développeurs</Text>
+      <AppHeader navigation={navigation} title={i18n.t("profileSendFeedback")} showBack absolute />
+      <ScrollView
+        onScroll={handleHeaderScroll}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      >
+        <Text style={[styles.title, { color: COLORS.primary }]}>{i18n.t("feedbackContactTeam")}</Text>
         <DiscoveryCard style={styles.card}>
           {contacts.map((item, index) => (
             <View key={item.key}>
@@ -77,7 +85,7 @@ const Feedback = () => {
             </View>
           ))}
         </DiscoveryCard>
-      </View>
+      </ScrollView>
     </View>
   );
 };

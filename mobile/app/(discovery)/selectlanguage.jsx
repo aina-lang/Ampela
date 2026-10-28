@@ -1,9 +1,10 @@
 import { DecorativeBlobs } from "@/components/ui";
 import React, { useCallback } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SIZES, COLORS, images } from "@/constants";
 import { useRouter } from "expo-router";
+import i18n from "@/constants/i18n";
 import { preferenceState, updatePreference } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,38 +15,6 @@ import { DISCOVERY_RADIUS, DISCOVERY_SPACING } from "@/components/discovery/Disc
 
 // Sous-composants hoistés hors de l'écran : ils ne sont pas recréés à
 // chaque rendu.
-const LanguageCard = ({ code, label, flag, selected, accentColor, onSelect }) => (
-  <TouchableOpacity
-    activeOpacity={0.85}
-    onPress={() => onSelect(code)}
-    style={[
-      styles.languageCard,
-      { backgroundColor: selected ? accentColor : COLORS.neutral100 },
-    ]}
-  >
-    <View style={styles.cardLeft}>
-      <Image source={flag} style={styles.flag} />
-      <Text
-        style={[
-          styles.cardLabel,
-          { color: selected ? COLORS.neutral100 : "#433C47" },
-        ]}
-      >
-        {label}
-      </Text>
-    </View>
-
-    <View
-      style={[
-        styles.radioOuter,
-        { backgroundColor: selected ? COLORS.neutral100 : "#EFECF2" },
-      ]}
-    >
-      {selected && <Ionicons name="checkmark" size={14} color={accentColor} />}
-    </View>
-  </TouchableOpacity>
-);
-
 const ThemeCard = ({ themeKey, label, desc, image, selected, onSelect }) => {
   const cardAccent = themeKey === "pink" ? "#FF7575" : "#FE8729";
 
@@ -53,7 +22,7 @@ const ThemeCard = ({ themeKey, label, desc, image, selected, onSelect }) => {
     <TouchableOpacity
       activeOpacity={0.85}
       onPress={() => onSelect(themeKey)}
-      style={styles.themeCard}
+      style={[styles.themeCard, { borderColor: selected ? cardAccent : "transparent" }]}
     >
       <View style={styles.themeImageWrapper}>
         <Image source={image} style={styles.themeImage} resizeMode="cover" />
@@ -78,17 +47,12 @@ const ThemeCard = ({ themeKey, label, desc, image, selected, onSelect }) => {
 const SelectLanguage = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { language, theme } = useSelector(() => preferenceState.get());
+  const { theme } = useSelector(() => preferenceState.get());
   const {
     accentColor,
     accentColorDisabled,
     surface,
   } = useDiscoveryTheme();
-
-  const changeLanguage = (lang) => {
-    // i18n suit automatiquement preferenceState.language (constants/i18n.js).
-    updatePreference({ language: lang });
-  };
 
   const handleThemeChange = (themeKey) => {
     updatePreference({ theme: themeKey });
@@ -104,44 +68,26 @@ const SelectLanguage = () => {
       <MeshBackground color={accentColor} surfaceColor={surface} />
       <DecorativeBlobs />
 
-      <View style={[styles.content, { paddingTop: insets.top + 16 }]}>
+      <View style={styles.content}>
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 16 }]}
+          showsVerticalScrollIndicator={false}
+        >
         <DiscoveryHeader
-          eyebrow="Bienvenue"
-          title="Langue et thème"
-          subtitle="Choisissez votre langue et le thème qui vous convient."
+          eyebrow={i18n.t("onboardingWelcomeEyebrow")}
+          title={i18n.t("onboardingThemeTitle")}
+          subtitle={i18n.t("onboardingThemeSubtitle")}
         />
 
         <View style={styles.sectionLabel}>
-          <Text style={styles.sectionLabelText}>Choisissez votre langue</Text>
-        </View>
-        <View style={styles.cardsWrapper}>
-          <LanguageCard
-            code="fr"
-            label="Français"
-            flag={images.franceImg}
-            selected={language === "fr"}
-            accentColor={accentColor}
-            onSelect={changeLanguage}
-          />
-          <LanguageCard
-            code="mg"
-            label="Malagasy"
-            flag={images.madaImg}
-            selected={language === "mg"}
-            accentColor={accentColor}
-            onSelect={changeLanguage}
-          />
-        </View>
-
-        <View style={styles.sectionLabel}>
-          <Text style={styles.sectionLabelText}>Choisissez votre thème</Text>
+          <Text style={styles.sectionLabelText}>{i18n.t("onboardingChooseTheme")}</Text>
         </View>
 
         <View style={styles.themeCardsWrapper}>
           <ThemeCard
             themeKey="pink"
             label="Anna’s Rose"
-            desc="Rose"
+            desc={i18n.t("themePink")}
             image={images.pinkTheme}
             selected={theme === "pink"}
             onSelect={handleThemeChange}
@@ -149,16 +95,19 @@ const SelectLanguage = () => {
           <ThemeCard
             themeKey="orange"
             label="Linda Sunset"
-            desc="Orange"
+            desc={i18n.t("themeOrange")}
             image={images.orangeTheme}
             selected={theme === "orange"}
             onSelect={handleThemeChange}
           />
         </View>
 
-        <View style={[styles.bottomArea, { paddingBottom: insets.bottom + 24 }]}>
+        </ScrollView>
+
+        {/* Bouton toujours visible, quelle que soit la hauteur d'écran */}
+        <View style={[styles.bottomArea, { paddingBottom: insets.bottom + 16 }]}>
           <ModernButton
-            title="Continuer"
+            title={i18n.t("onboardingContinue")}
             onPress={handleNextBtnPress}
             accentColor={accentColor}
             accentColorDisabled={accentColorDisabled}
@@ -175,7 +124,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 24,
+    paddingBottom: 16,
   },
   cardsWrapper: {
     gap: 14,
@@ -200,6 +152,8 @@ const styles = StyleSheet.create({
     borderRadius: DISCOVERY_RADIUS.xl,
     backgroundColor: COLORS.neutral100,
     overflow: "hidden",
+    // Bordure couleur du thème sur la carte sélectionnée
+    borderWidth: 2.5,
   },
   themeImageWrapper: {
     position: "relative",
@@ -265,9 +219,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   bottomArea: {
-    marginTop: "auto",
-    paddingBottom: 10,
-    paddingTop: 20,
+    paddingHorizontal: 24,
+    paddingTop: 12,
   },
 });
 

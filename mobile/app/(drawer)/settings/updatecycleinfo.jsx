@@ -1,4 +1,9 @@
 import { handleHeaderScroll } from "@/hooks/useHeaderScroll";
+import i18n from "@/constants/i18n";
+import { monthNames as calendarMonthNames } from "@/constants/calendarLocale";
+import MonthYearPicker from "@/components/calendar/MonthYearPicker";
+import { Ionicons } from "@expo/vector-icons";
+import moment from "moment";
 import { DecorativeBlobs, toast } from "@/components/ui";
 import React, { useState } from "react";
 import {
@@ -29,8 +34,7 @@ import {
 } from "@/services/database";
 import { generateCycleMenstrualData } from "@/utils/menstruationUtils";
 import { isSignedIn } from "@/services/api";
-import { syncCycles } from "@/services/sync";
-import { pushProfileToCloud } from "@/services/otpAuth";
+import { scheduleSync } from "@/services/sync";
 import { rescheduleAllReminders } from "@/services/reminders";
 import { useDiscoveryTheme } from "@/components/discovery";
 import DiscoveryCard from "@/components/discovery/DiscoveryCard";
@@ -40,23 +44,22 @@ import ModernButton from "@/components/ModernButton";
 const UpdateCycleInfo = () => {
   const navigation = useNavigation();
   const [selectedDate, setSelectedDate] = useState(null);
-  const [periodDuration, setPeriodDuration] = useState("");
-  const [cycleDuration, setCycleDuration] = useState("");
+  // Durées en jours (nombres) ; le libellé « N jours » est traduit à l'affichage.
+  const [periodDuration, setPeriodDuration] = useState(null);
+  const [cycleDuration, setCycleDuration] = useState(null);
+  const dayLabel = (n) => `${n} ${i18n.t("jours")}`;
   const { theme } = useSelector(() => preferenceState.get());
   const user = useSelector(() => userState.get());
   const [saving, setSaving] = useState(false);
   const isDateSelected = !!selectedDate;
   const { surface, accentColor, accentColorDisabled } = useDiscoveryTheme();
 
-  const getFirstDayOfLastMonth = () => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  };
-
-  const getLastDayOfLastMonth = () => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 0);
-  };
+  // Les dernières règles peuvent dater de plusieurs mois : aucune date
+  // minimale, seulement « pas dans le futur ». Le mois affiché se choisit
+  // par balayage ou via la fenêtre mois/année du titre, comme à l'accueil.
+  const todayString = moment().format("YYYY-MM-DD");
+  const [visibleMonth, setVisibleMonth] = useState(() => moment().startOf("month"));
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
 
   const handleDayPress = (day) => {
     setSelectedDate(day.dateString);
@@ -64,30 +67,30 @@ const UpdateCycleInfo = () => {
 
   const handleUpdateCycleInfo = async () => {
     if (!selectedDate) {
-      Alert.alert("Erreur", "Veuillez choisir une date");
+      Alert.alert(i18n.t("erreur"), i18n.t("cycleUpdatePickDate"));
       return;
     }
 
     if (!cycleDuration) {
-      Alert.alert("Erreur", "Veuillez entrer la durée du cycle");
+      Alert.alert(i18n.t("erreur"), i18n.t("cycleUpdateNeedCycle"));
       return;
     }
 
     if (!periodDuration) {
-      Alert.alert("Erreur", "Veuillez entrer la durée des règles");
+      Alert.alert(i18n.t("erreur"), i18n.t("cycleUpdateNeedPeriod"));
       return;
     }
 
-    const periodNum = parseInt(periodDuration.split(" ")[0], 10);
-    const cycleNum = parseInt(cycleDuration.split(" ")[0], 10);
+    const periodNum = Number(periodDuration);
+    const cycleNum = Number(cycleDuration);
 
     if (periodNum > 8) {
-      Alert.alert("Erreur", "La durée des règles ne peut pas dépasser 8 jours");
+      Alert.alert(i18n.t("erreur"), i18n.t("cycleUpdatePeriodMax"));
       return;
     }
 
     if (periodNum < 1) {
-      Alert.alert("Erreur", "La durée des règles doit être d'au moins 1 jour");
+      Alert.alert(i18n.t("erreur"), i18n.t("cycleUpdatePeriodMin"));
       return;
     }
 
@@ -111,7 +114,7 @@ const UpdateCycleInfo = () => {
         cycleDuration: cycleNum,
         durationMenstruation: periodNum,
       };
-      updateUser(updatedUser);
+      updateUser(updatedUser, { touch: true });
       await updateUserSqlite(
         updatedUser.id,
         updatedUser.username,
@@ -141,7 +144,7 @@ const UpdateCycleInfo = () => {
 
       // 4. Le calendrier de l'accueil lit cet état : historique + nouveaux cycles.
       const refreshedCycles = await getAllCycle();
-      updateCycleMenstruelData(refreshedCycles);
+      updateCycleMenstruelData(refreshedCycles, { touch: true });
 
       // Les rappels « règles » et « ovulation » actifs suivent les nouvelles dates.
       rescheduleAllReminders(refreshedCycles).catch((error) =>
@@ -150,49 +153,54 @@ const UpdateCycleInfo = () => {
 
       // 5. Compte connecté : profil et cycles partent dans le cloud (sans bloquer).
       if (isSignedIn()) {
-        Promise.all([pushProfileToCloud(), syncCycles()]).catch((error) =>
-          console.error("Cycle sync failed:", error)
-        );
+        scheduleSync();
       }
 
-      toast.success("Informations du cycle mises à jour.");
+      toast.success(i18n.t("cycleUpdateSaved"));
       navigation.goBack();
     } catch (error) {
-      toast.error("Une erreur est survenue lors de la mise à jour du cycle.");
+      toast.error(i18n.t("cycleUpdateFailed"));
       console.error(error);
     } finally {
       setSaving(false);
     }
   };
 
-  const periodDurations = [];
-  const cycleDurations = [];
-  for (let i = 1; i <= 8; i++) {
-    periodDurations.push(i + " jours");
-  }
-  for (let i = 20; i <= 45; i++) {
-    cycleDurations.push(i + " jours");
-  }
+  const periodDurations = Array.from({ length: 8 }, (_, i) => i + 1);
+  const cycleDurations = Array.from({ length: 26 }, (_, i) => i + 20);
 
   return (
     <View style={[styles.container, { backgroundColor: surface }]}>
       <DecorativeBlobs />
-      <AppHeader navigation={navigation} title="Modification" showBack absolute />
+      <AppHeader navigation={navigation} title={i18n.t("cycleUpdateTitle")} showBack absolute />
       <ScrollView
         onScroll={handleHeaderScroll}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <Text style={styles.description}>
-          Choisissez une date du mois précédent pour mettre à jour l’information
-          du cycle. Ce date sera le début des règles du dernier cycle
-        </Text>
+        <Text style={styles.description}>{i18n.t("cycleUpdateDescription")}</Text>
         <DiscoveryCard style={styles.calendarCard}>
           <Calendar
+            key={visibleMonth.format("YYYY-MM")}
+            current={visibleMonth.format("YYYY-MM-DD")}
+            onMonthChange={(m) => setVisibleMonth(moment(m.dateString).startOf("month"))}
+            renderHeader={() => (
+              <TouchableOpacity
+                onPress={() => setMonthPickerOpen(true)}
+                activeOpacity={0.7}
+                style={styles.calendarHeader}
+                accessibilityLabel={i18n.t("calendarPickMonth")}
+              >
+                <Text style={styles.calendarHeaderText}>
+                  {calendarMonthNames()[visibleMonth.month()]} {visibleMonth.year()}
+                </Text>
+                <Ionicons name="chevron-down" size={16} color={accentColor} />
+              </TouchableOpacity>
+            )}
+            enableSwipeMonths
             onDayPress={handleDayPress}
-            minDate={getFirstDayOfLastMonth().toISOString().split("T")[0]}
-            maxDate={getLastDayOfLastMonth().toISOString().split("T")[0]}
+            maxDate={todayString}
             markedDates={{
               [selectedDate]: {
                 selected: true,
@@ -208,13 +216,25 @@ const UpdateCycleInfo = () => {
           />
         </DiscoveryCard>
 
-        <Text style={styles.chipLabel}>Durée des règles</Text>
+        <MonthYearPicker
+          visible={monthPickerOpen}
+          month={visibleMonth.month()}
+          year={visibleMonth.year()}
+          monthNames={calendarMonthNames()}
+          onConfirm={(month, year) => {
+            setVisibleMonth(moment({ year, month, day: 1 }));
+            setMonthPickerOpen(false);
+          }}
+          onCancel={() => setMonthPickerOpen(false)}
+        />
+
+        <Text style={styles.chipLabel}>{i18n.t("accountPeriodLength")}</Text>
         <FlatList
           data={periodDurations}
-          keyExtractor={(item) => item}
+          keyExtractor={(item) => String(item)}
           renderItem={({ item }) => (
             <ResponseOfQuestion0
-              text={item}
+              text={dayLabel(item)}
               active={periodDuration === item}
               onPress={() => setPeriodDuration(item)}
               accentColor={accentColor}
@@ -225,13 +245,13 @@ const UpdateCycleInfo = () => {
           horizontal
         />
 
-        <Text style={styles.chipLabel}>Durée du cycle</Text>
+        <Text style={styles.chipLabel}>{i18n.t("accountCycleLength")}</Text>
         <FlatList
           data={cycleDurations}
-          keyExtractor={(item) => item}
+          keyExtractor={(item) => String(item)}
           renderItem={({ item }) => (
             <ResponseOfQuestion1
-              text={item}
+              text={dayLabel(item)}
               active={cycleDuration === item}
               onPress={() => setCycleDuration(item)}
               accentColor={accentColor}
@@ -243,7 +263,7 @@ const UpdateCycleInfo = () => {
         />
 
         <ModernButton
-          title="Mettre à jour"
+          title={i18n.t("cycleUpdateButton")}
           onPress={handleUpdateCycleInfo}
           disabled={!isDateSelected || !periodDuration || !cycleDuration || saving}
           accentColor={accentColor}
@@ -256,6 +276,18 @@ const UpdateCycleInfo = () => {
 };
 
 const styles = StyleSheet.create({
+  calendarHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  calendarHeaderText: {
+    fontFamily: "SBold",
+    fontSize: SIZES.medium,
+    color: "#433C47",
+  },
   container: {
     flex: 1,
   },
@@ -265,11 +297,12 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   description: {
-    fontSize: 16,
-    color: COLORS.dark,
+    fontFamily: "Regular",
+    fontSize: SIZES.small,
+    color: "#7A737F",
     textAlign: "center",
-    marginBottom: 20,
-    lineHeight: 30,
+    marginBottom: 16,
+    lineHeight: 20,
   },
   calendarCard: {
     marginBottom: 20,

@@ -64,7 +64,7 @@ const ArticleItem = ({
         </Text>
         <Pressable onPress={handleOpenArticle}>
           <Text style={{ color: accentColor, fontFamily: "SBold", marginTop: 8 }}>
-            Voir plus {">"}
+            {i18n.t("voirPlus")} {">"}
           </Text>
         </Pressable>
       </Animated.View>

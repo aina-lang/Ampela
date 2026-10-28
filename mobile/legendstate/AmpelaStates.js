@@ -23,6 +23,9 @@ const cycleMenstruelState = observable({
   cycleDuration: null,
   menstruationDuration: null,
   cyclesData: [],
+  // Horodatage (ISO) de la dernière modification du jeu de cycles sur cet
+  // appareil ; comparé à celui du cloud pour ne jamais écraser plus récent.
+  cyclesUpdatedAt: null,
 });
 
 const preferenceState = observable({
@@ -83,31 +86,47 @@ when(userPersist.state.isLoadedLocal, () => {
 });
 
 // Update functions
-export const updateCycleMenstruelData = (data) => {
+//
+// Option `touch` : la modification vient de l'utilisatrice sur cet
+// appareil → on date la donnée (ISO) pour la synchronisation « le plus
+// récent gagne ». Sans `touch` (chargement local, application d'une
+// version cloud), l'horodatage n'est pas modifié ; `updatedAt` permet de
+// reprendre celui du cloud.
+const nowIso = () => new Date().toISOString();
+
+export const updateCycleMenstruelData = (data, { touch = false, updatedAt } = {}) => {
   cycleMenstruelState.set((prevState) => ({
     ...prevState,
     cyclesData: data,
+    ...(touch ? { cyclesUpdatedAt: nowIso() } : {}),
+    ...(updatedAt !== undefined ? { cyclesUpdatedAt: updatedAt } : {}),
   }));
 };
 
-export const updatePreference = (data) => {
+/** Date le jeu de cycles local (après génération ou recalcul). */
+export const touchCycles = () => cycleMenstruelState.cyclesUpdatedAt.set(nowIso());
+
+export const updatePreference = (data, { touch = true } = {}) => {
   preferenceState.set((prevState) => ({
     ...prevState,
     ...data,
+    ...(touch ? { preferencesUpdatedAt: nowIso() } : {}),
   }));
 };
 
-export const updateUser = (data) => {
+export const updateUser = (data, { touch = false } = {}) => {
   userState.set((prevState) => ({
     ...prevState,
     ...data,
+    ...(touch ? { profileUpdatedAt: nowIso() } : {}),
   }));
 };
 
-export const updateReminder = (name, data) => {
+export const updateReminder = (name, data, { touch = false } = {}) => {
   reminderState[name].set((prev) => ({
     ...(prev || {}),
     ...data,
+    ...(touch ? { updatedAt: nowIso() } : {}),
   }));
 };
 

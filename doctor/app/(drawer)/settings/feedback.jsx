@@ -1,3 +1,4 @@
+import { handleHeaderScroll } from "@/hooks/useHeaderScroll";
 import { DecorativeBlobs } from "@/components/ui";
 import AppHeader, { HEADER_HEIGHT } from "@/components/AppHeader";
 import { useNavigation } from "expo-router";
@@ -8,6 +9,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Linking,
+  ScrollView,
 } from "react-native";
 import { SIZES, COLORS } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
@@ -53,7 +55,12 @@ const Feedback = () => {
     <View style={[styles.container, { backgroundColor: surface }]}>
       <DecorativeBlobs />
       <AppHeader navigation={navigation} title="Feed-back" showBack absolute />
-      <View style={styles.content}>
+      <ScrollView
+        onScroll={handleHeaderScroll}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      >
         <Text style={[styles.title, { color: COLORS.primary }]}>Contactez les développeurs</Text>
         <DiscoveryCard style={styles.card}>
           {contacts.map((item, index) => (
@@ -77,7 +84,7 @@ const Feedback = () => {
             </View>
           ))}
         </DiscoveryCard>
-      </View>
+      </ScrollView>
     </View>
   );
 };

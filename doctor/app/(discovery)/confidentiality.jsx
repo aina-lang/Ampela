@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Checkbox } from "expo-checkbox";
 import { COLORS, SIZES } from "@/constants";
 import { useRouter } from "expo-router";
+import i18n from "@/constants/i18n";
 import { AntDesign } from "@expo/vector-icons";
 import ModernButton from "@/components/ModernButton";
 import { StatusBar } from "expo-status-bar";
@@ -38,33 +39,11 @@ const Confidentiality = () => {
     router.back();
   };
 
-  const confidentialiteData = [
-    {
-      title: "Utilisation de vos données",
-      description:
-        "Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat.",
-    },
-    {
-      title: "Confidentialité et sécurité",
-      description:
-        "Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat.",
-    },
-    {
-      title: "Partage avec des tiers",
-      description:
-        "Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat.",
-    },
-    {
-      title: "Durée de conservation",
-      description:
-        "Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat.",
-    },
-    {
-      title: "Vos droits",
-      description:
-        "Lorem, ipsum dolor sit amet consectetur adipisicing elit. Quia iusto nemo sunt fuga illum rem sit officia recusandae, magni nobis, nostrum expedita libero ut pariatur explicabo harum. Maxime, voluptatibus fugiat.",
-    },
-  ];
+  // Textes traduits (fr / mg) dans constants/locales/*.json
+  const confidentialiteData = [1, 2, 3, 4, 5].map((i) => ({
+    title: i18n.t(`onboardingPrivacy${i}Title`),
+    description: i18n.t(`onboardingPrivacy${i}Text`),
+  }));
 
   const renderItem = ({ item }) => (
     <DiscoveryCard style={styles.card}>
@@ -86,9 +65,9 @@ const Confidentiality = () => {
 
       <View style={[styles.content, { paddingTop: insets.top + 12 }]}>
         <DiscoveryHeader
-          eyebrow="Confidentialité"
-          title="Vos données, notre priorité"
-          subtitle="Nous prenons la protection de vos données très au sérieux."
+          eyebrow={i18n.t("onboardingPrivacyEyebrow")}
+          title={i18n.t("onboardingPrivacyTitle")}
+          subtitle={i18n.t("onboardingPrivacySubtitle")}
         />
 
         <FlatList
@@ -117,18 +96,16 @@ const Confidentiality = () => {
               color={accepted ? accentColor : undefined}
               style={styles.checkbox}
             />
-            <Text style={styles.acceptText}>
-              J’ai lu et j’accepte les conditions ci-dessus
-            </Text>
+            <Text style={styles.acceptText}>{i18n.t("onboardingPrivacyAccept")}</Text>
           </Pressable>
 
           <View style={styles.navRow}>
-            <DiscoveryBackButton onPress={prevHandled} />
+            <DiscoveryBackButton onPress={prevHandled} label={i18n.t("onboardingBack")} />
 
             <View style={{ flex: 1 }} />
 
             <ModernButton
-              title="Continuer"
+              title={i18n.t("onboardingContinue")}
               onPress={handleNextBtnPress}
               disabled={!accepted}
               accentColor={accentColor}

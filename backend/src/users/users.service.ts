@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
@@ -29,8 +30,40 @@ export class UsersService {
     return user;
   }
 
-  updateMe(userId: string, dto: UpdateProfileDto) {
-    return this.prisma.user.update({ where: { id: userId }, data: dto });
+  /**
+   * Mise à jour du profil et des préférences avec la règle « le plus
+   * récent gagne » : chaque groupe (profil / préférences) n'est appliqué
+   * que si l'horodatage déclaré est plus récent que celui enregistré.
+   * Sans horodatage déclaré (anciens clients, app professionnelle), la
+   * modification est appliquée et datée de maintenant.
+   */
+  async updateMe(userId: string, dto: UpdateProfileDto) {
+    const current = await this.getMe(userId);
+    const { profileUpdatedAt, preferences, preferencesUpdatedAt, ...profile } = dto;
+    const data: Prisma.UserUpdateInput = {};
+
+    const profileFields = Object.fromEntries(
+      Object.entries(profile).filter(([, value]) => value !== undefined),
+    );
+    if (Object.keys(profileFields).length > 0) {
+      const incoming = profileUpdatedAt ? new Date(profileUpdatedAt) : new Date();
+      const stored = current.profileUpdatedAt;
+      if (!stored || incoming.getTime() >= stored.getTime()) {
+        Object.assign(data, profileFields, { profileUpdatedAt: incoming });
+      }
+    }
+
+    if (preferences !== undefined) {
+      const incoming = preferencesUpdatedAt ? new Date(preferencesUpdatedAt) : new Date();
+      const stored = current.preferencesUpdatedAt;
+      if (!stored || incoming.getTime() >= stored.getTime()) {
+        data.preferences = preferences as Prisma.InputJsonValue;
+        data.preferencesUpdatedAt = incoming;
+      }
+    }
+
+    if (Object.keys(data).length === 0) return current;
+    return this.prisma.user.update({ where: { id: userId }, data });
   }
 
   /**

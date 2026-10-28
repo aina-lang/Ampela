@@ -10,6 +10,7 @@ import Animated, {
   runOnJS,
 } from "react-native-reanimated";
 import { SIZES } from "@/constants";
+import i18n from "@/constants/i18n";
 import { isSignedIn } from "@/services/api";
 import { useModal } from "@/hooks/ModalProvider";
 import { useDiscoveryTheme } from "@/components/discovery";
@@ -111,18 +112,15 @@ const AccountPromoSheet = () => {
           ))}
         </View>
 
-        <Text style={styles.title}>Encore plus belle avec un compte</Text>
-        <Text style={styles.subtitle}>
-          Sauvegardez vos cycles dans le cloud, échangez sur le forum et
-          discutez avec des professionnelles — gratuitement.
-        </Text>
+        <Text style={styles.title}>{i18n.t("accountPromoTitle")}</Text>
+        <Text style={styles.subtitle}>{i18n.t("accountPromoSubtitle")}</Text>
 
         <PrimaryButton
-          title="Créer mon compte"
+          title={i18n.t("accountPromoCreate")}
           onPress={handleCreateAccount}
           style={styles.cta}
         />
-        <GhostButton title="Plus tard" size="sm" onPress={dismiss} />
+        <GhostButton title={i18n.t("accountPromoLater")} size="sm" onPress={dismiss} />
       </View>
     </Animated.View>
   );

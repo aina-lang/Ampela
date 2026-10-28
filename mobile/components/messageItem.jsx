@@ -1,7 +1,10 @@
 import React from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import Avatar from "@/components/ui/Avatar";
+import i18n from "@/constants/i18n";
+import { formatDateFr } from "@/services/reminders";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { SIZES, images } from "@/constants";
+import { SIZES } from "@/constants";
 import { useAuth } from "@/hooks/AuthContext";
 import { useDiscoveryTheme } from "@/components/discovery";
 import { isDoctor, describeRole } from "@/utils/roles";
@@ -13,12 +16,12 @@ const formatTimestamp = (value) => {
   const now = new Date();
   const dayMs = 24 * 60 * 60 * 1000;
   if (date.toDateString() === now.toDateString()) {
-    return date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
   }
   const diffDays = Math.floor((now - date) / dayMs);
-  if (diffDays === 1) return "hier";
-  if (diffDays < 7) return date.toLocaleDateString("fr-FR", { weekday: "short" });
-  return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+  if (diffDays === 1) return i18n.t("timeYesterday");
+  if (diffDays < 7) return formatDateFr(date).split(" ")[0];
+  return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}`;
 };
 
 /**
@@ -28,10 +31,10 @@ const formatTimestamp = (value) => {
 /** Aperçu du dernier message : texte, ou icône + libellé pour une pièce jointe. */
 const previewOf = (m) => {
   if (!m) return { text: "" };
-  if (m.deletedAt) return { text: "Message supprimé", icon: "ban-outline" };
-  if (m.attachmentType === "image") return { text: "Photo", icon: "image-outline" };
-  if (m.attachmentType === "audio") return { text: "Message vocal", icon: "mic-outline" };
-  if (m.attachmentType === "file") return { text: "Fichier", icon: "document-attach-outline" };
+  if (m.deletedAt) return { text: i18n.t("msgDeletedPlaceholder"), icon: "ban-outline" };
+  if (m.attachmentType === "image") return { text: i18n.t("msgPhoto"), icon: "image-outline" };
+  if (m.attachmentType === "audio") return { text: i18n.t("msgVoiceMessage"), icon: "mic-outline" };
+  if (m.attachmentType === "file") return { text: i18n.t("msgFile"), icon: "document-attach-outline" };
   return { text: m.text };
 };
 
@@ -52,10 +55,7 @@ const MessageItem = ({ onPress, onLongPress, target, last = false }) => {
       activeOpacity={0.7}
     >
       <View style={[styles.avatarRing, { borderColor: accentContainer }]}>
-        <Image
-          source={target?.profileImage ? { uri: target.profileImage } : images.doctor03}
-          style={styles.avatar}
-        />
+        <Avatar uri={target?.profileImage} name={target?.username} fill fontSize={19} />
       </View>
 
       <View style={styles.text}>
@@ -81,7 +81,7 @@ const MessageItem = ({ onPress, onLongPress, target, last = false }) => {
               <Ionicons name={preview.icon} size={14} color={unread > 0 ? "#2B2530" : "#8E8793"} />
             )}
             <Text style={[styles.preview, unread > 0 && styles.previewUnread]} numberOfLines={1}>
-              {fromMe ? "Vous : " : ""}
+              {fromMe ? `${i18n.t("msgYou")} : ` : ""}
               {preview.text}
             </Text>
           </View>

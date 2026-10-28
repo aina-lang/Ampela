@@ -18,18 +18,40 @@ export class CyclesService {
     });
   }
 
-  /** Upsert atomique de tous les cycles envoyés (jamais de suppression). */
-  async upsertMany(userId: string, cycles: CycleDto[]) {
-    await this.prisma.$transaction(
-      cycles.map((cycle) => {
-        const key = cycleKey(cycle);
-        return this.prisma.cycle.upsert({
-          where: { userId_key: { userId, key } },
-          create: { userId, key, ...cycle },
+  /**
+   * Upsert atomique de tous les cycles envoyés. Avec `replace`, les cycles
+   * absents de l'envoi sont supprimés (l'appareil envoie son jeu complet).
+   * Avec `updatedAt`, l'envoi est ignoré s'il est plus ancien que le jeu
+   * déjà enregistré : un appareil en retard n'écrase jamais le plus récent.
+   */
+  async upsertMany(
+    userId: string,
+    cycles: CycleDto[],
+    { replace = false, updatedAt }: { replace?: boolean; updatedAt?: string } = {},
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { cyclesUpdatedAt: true },
+    });
+    const incoming = updatedAt ? new Date(updatedAt) : new Date();
+    if (updatedAt && user?.cyclesUpdatedAt && incoming.getTime() < user.cyclesUpdatedAt.getTime()) {
+      return { ok: true, skipped: true, cyclesUpdatedAt: user.cyclesUpdatedAt };
+    }
+
+    const keys = cycles.map(cycleKey);
+    await this.prisma.$transaction([
+      ...(replace
+        ? [this.prisma.cycle.deleteMany({ where: { userId, key: { notIn: keys } } })]
+        : []),
+      ...cycles.map((cycle, index) =>
+        this.prisma.cycle.upsert({
+          where: { userId_key: { userId, key: keys[index] } },
+          create: { userId, key: keys[index], ...cycle },
           update: cycle,
-        });
-      }),
-    );
-    return { ok: true, count: cycles.length };
+        }),
+      ),
+      this.prisma.user.update({ where: { id: userId }, data: { cyclesUpdatedAt: incoming } }),
+    ]);
+    return { ok: true, count: cycles.length, cyclesUpdatedAt: incoming };
   }
 }

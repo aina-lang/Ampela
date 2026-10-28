@@ -8,12 +8,11 @@ import { useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useDiscoveryTheme } from "@/components/discovery";
 import DiscoveryCard from "@/components/discovery/DiscoveryCard";
-import {
-  PRIVACY_INTRO,
-  PRIVACY_SECTIONS,
-  PRIVACY_UPDATED_AT,
-  PRIVACY_CONTACT_EMAIL,
-} from "@/constants/privacyPolicy";
+import { PRIVACY_SECTIONS, PRIVACY_UPDATED_AT, PRIVACY_CONTACT_EMAIL } from "@/constants/privacyPolicy";
+import i18n from "@/constants/i18n";
+import { useSelector } from "@legendapp/state/react";
+import { preferenceState } from "@/legendstate/AmpelaStates";
+import { formatDateFr } from "@/services/reminders";
 
 /**
  * Politique de confidentialité consultable depuis les réglages. Même
@@ -23,11 +22,14 @@ import {
 const PrivacyScreen = () => {
   const navigation = useNavigation();
   const { surface, accentColor, accentContainer } = useDiscoveryTheme();
+  // Re-rendu au changement de langue (textes via i18n).
+  useSelector(() => preferenceState.language.get());
+  const updatedAt = `${formatDateFr(PRIVACY_UPDATED_AT)} ${PRIVACY_UPDATED_AT.slice(0, 4)}`;
 
   return (
     <View style={[styles.container, { backgroundColor: surface }]}>
       <DecorativeBlobs />
-      <AppHeader navigation={navigation} title="Confidentialité" showBack absolute />
+      <AppHeader navigation={navigation} title={i18n.t("profilePrivacy")} showBack absolute />
       <ScrollView
         onScroll={handleHeaderScroll}
         scrollEventThrottle={16}
@@ -35,8 +37,8 @@ const PrivacyScreen = () => {
         contentContainerStyle={styles.scrollContent}
       >
         <DiscoveryCard style={styles.introCard}>
-          <Text style={styles.introText}>{PRIVACY_INTRO}</Text>
-          <Text style={styles.updatedAt}>Dernière mise à jour : {PRIVACY_UPDATED_AT}</Text>
+          <Text style={styles.introText}>{i18n.t("privacyIntro")}</Text>
+          <Text style={styles.updatedAt}>{i18n.t("privacyUpdatedAt", { date: updatedAt })}</Text>
         </DiscoveryCard>
 
         <DiscoveryCard style={styles.contentCard}>
@@ -47,8 +49,8 @@ const PrivacyScreen = () => {
                   <Ionicons name={item.icon} size={18} color={accentColor} />
                 </View>
                 <View style={styles.textWrapper}>
-                  <Text style={[styles.subtitle, { color: COLORS.primary }]}>{item.title}</Text>
-                  <Text style={[styles.text, { color: COLORS.neutral400 }]}>{item.body}</Text>
+                  <Text style={[styles.subtitle, { color: COLORS.primary }]}>{i18n.t(item.title)}</Text>
+                  <Text style={[styles.text, { color: COLORS.neutral400 }]}>{i18n.t(item.body)}</Text>
                 </View>
               </View>
               {index < PRIVACY_SECTIONS.length - 1 && <View style={styles.divider} />}
@@ -57,7 +59,7 @@ const PrivacyScreen = () => {
         </DiscoveryCard>
 
         <DiscoveryCard style={styles.contactCard}>
-          <Text style={[styles.subtitle, { color: COLORS.primary }]}>Nous contacter</Text>
+          <Text style={[styles.subtitle, { color: COLORS.primary }]}>{i18n.t("privacyContact")}</Text>
           <Text
             style={[styles.text, styles.link, { color: accentColor }]}
             onPress={() => Linking.openURL(`mailto:${PRIVACY_CONTACT_EMAIL}`)}

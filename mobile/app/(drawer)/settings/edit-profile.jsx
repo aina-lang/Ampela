@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import Avatar from "@/components/ui/Avatar";
+import i18n from "@/constants/i18n";
+import { persistLocalPhoto } from "@/utils/profilePhoto";
 import {
   View,
   Text,
-  Image,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -12,7 +14,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "@legendapp/state/react";
-import { COLORS, SIZES, images } from "@/constants";
+import { COLORS, SIZES } from "@/constants";
 import AppHeader, { HEADER_HEIGHT } from "@/components/AppHeader";
 import { handleHeaderScroll } from "@/hooks/useHeaderScroll";
 import { useDiscoveryTheme } from "@/components/discovery";
@@ -20,7 +22,7 @@ import DiscoveryCard from "@/components/discovery/DiscoveryCard";
 import { DecorativeBlobs, Input, PrimaryButton, toast } from "@/components/ui";
 import { userState, updateUser } from "@/legendstate/AmpelaStates";
 import { updateUserSqlite } from "@/services/database";
-import { isSignedIn, uploadImage } from "@/services/api";
+import { isSignedIn } from "@/services/api";
 import { pushProfileToCloud } from "@/services/otpAuth";
 import { suspendAppLock } from "@/components/AppLockGate";
 
@@ -45,7 +47,7 @@ const EditProfileScreen = () => {
     suspendAppLock();
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      toast.warning("Autorisez l'accès aux photos pour changer votre avatar.");
+      toast.warning(i18n.t("editProfilePhotoPermission"));
       return;
     }
     suspendAppLock();
@@ -56,33 +58,21 @@ const EditProfileScreen = () => {
       quality: 0.9,
     });
     if (result.canceled) return;
-    let uri = result.assets[0].uri;
-    // Connectée : l'image part sur le serveur pour être visible depuis les
-    // autres appareils et dans la messagerie.
-    if (isSignedIn()) {
-      setUploading(true);
-      try {
-        uri = await uploadImage(uri);
-      } catch (error) {
-        console.error("Avatar upload failed:", error);
-        toast.error("Envoi de la photo impossible, elle restera locale.");
-      } finally {
-        setUploading(false);
-      }
-    }
-    setProfileImage(uri);
+    // Local d'abord : la photo est gardée sur le téléphone ; l'envoi au
+    // serveur se fait à l'enregistrement, par la synchronisation.
+    setProfileImage(await persistLocalPhoto(result.assets[0].uri));
   };
 
   const save = async () => {
     const name = username.trim();
     if (!name) {
-      toast.warning("Le pseudo ne peut pas être vide.");
+      toast.warning(i18n.t("editProfileUsernameEmpty"));
       return;
     }
     const updated = { ...user, username: name, profileImage };
     setSaving(true);
     try {
-      updateUser(updated);
+      updateUser(updated, { touch: true });
       await updateUserSqlite(
         updated.id,
         updated.username,
@@ -96,11 +86,11 @@ const EditProfileScreen = () => {
       if (isSignedIn()) {
         pushProfileToCloud().catch((error) => console.error("Profile sync failed:", error));
       }
-      toast.success("Profil mis à jour.");
+      toast.success(i18n.t("editProfileSaved"));
       navigation.goBack();
     } catch (error) {
       console.error("Error saving profile:", error);
-      toast.error("Impossible d'enregistrer le profil.");
+      toast.error(i18n.t("editProfileSaveFailed"));
     } finally {
       setSaving(false);
     }
@@ -109,7 +99,7 @@ const EditProfileScreen = () => {
   return (
     <View style={[styles.container, { backgroundColor: surface }]}>
       <DecorativeBlobs />
-      <AppHeader navigation={navigation} title="Modifier le profil" showBack absolute />
+      <AppHeader navigation={navigation} title={i18n.t("editProfileTitle")} showBack absolute />
       <KeyboardAvoidingView style={styles.container} behavior="padding">
         <ScrollView
           onScroll={handleHeaderScroll}
@@ -121,40 +111,40 @@ const EditProfileScreen = () => {
           {/* Photo */}
           <View style={styles.avatarSection}>
             <TouchableOpacity onPress={pickImage} activeOpacity={0.85} style={styles.avatarWrapper} disabled={uploading}>
-              <Image
-                source={profileImage ? { uri: profileImage } : images.doctor01}
-                style={[styles.avatar, { borderColor: accentColor }]}
+              <Avatar
+                uri={profileImage}
+                name={username}
+                size={120}
+                borderWidth={2}
+                borderColor={accentColor}
               />
               <View style={[styles.editBadge, { backgroundColor: accentColor }]}>
                 <Ionicons name="camera" size={16} color={COLORS.neutral100} />
               </View>
             </TouchableOpacity>
-            <Text style={styles.avatarHint}>{uploading ? "Envoi de la photo…" : "Touchez la photo pour la changer"}</Text>
+            <Text style={styles.avatarHint}>{uploading ? i18n.t("editProfileUploading") : i18n.t("editProfileTapPhoto")}</Text>
           </View>
 
           <DiscoveryCard style={styles.card}>
-            <Text style={styles.fieldLabel}>Pseudo</Text>
+            <Text style={styles.fieldLabel}>{i18n.t("editProfileUsername")}</Text>
             <Input
               value={username}
               onChangeText={setUsername}
-              placeholder="Votre pseudo"
+              placeholder={i18n.t("editProfileUsernamePlaceholder")}
               maxLength={40}
               editable={!saving}
               containerStyle={styles.field}
             />
             <View style={[styles.hint, { backgroundColor: accentContainer }]}>
               <Ionicons name="information-circle-outline" size={16} color={accentColor} />
-              <Text style={[styles.hintText, { color: accentColor }]}>
-                Seul votre pseudo est visible par les autres membres sur le forum et dans la
-                messagerie.
-              </Text>
+              <Text style={[styles.hintText, { color: accentColor }]}>{i18n.t("editProfileHint")}</Text>
             </View>
           </DiscoveryCard>
         </ScrollView>
 
         <View style={styles.footer}>
           <PrimaryButton
-            title="Enregistrer"
+            title={i18n.t("editProfileSave")}
             onPress={save}
             disabled={!dirty || saving || uploading}
             loading={saving}

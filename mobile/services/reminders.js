@@ -1,6 +1,6 @@
 import * as Notifications from "expo-notifications";
 import moment from "moment";
-import { reminderState, updateReminder } from "@/legendstate/AmpelaStates";
+import { reminderState, updateReminder, preferenceState } from "@/legendstate/AmpelaStates";
 import { ensureNotificationPermission } from "@/utils/notifications";
 
 /**
@@ -18,12 +18,20 @@ export const REMINDER_KIND = {
   "Prise de pilule": "pill",
 };
 
+// Clé i18n du libellé affiché pour chaque rappel (la clé interne `as`
+// reste en français : elle sert d'identifiant dans reminderState).
+export const REMINDER_LABEL_KEY = {
+  "Début des règles": "debutDesRegles",
+  "Jour d'ovulation": "jourDovulation",
+  "Prise de pilule": "priseDePilule",
+};
+
 export const FREQUENCY_OPTIONS = [
-  { label: "Quotidien", value: "quotidien" },
-  { label: "Hebdomadaire", value: "hebdomadaire" },
-  { label: "Le jour même", value: "lejourmeme" },
-  { label: "Chaque deux jours", value: "chaquedeuxjours" },
-  { label: "Chaque trois jours", value: "chaquetroisjours" },
+  { label: "Quotidien", labelKey: "frequencyDaily", value: "quotidien" },
+  { label: "Hebdomadaire", labelKey: "frequencyWeekly", value: "hebdomadaire" },
+  { label: "Le jour même", labelKey: "frequencySameDay", value: "lejourmeme" },
+  { label: "Chaque deux jours", labelKey: "frequencyEveryTwoDays", value: "chaquedeuxjours" },
+  { label: "Chaque trois jours", labelKey: "frequencyEveryThreeDays", value: "chaquetroisjours" },
 ];
 
 /**
@@ -75,22 +83,33 @@ const pillTrigger = (frequency, hour, minute) => {
 // Jusqu'à 12 mois d'événements, soit au plus 24 notifications par rappel.
 const MAX_EVENTS = 12;
 
-const DAYS_FR = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-const MONTHS_FR = [
-  "janvier", "février", "mars", "avril", "mai", "juin",
-  "juillet", "août", "septembre", "octobre", "novembre", "décembre",
-];
+const DAY_NAMES = {
+  fr: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"],
+  mg: ["alahady", "alatsinainy", "talata", "alarobia", "alakamisy", "zoma", "sabotsy"],
+};
+const MONTH_NAMES = {
+  fr: [
+    "janvier", "février", "mars", "avril", "mai", "juin",
+    "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+  ],
+  mg: [
+    "janoary", "febroary", "martsa", "aprily", "may", "jona",
+    "jolay", "aogositra", "septambra", "oktobra", "novambra", "desambra",
+  ],
+};
+const lang = () => (preferenceState.language.get() === "mg" ? "mg" : "fr");
 
-/** « mercredi 12 novembre » (sans dépendre d'une locale moment). */
+/** « mercredi 12 novembre » dans la langue de l'app (sans locale moment). */
 export const formatDateFr = (input) => {
   const d = moment(input);
-  return `${DAYS_FR[d.day()]} ${d.date()} ${MONTHS_FR[d.month()]}`;
+  const l = lang();
+  return `${DAY_NAMES[l][d.day()]} ${d.date()} ${MONTH_NAMES[l][d.month()]}`;
 };
 
 /** « 12 novembre » (sans le jour de la semaine, pour les intervalles). */
 const shortDateFr = (input) => {
   const d = moment(input);
-  return `${d.date()} ${MONTHS_FR[d.month()]}`;
+  return `${d.date()} ${MONTH_NAMES[lang()][d.month()]}`;
 };
 
 const pad = (n) => String(n).padStart(2, "0");

@@ -1,4 +1,5 @@
 import React from "react";
+import i18n from "@/constants/i18n";
 import { Stack, useNavigation } from "expo-router";
 import { preferenceState, userState } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
@@ -14,7 +15,7 @@ const Layout = () => {
         header: ({ route }) => (
           <AppHeader
             navigation={navigation}
-            title={route.name === "media" ? "Médias, liens et docs" : "Message"}
+            title={route.name === "media" ? i18n.t("msgMediaTitle") : i18n.t("msgTitle")}
             showBack
             absolute
           />

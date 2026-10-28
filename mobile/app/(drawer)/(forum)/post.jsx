@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { useCache, writeCache } from "@/services/localCache";
+import Avatar from "@/components/ui/Avatar";
 import {
   View,
   Text,
@@ -12,11 +14,14 @@ import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { SIZES, images } from "@/constants";
+import { SIZES } from "@/constants";
 import { HEADER_HEIGHT } from "@/components/AppHeader";
 import { handleHeaderScroll } from "@/hooks/useHeaderScroll";
 import { useDiscoveryTheme } from "@/components/discovery";
-import { DecorativeBlobs, Skeleton, toast } from "@/components/ui";
+import { DecorativeBlobs, SecondaryButton, Skeleton, toast } from "@/components/ui";
+import AuthContent from "@/components/AuthContent";
+import { useModal } from "@/hooks/ModalProvider";
+import i18n from "@/constants/i18n";
 import ConfirmSheet from "@/components/ConfirmSheet";
 import CommentThread, { CommentThreadSkeleton, relativeDate } from "@/components/forum/CommentThread";
 import CommentComposer from "@/components/forum/CommentComposer";
@@ -24,6 +29,7 @@ import CommentDeleteSheet from "@/components/forum/CommentDeleteSheet";
 import { useComments } from "@/hooks/useComments";
 import { getPost, likePost, unlikePost, deletePost } from "@/services/forumAPI";
 import { getCurrentUser } from "@/services/api";
+import { subscribeToMessageEvents } from "@/services/messagesAPI";
 
 /**
  * Écran d'une question du forum : publication complète, réactions, fil
@@ -35,6 +41,7 @@ const PostScreen = () => {
   const insets = useSafeAreaInsets();
   const { surface, accentColor, accentContainer } = useDiscoveryTheme();
   const user = getCurrentUser();
+  const { openModal } = useModal();
 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -51,13 +58,26 @@ const PostScreen = () => {
   });
   const { load: loadComments } = thread;
 
+  // Local d'abord : version en cache affichée avant le rafraîchissement.
+  const cachedPost = useCache(`forum:post:${id}`);
+  useEffect(() => {
+    if (!cachedPost || post) return undefined;
+    const timer = setTimeout(() => {
+      setPost(cachedPost);
+      setLoading(false);
+    }, 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cachedPost]);
+
   const loadAll = useCallback(async () => {
     try {
       const [fresh] = await Promise.all([getPost(id), loadComments()]);
       setPost(fresh);
+      writeCache(`forum:post:${id}`, fresh);
     } catch (error) {
       console.error("Erreur lors du chargement de la question : ", error);
-      toast.error(error.message || "Impossible de charger cette question.");
+      toast.error(error.message || i18n.t("forumQuestionLoadFailed"));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -70,13 +90,41 @@ const PostScreen = () => {
     return () => clearTimeout(timer);
   }, [loadAll]);
 
+  // Temps réel : compteurs, commentaires des autres membres, suppression.
+  const { applyRemote } = thread;
+  useEffect(() => {
+    return subscribeToMessageEvents((event, payload) => {
+      if (event === "post:updated" && payload.id === id) {
+        setPost((current) =>
+          current
+            ? { ...current, likeCount: payload.likeCount ?? current.likeCount, commentCount: payload.commentCount ?? current.commentCount }
+            : current
+        );
+      } else if (event === "post:deleted" && payload.id === id) {
+        toast.info(i18n.t("forumQuestionDeleted"));
+        router.back();
+      } else if (event.startsWith("comment:") && payload.postId === id) {
+        applyRemote(event, payload);
+      }
+    });
+  }, [id, applyRemote, router]);
+
   const toggleLike = async () => {
     if (!user || !post || liking) return;
     setLiking(true);
+    const previous = post;
+    setPost({
+      ...post,
+      likedByMe: !post.likedByMe,
+      likeCount: Math.max(0, (post.likeCount ?? 0) + (post.likedByMe ? -1 : 1)),
+    });
     try {
-      setPost(post.likedByMe ? await unlikePost(post.id) : await likePost(post.id));
+      const updated = previous.likedByMe ? await unlikePost(post.id) : await likePost(post.id);
+      setPost(updated);
+      writeCache(`forum:post:${id}`, updated);
     } catch (_error) {
-      toast.error("Impossible d'enregistrer votre réaction.");
+      setPost(previous);
+      toast.error(i18n.t("forumReactionFailed"));
     } finally {
       setLiking(false);
     }
@@ -86,10 +134,10 @@ const PostScreen = () => {
     setDeleting(true);
     try {
       await deletePost(post.id);
-      toast.success("Question supprimée.");
+      toast.success(i18n.t("forumQuestionDeleted"));
       router.back();
     } catch (error) {
-      toast.error(error.message || "Suppression impossible.");
+      toast.error(error.message || i18n.t("forumDeleteFailed"));
     } finally {
       setDeleting(false);
       setConfirmDelete(false);
@@ -139,19 +187,16 @@ const PostScreen = () => {
             <View style={styles.card}>
               <View style={styles.header}>
                 <View style={[styles.avatarRing, { borderColor: accentContainer }]}>
-                  <Image
-                    source={post.authorImage ? { uri: post.authorImage } : images.doctor03}
-                    style={styles.avatar}
-                  />
+                  <Avatar uri={post.authorImage} name={post.authorName} fill fontSize={17} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.authorName} numberOfLines={1}>
-                    {post.authorName || "Anonyme"}
+                    {post.authorName || i18n.t("anonymous")}
                   </Text>
                   <Text style={styles.meta} numberOfLines={1}>
                     {[
               post.authorRole === "doctor"
-                ? [post.authorProfession, "Professionnelle de santé"].filter(Boolean).join(" · ")
+                ? [post.authorProfession, i18n.t("roleDoctor")].filter(Boolean).join(" · ")
                 : null,
               relativeDate(post.createdAt),
             ]
@@ -163,7 +208,7 @@ const PostScreen = () => {
                   <TouchableOpacity
                     onPress={() => setConfirmDelete(true)}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    accessibilityLabel="Supprimer la question"
+                    accessibilityLabel={i18n.t("forumDeleteQuestion")}
                   >
                     <Ionicons name="trash-outline" size={20} color="#E24C6B" />
                   </TouchableOpacity>
@@ -187,13 +232,13 @@ const PostScreen = () => {
                     size={18}
                   />
                   <Text style={[styles.actionText, post.likedByMe && { color: accentColor }]}>
-                    {post.likeCount ?? 0} réaction{(post.likeCount ?? 0) > 1 ? "s" : ""}
+                    {i18n.t("forumReactionCount", { count: post.likeCount ?? 0 })}
                   </Text>
                 </TouchableOpacity>
                 <View style={styles.actionChip}>
                   <Ionicons name="chatbubble-ellipses-outline" color="#7A737F" size={18} />
                   <Text style={styles.actionText}>
-                    {commentCount} commentaire{commentCount > 1 ? "s" : ""}
+                    {i18n.t("forumCommentCount", { count: commentCount })}
                   </Text>
                 </View>
               </View>
@@ -212,13 +257,23 @@ const PostScreen = () => {
                 onReply={user ? thread.startReply : undefined}
                 onEdit={thread.startEdit}
                 onDelete={thread.requestDelete}
-                emptyText="Aucun commentaire pour l'instant. Soyez la première à répondre !"
+                emptyText={i18n.t("forumNoCommentsBeFirst")}
               />
             )}
           </View>
         </ScrollView>
 
-        {/* Saisie fixée en bas */}
+        {/* Saisie fixée en bas (ou invitation à se connecter) */}
+        {!user && (
+          <View style={[styles.footer, styles.signInBar, { paddingBottom: insets.bottom + 12, backgroundColor: surface }]}>
+            <Text style={styles.signInText}>{i18n.t("forumSignInToComment")}</Text>
+            <SecondaryButton
+              title={i18n.t("forumSignIn")}
+              size="sm"
+              onPress={() => openModal(<AuthContent />)}
+            />
+          </View>
+        )}
         {user && (
           <View style={[styles.footer, { paddingBottom: insets.bottom + 12, backgroundColor: surface }]}>
             <CommentComposer
@@ -241,9 +296,9 @@ const PostScreen = () => {
         visible={confirmDelete}
         icon="trash-outline"
         danger
-        title="Supprimer cette question ?"
-        message="La question et tous ses commentaires seront supprimés définitivement."
-        confirmLabel="Supprimer"
+        title={i18n.t("forumDeleteQuestionTitle")}
+        message={i18n.t("forumDeleteQuestionMessage")}
+        confirmLabel={i18n.t("forumDelete")}
         loading={deleting}
         onConfirm={handleDelete}
         onCancel={() => setConfirmDelete(false)}
@@ -347,6 +402,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 22,
     padding: 12,
+  },
+  signInBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  signInText: {
+    flex: 1,
+    fontFamily: "Regular",
+    fontSize: SIZES.small,
+    color: "#7A737F",
   },
   footer: {
     paddingHorizontal: 16,

@@ -20,8 +20,9 @@ import { addCyclesMenstruels, addUser } from "@/services/database";
 import { generateCycleMenstrualData } from "@/utils/menstruationUtils";
 import { isSignedIn } from "@/services/api";
 import { createCloudProfileFromLocal } from "@/services/otpAuth";
-import { updateUser, userState, preferenceState } from "@/legendstate/AmpelaStates";
+import { updateUser, userState, preferenceState, touchCycles } from "@/legendstate/AmpelaStates";
 import { useSelector } from "@legendapp/state/react";
+import i18n from "@/constants/i18n";
 import ModernButton from "@/components/ModernButton";
 import {
   DiscoveryBackButton,
@@ -35,19 +36,12 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-na
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const durationMenstruations = [];
-const cycleDurations = [];
-
-for (let i = 2; i < 46; i++) {
-  if (i > 2 && i < 8) {
-    durationMenstruations.push(i + " jours");
-  }
-  if (i > 20 && i < 46) {
-    cycleDurations.push(i + " jours");
-  }
-}
-
-const dontRememberText = "je m'en souviens pas";
+// Durées proposées (en jours) : règles 3 à 7, cycle 21 à 45.
+const durationMenstruations = Array.from({ length: 5 }, (_, i) => i + 3);
+const cycleDurations = Array.from({ length: 25 }, (_, i) => i + 21);
+// Valeur sentinelle « je ne me souviens plus » (cycle moyen de 28 jours).
+const DONT_REMEMBER = "dontRemember";
+const dayLabel = (n) => `${n} ${i18n.t("jours")}`;
 
 const AnimatedProgressBar = ({ progress, accentColor }) => {
   const width = useSharedValue(0);
@@ -75,7 +69,8 @@ const QuestionsSeries = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const user = useSelector(() => userState.get());
-  const { theme } = useSelector(() => preferenceState.get());
+  // La langue est observée pour re-rendre les libellés traduits.
+  useSelector(() => preferenceState.language.get());
   const {
     accentColor,
     accentColorDisabled,
@@ -86,9 +81,9 @@ const QuestionsSeries = () => {
   const handleResponsePress0 = useCallback((item) => setResponse0(item), []);
   const handleResponsePress1 = useCallback((item) => setResponse1(item), []);
 
-  function getNumberFromString(str) {
-    if (str === dontRememberText) return 28;
-    return parseInt(str.split(" ")[0], 10);
+  function getNumberFromString(value) {
+    if (value === DONT_REMEMBER) return 28;
+    return Number(value);
   }
 
   // État dérivé : pas besoin d'effet.
@@ -138,6 +133,9 @@ const QuestionsSeries = () => {
         }))
       );
       setProgress(100);
+      // Données saisies sur cet appareil : datées pour la synchronisation.
+      updateUser({ durationMenstruation, cycleDuration }, { touch: true });
+      touchCycles();
 
       // Si l'utilisatrice s'est connectée par code e-mail avant
       // l'onboarding, son profil et ses cycles partent dans le cloud.
@@ -149,11 +147,11 @@ const QuestionsSeries = () => {
         }
       }
 
-      toast.success("Votre profil est prêt, bienvenue sur Ampela !");
+      toast.success(i18n.t("predictionsReady"));
       router.replace("/(drawer)");
     } catch (error) {
       console.error("Erreur lors de l'enregistrement des cycles:", error);
-      toast.error("L'enregistrement a échoué. Veuillez réessayer.");
+      toast.error(i18n.t("predictionsSaveFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -167,9 +165,9 @@ const QuestionsSeries = () => {
 
       <View style={[styles.content, { paddingTop: insets.top + 12 }]}>
         <DiscoveryHeader
-          eyebrow="Prédictions"
-          title="Vos durées menstruelles"
-          subtitle="Ces informations nous permettent de calculer vos prédictions personnalisées."
+          eyebrow={i18n.t("predictionsEyebrow")}
+          title={i18n.t("predictionsTitle")}
+          subtitle={i18n.t("predictionsSubtitle")}
         />
 
         <ScrollView
@@ -178,13 +176,13 @@ const QuestionsSeries = () => {
         >
           <DiscoveryCard style={styles.questionsCard}>
             <View style={styles.contentItem}>
-              <Text style={styles.question}>Durée de vos règles</Text>
+              <Text style={styles.question}>{i18n.t("predictionsPeriodLength")}</Text>
               <FlatList
                 data={durationMenstruations}
-                keyExtractor={(item) => item}
+                keyExtractor={(item) => String(item)}
                 renderItem={({ item }) => (
                   <ResponseOfQuestion0
-                    text={item}
+                    text={dayLabel(item)}
                     active={response0 === item}
                     onPress={() => handleResponsePress0(item)}
                     accentColor={accentColor}
@@ -197,13 +195,13 @@ const QuestionsSeries = () => {
             </View>
 
             <View style={styles.contentItem}>
-              <Text style={styles.question}>Durée du cycle</Text>
+              <Text style={styles.question}>{i18n.t("predictionsCycleLength")}</Text>
               <FlatList
                 data={cycleDurations}
-                keyExtractor={(item) => item}
+                keyExtractor={(item) => String(item)}
                 renderItem={({ item }) => (
                   <ResponseOfQuestion1
-                    text={item}
+                    text={dayLabel(item)}
                     active={response1 === item}
                     onPress={() => handleResponsePress1(item)}
                     accentColor={accentColor}
@@ -217,9 +215,9 @@ const QuestionsSeries = () => {
               <TouchableOpacity
                 style={[
                   styles.dontRememberChip,
-                  { backgroundColor: response1 === dontRememberText ? accentColor : accentContainer },
+                  { backgroundColor: response1 === DONT_REMEMBER ? accentColor : accentContainer },
                 ]}
-                onPress={() => handleResponsePress1(dontRememberText)}
+                onPress={() => handleResponsePress1(DONT_REMEMBER)}
                 activeOpacity={0.85}
               >
                 <Text
@@ -227,13 +225,13 @@ const QuestionsSeries = () => {
                     styles.dontRememberText,
                     {
                       color:
-                        response1 === dontRememberText
+                        response1 === DONT_REMEMBER
                           ? COLORS.neutral100
                           : accentColor,
                     },
                   ]}
                 >
-                  {dontRememberText}
+                  {i18n.t("profileDontRemember")}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -241,10 +239,10 @@ const QuestionsSeries = () => {
         </ScrollView>
 
         <View style={[styles.btnBox, { paddingBottom: insets.bottom + 24 }]}>
-          <DiscoveryBackButton onPress={() => router.back()} label="Précédent" />
+          <DiscoveryBackButton onPress={() => router.back()} label={i18n.t("onboardingBack")} />
 
           <ModernButton
-            title="Terminer"
+            title={i18n.t("predictionsFinish")}
             onPress={handleNextBtnPress}
             disabled={isNextBtnDisabled}
             accentColor={accentColor}
@@ -259,7 +257,7 @@ const QuestionsSeries = () => {
           <DiscoveryCard style={styles.modalContent} elevated>
             <ActivityIndicator size="large" color={accentColor} />
             <Text style={styles.modalText}>
-              Préparation de vos données... {Math.round(progress)}%
+              {i18n.t("predictionsPreparing", { percent: Math.round(progress) })}
             </Text>
             <AnimatedProgressBar progress={progress} accentColor={accentColor} />
           </DiscoveryCard>
@@ -326,7 +324,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.45)",
   },
   modalContent: {
-    width: 280,
+    width: "80%",
+    maxWidth: 360,
     padding: 32,
     alignItems: "center",
     borderRadius: DISCOVERY_RADIUS.xl,

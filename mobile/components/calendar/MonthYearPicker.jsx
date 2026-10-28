@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Modal, View, Text, StyleSheet, Pressable } from "react-native";
 import { SIZES, COLORS } from "@/constants";
+import i18n from "@/constants/i18n";
 import { PrimaryButton, GhostButton, WheelPicker } from "@/components/ui";
 
 // Plage d'années « sans limite » à l'usage : de 1900 à cent ans après
@@ -12,53 +13,80 @@ const YEARS_AHEAD = 100;
  * Fenêtre « Aller à un mois » : deux roues (mois, année) et validation.
  * `monthNames` vient de la locale active du calendrier.
  */
-const MonthYearPicker = ({ visible, month, year, monthNames, onConfirm, onCancel }) => {
+const LAST_YEAR = new Date().getFullYear() + YEARS_AHEAD;
+const YEARS = Array.from(
+  { length: LAST_YEAR - FIRST_YEAR + 1 },
+  (_, i) => FIRST_YEAR + i,
+);
+
+/**
+ * Carte avec ses deux roues. Montée à chaque ouverture du Modal (qui ne
+ * rend ses enfants que visible), elle repart donc toujours du mois affiché.
+ */
+const PickerCard = ({ month, year, monthNames, onConfirm, onCancel }) => {
   const [tempMonth, setTempMonth] = useState(month);
   const [tempYear, setTempYear] = useState(year);
-
-  const lastYear = new Date().getFullYear() + YEARS_AHEAD;
-  const years = Array.from(
-    { length: lastYear - FIRST_YEAR + 1 },
-    (_, i) => FIRST_YEAR + i
-  );
-  const months = monthNames.map((_, i) => i);
+  const months = useMemo(() => monthNames.map((_, i) => i), [monthNames]);
+  const formatMonth = useMemo(() => (m) => monthNames[m], [monthNames]);
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-      <View style={styles.overlay}>
-        {/* Fond cliquable derrière la carte : un Pressable autour de la
-            carte volerait le geste de défilement des roues sur Android. */}
-        <Pressable style={styles.backdrop} onPress={onCancel} />
-        <View style={styles.card}>
-          <Text style={styles.title}>Aller à un mois</Text>
+    <View style={styles.card}>
+      <Text style={styles.title}>{i18n.t("calendarGoToMonth")}</Text>
 
-          <View style={styles.wheels}>
-            <WheelPicker
-              items={months}
-              value={tempMonth}
-              onChange={setTempMonth}
-              format={(m) => monthNames[m]}
-              width={150}
-            />
-            <WheelPicker
-              items={years}
-              value={tempYear}
-              onChange={setTempYear}
-              width={90}
-            />
-          </View>
-
-          <PrimaryButton
-            title="Afficher"
-            onPress={() => onConfirm(tempMonth, tempYear)}
-            style={styles.action}
-          />
-          <GhostButton title="Annuler" size="sm" onPress={onCancel} />
-        </View>
+      <View style={styles.wheels}>
+        <WheelPicker
+          items={months}
+          value={tempMonth}
+          onChange={setTempMonth}
+          format={formatMonth}
+          width={150}
+        />
+        <WheelPicker
+          items={YEARS}
+          value={tempYear}
+          onChange={setTempYear}
+          width={90}
+        />
       </View>
-    </Modal>
+
+      <PrimaryButton
+        title={i18n.t("calendarShow")}
+        onPress={() => onConfirm(tempMonth, tempYear)}
+        style={styles.action}
+      />
+      <GhostButton title={i18n.t("cancel")} size="sm" onPress={onCancel} />
+    </View>
   );
 };
+
+const MonthYearPicker = ({
+  visible,
+  month,
+  year,
+  monthNames,
+  onConfirm,
+  onCancel,
+}) => (
+  <Modal
+    visible={visible}
+    transparent
+    animationType="fade"
+    onRequestClose={onCancel}
+  >
+    <View style={styles.overlay}>
+      {/* Fond cliquable derrière la carte : un Pressable autour de la
+          carte volerait le geste de défilement des roues sur Android. */}
+      <Pressable style={styles.backdrop} onPress={onCancel} />
+      <PickerCard
+        month={month}
+        year={year}
+        monthNames={monthNames}
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+      />
+    </View>
+  </Modal>
+);
 
 const styles = StyleSheet.create({
   overlay: {

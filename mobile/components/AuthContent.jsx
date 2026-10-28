@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import i18n from "@/constants/i18n";
 import {
   View,
   Text,
@@ -27,7 +28,7 @@ import {
   fetchCloudProfile,
   createCloudProfileFromLocal,
 } from "@/services/otpAuth";
-import { syncCycles } from "@/services/sync";
+import { syncAll } from "@/services/sync";
 
 /**
  * Connexion sans mot de passe : e-mail → code à 6 chiffres reçu par
@@ -62,9 +63,9 @@ const AuthContent = ({ closeModal: closeModalProp }) => {
   const handleEmailChange = (text) => {
     setEmail(text);
     if (!text) {
-      setEmailError("Veuillez saisir votre adresse e-mail");
+      setEmailError(i18n.t("loginEmailRequired"));
     } else if (!validateEmail(text)) {
-      setEmailError("Veuillez saisir une adresse e-mail valide");
+      setEmailError(i18n.t("loginEmailInvalid"));
     } else {
       setEmailError("");
     }
@@ -79,7 +80,7 @@ const AuthContent = ({ closeModal: closeModalProp }) => {
       setCode("");
       setCodeError("");
       setResendIn(60);
-      toast.info(`Code envoyé à ${email.trim()}`);
+      toast.info(i18n.t("loginCodeSent", { email: email.trim() }));
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -90,19 +91,19 @@ const AuthContent = ({ closeModal: closeModalProp }) => {
   const handleVerify = async (submitted) => {
     const otp = typeof submitted === "string" ? submitted : code;
     if (otp.length !== 6) {
-      setCodeError("Le code contient 6 chiffres");
+      setCodeError(i18n.t("loginCodeLength"));
       return;
     }
     setLoading(true);
     try {
       await verifyOtpAndSignIn(email.trim(), otp);
 
-      // Profil cloud existant → synchronise ; sinon crée-le depuis les
-      // données locales de cet appareil.
+      // Profil cloud existant → synchronisation complète (le plus récent
+      // gagne) ; sinon le profil cloud est créé depuis cet appareil.
       const profile = await fetchCloudProfile();
       try {
         if (profile) {
-          await syncCycles();
+          await syncAll();
         } else {
           await createCloudProfileFromLocal();
         }
@@ -110,7 +111,7 @@ const AuthContent = ({ closeModal: closeModalProp }) => {
         console.error("Sync failed after sign-in:", syncError);
       }
 
-      toast.success("Connexion réussie, vos données sont synchronisées !");
+      toast.success(i18n.t("accountLoginSuccess"));
       closeModal();
     } catch (error) {
       setCodeError(error.message);
@@ -139,19 +140,19 @@ const AuthContent = ({ closeModal: closeModalProp }) => {
           {step === "email" ? (
             <>
               <DiscoveryHeader
-                eyebrow="Votre compte"
-                title="Juste votre e-mail"
-                subtitle="Pas de mot de passe : nous vous envoyons un code à 6 chiffres pour vous connecter et synchroniser vos données."
+                eyebrow={i18n.t("accountEyebrow")}
+                title={i18n.t("accountTitle")}
+                subtitle={i18n.t("accountSubtitle")}
                 accentColor={accentColor}
               />
 
               <View style={styles.centerZone}>
                 <View style={styles.formCard}>
-                  <Text style={styles.formTitle}>Recevoir mon code</Text>
+                  <Text style={styles.formTitle}>{i18n.t("accountFormTitle")}</Text>
 
                   <Input
                     icon={<Ionicons name="mail" size={20} color="#A9A4AE" />}
-                    placeholder="Email"
+                    placeholder={i18n.t("loginEmailPlaceholder")}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
@@ -162,7 +163,7 @@ const AuthContent = ({ closeModal: closeModalProp }) => {
                   />
 
                   <PrimaryButton
-                    title="Recevoir un code"
+                    title={i18n.t("loginReceiveCode")}
                     onPress={handleSendCode}
                     disabled={!email || !!emailError || loading}
                     loading={loading}
@@ -170,17 +171,15 @@ const AuthContent = ({ closeModal: closeModalProp }) => {
                   />
                 </View>
 
-                <Text style={styles.hint}>
-                  Le même e-mail sur un autre téléphone retrouve vos données.
-                </Text>
+                <Text style={styles.hint}>{i18n.t("accountHint")}</Text>
               </View>
             </>
           ) : (
             <>
               <DiscoveryHeader
-                eyebrow="Vérification"
-                title="Entrez votre code"
-                subtitle={`Un code à 6 chiffres a été envoyé à ${email.trim()}. Il expire dans 10 minutes.`}
+                eyebrow={i18n.t("loginVerifyEyebrow")}
+                title={i18n.t("loginVerifyTitle")}
+                subtitle={i18n.t("loginVerifySubtitle", { email: email.trim() })}
                 accentColor={accentColor}
               />
 
@@ -200,7 +199,7 @@ const AuthContent = ({ closeModal: closeModalProp }) => {
                   />
 
                   <PrimaryButton
-                    title="Valider"
+                    title={i18n.t("loginValidate")}
                     onPress={handleVerify}
                     disabled={code.length !== 6 || loading}
                     loading={loading}
@@ -211,8 +210,8 @@ const AuthContent = ({ closeModal: closeModalProp }) => {
                 <GhostButton
                   title={
                     resendIn > 0
-                      ? `Renvoyer le code (${resendIn}s)`
-                      : "Renvoyer le code"
+                      ? i18n.t("loginResendIn", { seconds: resendIn })
+                      : i18n.t("loginResend")
                   }
                   size="sm"
                   disabled={resendIn > 0 || loading}
@@ -220,7 +219,7 @@ const AuthContent = ({ closeModal: closeModalProp }) => {
                   style={{ marginTop: 18 }}
                 />
                 <GhostButton
-                  title="Changer d'e-mail"
+                  title={i18n.t("loginChangeEmail")}
                   size="sm"
                   onPress={() => setStep("email")}
                   disabled={loading}
@@ -236,7 +235,7 @@ const AuthContent = ({ closeModal: closeModalProp }) => {
         activeOpacity={0.7}
         style={[styles.skipButton, { top: insets.top + 12 }]}
       >
-        <Text style={styles.skipText}>Ignorer</Text>
+        <Text style={styles.skipText}>{i18n.t("onboardingSkip")}</Text>
       </TouchableOpacity>
     </View>
   );

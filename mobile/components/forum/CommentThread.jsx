@@ -1,4 +1,6 @@
 import React from "react";
+import i18n from "@/constants/i18n";
+import { formatDateFr } from "@/services/reminders";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { SIZES } from "@/constants";
 import { Skeleton } from "@/components/ui";
@@ -9,14 +11,14 @@ export const relativeDate = (value) => {
   if (!value) return "";
   const date = new Date(value);
   const minutes = Math.round((Date.now() - date.getTime()) / 60000);
-  if (minutes < 1) return "à l'instant";
-  if (minutes < 60) return `il y a ${minutes} min`;
+  if (minutes < 1) return i18n.t("timeJustNow");
+  if (minutes < 60) return i18n.t("timeMinutesAgo", { n: minutes });
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `il y a ${hours} h`;
+  if (hours < 24) return i18n.t("timeHoursAgo", { n: hours });
   const days = Math.round(hours / 24);
-  if (days === 1) return "hier";
-  if (days < 7) return `il y a ${days} jours`;
-  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  if (days === 1) return i18n.t("timeYesterday");
+  if (days < 7) return i18n.t("timeDaysAgo", { n: days });
+  return `${formatDateFr(date)} ${date.getFullYear()}`;
 };
 
 /** Deux lignes fantômes le temps du chargement. */
@@ -51,17 +53,17 @@ const CommentThread = ({ comments, onReply, onEdit, onDelete, currentUserId, emp
       <View style={styles.actions}>
         {onReply && (
           <TouchableOpacity onPress={() => onReply(comment)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
-            <Text style={[styles.action, { color: accentColor }]}>Répondre</Text>
+            <Text style={[styles.action, { color: accentColor }]}>{i18n.t("forumReply")}</Text>
           </TouchableOpacity>
         )}
         {mine && onEdit && (
           <TouchableOpacity onPress={() => onEdit(comment)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
-            <Text style={styles.action}>Modifier</Text>
+            <Text style={styles.action}>{i18n.t("forumEdit")}</Text>
           </TouchableOpacity>
         )}
         {mine && onDelete && (
           <TouchableOpacity onPress={() => onDelete(comment)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
-            <Text style={[styles.action, styles.danger]}>Supprimer</Text>
+            <Text style={[styles.action, styles.danger]}>{i18n.t("forumDelete")}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -71,7 +73,7 @@ const CommentThread = ({ comments, onReply, onEdit, onDelete, currentUserId, emp
   if (roots.length === 0) {
     return (
       <Text style={styles.empty}>
-        {emptyText ?? "Aucun commentaire pour l'instant. Lancez la discussion !"}
+        {emptyText ?? i18n.t("forumNoCommentsStart")}
       </Text>
     );
   }
@@ -81,11 +83,11 @@ const CommentThread = ({ comments, onReply, onEdit, onDelete, currentUserId, emp
       {roots.map((c) => {
         const replies = comments.filter((r) => r.parentId === c.id);
         return (
-          <View key={c.id}>
+          <View key={c.id} style={c.pending && styles.pending}>
             <View style={styles.row}>
               <View style={styles.head}>
                 <Text style={styles.author} numberOfLines={1}>
-                  {c.author?.username || "Anonyme"}
+                  {c.author?.username || i18n.t("anonymous")}
                 </Text>
                 <Text style={styles.date}>{relativeDate(c.createdAt)}</Text>
               </View>
@@ -99,7 +101,7 @@ const CommentThread = ({ comments, onReply, onEdit, onDelete, currentUserId, emp
               >
                 <View style={styles.head}>
                   <Text style={styles.author} numberOfLines={1}>
-                    {r.author?.username || "Anonyme"}
+                    {r.author?.username || i18n.t("anonymous")}
                   </Text>
                   <Text style={styles.date}>{relativeDate(r.createdAt)}</Text>
                 </View>
@@ -115,6 +117,9 @@ const CommentThread = ({ comments, onReply, onEdit, onDelete, currentUserId, emp
 };
 
 const styles = StyleSheet.create({
+  pending: {
+    opacity: 0.55,
+  },
   list: {
     gap: 8,
   },

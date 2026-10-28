@@ -4,6 +4,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { COLORS, SIZES } from "@/constants";
 import { Calendar } from "react-native-calendars";
+import { monthNames as calendarMonthNames } from "@/constants/calendarLocale";
+import MonthYearPicker from "@/components/calendar/MonthYearPicker";
+import { Ionicons } from "@expo/vector-icons";
+import moment from "moment";
+import i18n from "@/constants/i18n";
 import * as ImagePicker from "expo-image-picker";
 import { useSelector } from "@legendapp/state/react";
 import { updateUser, preferenceState } from "@/legendstate/AmpelaStates";
@@ -27,6 +32,9 @@ const UsernameAndDateScreen = () => {
   const [nameText, setNameText] = useState("");
   const [profileImage, setProfileImage] = useState(null);
   const [selectedDate, setSelectedDate] = useState(todayString);
+  // Mois affiché par le calendrier (balayage ou fenêtre mois/année via le titre).
+  const [visibleMonth, setVisibleMonth] = useState(() => moment().startOf("month"));
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const { theme } = useSelector(() => preferenceState.get());
   const {
     accentColor,
@@ -61,7 +69,7 @@ const UsernameAndDateScreen = () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       toast.warning(
-        "Autorisez l'accès à vos photos pour choisir un avatar."
+        i18n.t("profilePhotoPermission")
       );
       return;
     }
@@ -89,7 +97,7 @@ const UsernameAndDateScreen = () => {
     if (new Date(selectedDateStr) <= today) {
       setSelectedDate(selectedDateStr);
     } else {
-      toast.warning("La date doit être aujourd'hui ou dans le passé.");
+      toast.warning(i18n.t("profileDateInPast"));
     }
   };
 
@@ -107,9 +115,9 @@ const UsernameAndDateScreen = () => {
 
       <View style={[styles.content, { paddingTop: insets.top + 12 }]}>
         <DiscoveryHeader
-          eyebrow="Votre profil"
-          title="Enregistrez vos informations"
-          subtitle="Ces données nous permettront de calculer vos prédictions personnalisées."
+          eyebrow={i18n.t("profileEyebrow")}
+          title={i18n.t("profileTitle")}
+          subtitle={i18n.t("profileSubtitle")}
         />
 
         <ScrollView
@@ -134,14 +142,14 @@ const UsernameAndDateScreen = () => {
                 <Feather name="edit-2" size={14} color="#FFFFFF" />
               </View>
             </TouchableOpacity>
-            <Text style={styles.avatarLabel}>Photo de profil (optionnel)</Text>
+            <Text style={styles.avatarLabel}>{i18n.t("profilePhotoOptional")}</Text>
           </View>
 
           <View style={styles.form}>
-            <Text style={styles.inputLabel}>Nom d’utilisateur</Text>
+            <Text style={styles.inputLabel}>{i18n.t("profileUsername")}</Text>
             <DiscoveryInput
               cursorColor={accentColor}
-              placeholder="Ex : Sarah_M"
+              placeholder={i18n.t("profileUsernamePlaceholder")}
               value={nameText}
               onChangeText={handleUsernameChange}
               autoCapitalize="none"
@@ -151,9 +159,25 @@ const UsernameAndDateScreen = () => {
           </View>
 
           <View style={styles.dateSection}>
-            <Text style={styles.inputLabel}>Date de vos dernières règles</Text>
+            <Text style={styles.inputLabel}>{i18n.t("profileLastPeriod")}</Text>
             <View style={styles.calendarCard}>
               <Calendar
+                key={visibleMonth.format("YYYY-MM")}
+                current={visibleMonth.format("YYYY-MM-DD")}
+                onMonthChange={(m) => setVisibleMonth(moment(m.dateString).startOf("month"))}
+                renderHeader={() => (
+                  <TouchableOpacity
+                    onPress={() => setMonthPickerOpen(true)}
+                    activeOpacity={0.7}
+                    style={styles.calendarHeader}
+                    accessibilityLabel={i18n.t("calendarPickMonth")}
+                  >
+                    <Text style={styles.calendarHeaderText}>
+                      {calendarMonthNames()[visibleMonth.month()]} {visibleMonth.year()}
+                    </Text>
+                    <Ionicons name="chevron-down" size={16} color={accentColor} />
+                  </TouchableOpacity>
+                )}
                 style={styles.calendar}
                 maxDate={todayString}
                 theme={{
@@ -200,7 +224,7 @@ const UsernameAndDateScreen = () => {
                     { color: isForgotten ? COLORS.neutral100 : accentColor },
                   ]}
                 >
-                  Je ne me souviens plus
+                  {i18n.t("profileDontRemember")}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -208,10 +232,10 @@ const UsernameAndDateScreen = () => {
         </ScrollView>
 
         <View style={[styles.btnBox, { paddingBottom: insets.bottom + 24 }]}>
-          <DiscoveryBackButton onPress={prevHandled} />
+          <DiscoveryBackButton onPress={prevHandled} label={i18n.t("onboardingBack")} />
 
           <ModernButton
-            title="Suivant"
+            title={i18n.t("onboardingNext")}
             onPress={handleNextBtnPress}
             disabled={isNextBtnDisabled}
             accentColor={accentColor}
@@ -220,11 +244,35 @@ const UsernameAndDateScreen = () => {
           />
         </View>
       </View>
+
+      <MonthYearPicker
+        visible={monthPickerOpen}
+        month={visibleMonth.month()}
+        year={visibleMonth.year()}
+        monthNames={calendarMonthNames()}
+        onConfirm={(month, year) => {
+          setVisibleMonth(moment({ year, month, day: 1 }));
+          setMonthPickerOpen(false);
+        }}
+        onCancel={() => setMonthPickerOpen(false)}
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  calendarHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  calendarHeaderText: {
+    fontFamily: "SBold",
+    fontSize: SIZES.medium,
+    color: "#433C47",
+  },
   container: {
     flex: 1,
   },

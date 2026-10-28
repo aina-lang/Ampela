@@ -13,3 +13,4 @@ export { default as WheelPicker } from "./WheelPicker";
 export { default as Skeleton } from "./Skeleton";
 export { default as DecorativeBlobs } from "./DecorativeBlobs";
 export { default as ToastHost, toast } from "./Toast";
+export { default as Avatar } from "./Avatar";

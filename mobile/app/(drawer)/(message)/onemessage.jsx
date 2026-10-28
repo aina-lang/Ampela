@@ -1,4 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { enqueueMessage, flushOutbox, isQueueable, pendingFor, subscribeToOutbox, usePendingFor } from "@/services/outbox";
+import { useCache, writeCache } from "@/services/localCache";
+import Avatar from "@/components/ui/Avatar";
+import i18n from "@/constants/i18n";
+import { formatDateFr } from "@/services/reminders";
 import {
   View,
   Text,
@@ -8,6 +13,7 @@ import {
   Modal,
   Pressable,
   TextInput,
+  Keyboard,
 } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -28,7 +34,7 @@ import {
   Send,
   Time,
 } from "react-native-gifted-chat";
-import { SIZES, images } from "@/constants";
+import { SIZES } from "@/constants";
 import AppHeader, { HEADER_HEIGHT } from "@/components/AppHeader";
 import { useAuth } from "@/hooks/AuthContext";
 import { useDiscoveryTheme } from "@/components/discovery";
@@ -76,6 +82,8 @@ const toGifted = (m) => ({
   edited: !!m.editedAt,
   readAt: m.readAt,
   attachmentType: m.attachmentType,
+  // En attente d'envoi (écrit hors ligne) : horloge dans la bulle.
+  pending: !!m.pending,
 });
 
 const fmtDuration = (ms) => {
@@ -123,6 +131,18 @@ export default function OneMessageScreen() {
   const recorderRef = useRef(null);
   const recTimerRef = useRef(null);
   const [recording, setRecording] = useState(false);
+  // Barre de saisie : décollée de la barre de gestes quand le clavier est
+  // fermé, et décollée du clavier quand il est ouvert.
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  useEffect(() => {
+    const show = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
+    const hide = Keyboard.addListener("keyboardDidHide", () => setKeyboardVisible(false));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+  const toolbarBottom = keyboardVisible ? 12 : insets.bottom + 12;
   const [recDuration, setRecDuration] = useState(0);
 
   const releaseRecorder = useCallback(() => {
@@ -140,7 +160,7 @@ export default function OneMessageScreen() {
 
   const myId = user?.id;
   const targetId = target?.id;
-  const targetAvatar = target?.profileImage ? { uri: target.profileImage } : images.doctor03;
+  const targetAvatar = target?.profileImage || null;
 
   const appendMessage = useCallback((saved) => {
     setMessages((prev) =>
@@ -148,17 +168,61 @@ export default function OneMessageScreen() {
     );
   }, []);
 
+  // Local d'abord : l'historique en cache s'affiche avant le réseau, et
+  // les messages en attente d'envoi restent visibles.
+  const roomKey = myId && targetId ? `messages:room:${roomIdFor(myId, targetId)}` : null;
+  const cachedMessages = useCache(roomKey ?? "messages:none");
+  const pendingItems = usePendingFor(targetId);
+  useEffect(() => {
+    if (!cachedMessages || messages.length > 0) return undefined;
+    const timer = setTimeout(() => {
+      const restored = cachedMessages.map((m) => ({ ...m, createdAt: new Date(m.createdAt) }));
+      const queued = pendingItems.map((item) =>
+        toGifted({ id: item.id, text: item.payload.text, userId: myId, createdAt: item.createdAt, pending: true })
+      );
+      setMessages((prev) => (prev.length > 0 ? prev : GiftedChat.append(restored, queued)));
+      setLoading(false);
+    }, 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cachedMessages]);
+  useEffect(() => {
+    if (!roomKey || messages.length === 0) return;
+    // Les 100 derniers messages réellement envoyés (pas ceux en attente).
+    writeCache(roomKey, messages.filter((m) => !m.pending).slice(0, 100));
+  }, [roomKey, messages]);
+  useEffect(() => {
+    if (!targetId) return undefined;
+    flushOutbox().catch(() => undefined);
+    return subscribeToOutbox((event) => {
+      if (event.type === "sent") {
+        const gifted = toGifted(event.saved);
+        setMessages((prev) => prev.map((m) => (m._id === event.localId ? gifted : m)));
+      } else if (event.type === "failed") {
+        setMessages((prev) => prev.filter((m) => m._id !== event.localId));
+        toast.error(i18n.t("msgNotSent"));
+      }
+    });
+  }, [targetId]);
+
   // Historique au montage, puis nouveaux messages poussés par WebSocket.
   useEffect(() => {
     if (!myId || !targetId) return;
     let cancelled = false;
     listMessages(targetId)
       .then((list) => {
-        if (!cancelled) setMessages(list.map(toGifted));
+        if (cancelled) return;
+        const fresh = list.map(toGifted);
+        const queued = pendingFor(targetId).map((item) =>
+          toGifted({ id: item.id, text: item.payload.text, userId: myId, createdAt: item.createdAt, pending: true })
+        );
+        setMessages(GiftedChat.append(fresh, queued));
       })
       .catch((error) => {
-        console.error("Messages loading error:", error);
-        toast.error("Impossible de charger la conversation.");
+        // Hors ligne avec un historique en cache : pas d'erreur à montrer.
+        console.log("Messages loading error:", error?.message ?? error);
+        if (!error?.status && messages.length > 0) return;
+        toast.error(i18n.t("msgLoadFailed"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -197,11 +261,18 @@ export default function OneMessageScreen() {
       try {
         appendMessage(await sendMessage(targetId, payload));
       } catch (error) {
-        console.error(error);
-        toast.error("Message non envoyé. Vérifiez votre connexion.");
+        if (!error?.status && isQueueable(payload)) {
+          // Pas de réseau : gardé sur le téléphone, envoyé dès que possible.
+          const item = enqueueMessage(targetId, payload);
+          appendMessage({ id: item.id, text: payload.text, userId: myId, createdAt: item.createdAt, pending: true });
+          toast.info(i18n.t("msgQueued"));
+          return;
+        }
+        console.log("Send failed:", error?.message ?? error);
+        toast.error(i18n.t("msgNotSent"));
       }
     },
-    [targetId, appendMessage]
+    [targetId, appendMessage, myId]
   );
 
   const handleSend = useCallback(
@@ -213,9 +284,9 @@ export default function OneMessageScreen() {
           const updated = await editMessage(targetId, editing._id, text);
           const gifted = toGifted(updated);
           setMessages((prev) => prev.map((m) => (m._id === gifted._id ? gifted : m)));
-          toast.success("Message modifié.");
+          toast.success(i18n.t("msgEdited"));
         } catch (error) {
-          toast.error(error.message || "Modification impossible.");
+          toast.error(error.message || i18n.t("msgEditFailed"));
         } finally {
           setEditing(null);
           setDraft("");
@@ -233,7 +304,7 @@ export default function OneMessageScreen() {
     const content = selected.text || selected.image || selected.audio || selected.file?.url || "";
     await Clipboard.setStringAsync(content);
     setSelected(null);
-    toast.success("Copié.");
+    toast.success(i18n.t("msgCopied"));
   };
 
   const startEdit = () => {
@@ -256,9 +327,9 @@ export default function OneMessageScreen() {
       const updated = await deleteMessage(targetId, toDelete._id);
       const gifted = toGifted(updated);
       setMessages((prev) => prev.map((m) => (m._id === gifted._id ? gifted : m)));
-      toast.success("Message supprimé.");
+      toast.success(i18n.t("msgDeleted"));
     } catch (error) {
-      toast.error(error.message || "Suppression impossible.");
+      toast.error(error.message || i18n.t("forumDeleteFailed"));
     } finally {
       setToDelete(null);
     }
@@ -269,10 +340,10 @@ export default function OneMessageScreen() {
       await clearConversation(targetId);
       setMessages([]);
       setConfirmClear(false);
-      toast.success("Conversation supprimée.");
+      toast.success(i18n.t("msgConversationDeleted"));
       router.back();
     } catch (error) {
-      toast.error(error.message || "Suppression impossible.");
+      toast.error(error.message || i18n.t("forumDeleteFailed"));
       setConfirmClear(false);
     }
   };
@@ -360,7 +431,7 @@ export default function OneMessageScreen() {
       ? await (async () => {
           const perm = await ImagePicker.requestCameraPermissionsAsync();
           if (!perm.granted) {
-            toast.warning("Autorisez l'appareil photo pour prendre une photo.");
+            toast.warning(i18n.t("msgCameraPermission"));
             return { canceled: true };
           }
           return ImagePicker.launchCameraAsync(options);
@@ -372,7 +443,7 @@ export default function OneMessageScreen() {
       const url = await uploadImage(result.assets[0].uri);
       await deliver({ attachmentType: "image", attachmentUrl: url });
     } catch (error) {
-      toast.error(error.message || "Envoi de la photo impossible.");
+      toast.error(error.message || i18n.t("msgPhotoSendFailed"));
     } finally {
       setUploading(false);
     }
@@ -397,13 +468,13 @@ export default function OneMessageScreen() {
         multiple: false,
       });
     } catch (_error) {
-      toast.error("Sélection de fichier indisponible : mettez l'application à jour.");
+      toast.error(i18n.t("msgFilePickerUnavailable"));
       return;
     }
     if (result.canceled || !result.assets?.length) return;
     const asset = result.assets[0];
     if (asset.size && asset.size > 10 * 1024 * 1024) {
-      toast.warning("Fichier trop volumineux (10 Mo maximum).");
+      toast.warning(i18n.t("msgFileTooBig"));
       return;
     }
     setUploading(true);
@@ -419,7 +490,7 @@ export default function OneMessageScreen() {
         attachmentSize: uploaded.size ?? asset.size,
       });
     } catch (error) {
-      toast.error(error.message || "Envoi du fichier impossible.");
+      toast.error(error.message || i18n.t("msgFileSendFailed"));
     } finally {
       setUploading(false);
     }
@@ -431,7 +502,7 @@ export default function OneMessageScreen() {
       suspendAppLock();
       const perm = await AudioModule.requestRecordingPermissionsAsync();
       if (!perm.granted) {
-        toast.warning("Autorisez le micro pour envoyer un message vocal.");
+        toast.warning(i18n.t("msgMicPermission"));
         return;
       }
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
@@ -455,7 +526,7 @@ export default function OneMessageScreen() {
       console.error(error);
       releaseRecorder();
       setRecording(false);
-      toast.error("Enregistrement indisponible : mettez l'application à jour.");
+      toast.error(i18n.t("msgRecordingUnavailable"));
     }
   };
 
@@ -483,7 +554,7 @@ export default function OneMessageScreen() {
     }
     if (!send || !uri) return;
     if (durationMs < 700) {
-      toast.info("Message vocal trop court.");
+      toast.info(i18n.t("msgVoiceTooShort"));
       return;
     }
     setUploading(true);
@@ -499,7 +570,7 @@ export default function OneMessageScreen() {
         durationMs,
       });
     } catch (error) {
-      toast.error(error.message || "Envoi du message vocal impossible.");
+      toast.error(error.message || i18n.t("msgVoiceSendFailed"));
     } finally {
       setUploading(false);
     }
@@ -513,7 +584,7 @@ export default function OneMessageScreen() {
       return (
         <View style={[styles.deletedBubble, mine ? styles.deletedRight : styles.deletedLeft]}>
           <Ionicons name="ban-outline" size={14} color="#A9A4AE" />
-          <Text style={styles.deletedText}>Message supprimé</Text>
+          <Text style={styles.deletedText}>{i18n.t("msgDeletedPlaceholder")}</Text>
         </View>
       );
     }
@@ -557,7 +628,7 @@ export default function OneMessageScreen() {
         </Text>
         {currentMessage.edited && (
           <Text style={[styles.edited, { color: mine ? "rgba(255,255,255,0.75)" : "#A9A4AE" }]}>
-            modifié
+            {i18n.t("msgEditedMarker")}
           </Text>
         )}
       </View>
@@ -615,9 +686,12 @@ export default function OneMessageScreen() {
   // affiche « Today » / « Yesterday » en dur).
   const dayLabel = (date) => {
     const d = dayjs(date);
-    if (d.isSame(dayjs(), "day")) return "Aujourd'hui";
-    if (d.isSame(dayjs().subtract(1, "day"), "day")) return "Hier";
-    return d.format(d.isSame(dayjs(), "year") ? "dddd D MMMM" : "D MMMM YYYY");
+    if (d.isSame(dayjs(), "day")) return i18n.t("msgToday");
+    if (d.isSame(dayjs().subtract(1, "day"), "day")) return i18n.t("msgYesterday");
+    // Noms de jour et de mois dans la langue de l'app.
+    return d.isSame(dayjs(), "year")
+      ? formatDateFr(d.toDate())
+      : `${formatDateFr(d.toDate())} ${d.year()}`;
   };
   const renderDay = (props) => {
     const { currentMessage, previousMessage } = props;
@@ -635,7 +709,9 @@ export default function OneMessageScreen() {
     );
   };
 
-  const renderAvatar = () => <Image source={targetAvatar} style={styles.avatar} />;
+  const renderAvatar = () => (
+    <Avatar uri={targetAvatar} name={target?.username} size={30} fontSize={12} />
+  );
 
   const renderActions = () => (
     <TouchableOpacity
@@ -643,7 +719,7 @@ export default function OneMessageScreen() {
       disabled={uploading || recording}
       style={styles.attachButton}
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      accessibilityLabel="Joindre"
+      accessibilityLabel={i18n.t("msgAttach")}
     >
       <Ionicons name="add-circle" size={30} color={accentColor} />
     </TouchableOpacity>
@@ -652,17 +728,17 @@ export default function OneMessageScreen() {
   const renderInputToolbar = (props) => {
     if (recording) {
       return (
-        <View style={[styles.toolbar, { backgroundColor: surface }]}>
+        <View style={[styles.toolbar, { backgroundColor: surface, paddingBottom: toolbarBottom }]}>
           <View style={[styles.toolbarPrimary, styles.recording]}>
             <View style={styles.recDot} />
-            <Text style={styles.recText}>Enregistrement · {fmtDuration(recDuration)}</Text>
+            <Text style={styles.recText}>{i18n.t("msgRecording")} · {fmtDuration(recDuration)}</Text>
             <TouchableOpacity onPress={() => finishRecording(false)} style={styles.recCancel} hitSlop={{ top: 8, bottom: 8 }}>
               <Ionicons name="trash-outline" size={20} color="#E24C6B" />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => finishRecording(true)}
               style={[styles.sendButton, { backgroundColor: accentColor }]}
-              accessibilityLabel="Envoyer le message vocal"
+              accessibilityLabel={i18n.t("msgSendVoice")}
             >
               <Ionicons name="send" size={16} color="#FFFFFF" />
             </TouchableOpacity>
@@ -673,7 +749,7 @@ export default function OneMessageScreen() {
     return (
       <InputToolbar
         {...props}
-        containerStyle={[styles.toolbar, { backgroundColor: surface }]}
+        containerStyle={[styles.toolbar, { backgroundColor: surface, paddingBottom: toolbarBottom }]}
         primaryStyle={styles.toolbarPrimary}
       />
     );
@@ -687,7 +763,7 @@ export default function OneMessageScreen() {
           onPress={startRecording}
           disabled={uploading}
           style={[styles.sendContainer, styles.sendButton, { backgroundColor: accentColor }]}
-          accessibilityLabel="Enregistrer un message vocal"
+          accessibilityLabel={i18n.t("msgRecordVoice")}
         >
           <Ionicons name="mic" size={18} color="#FFFFFF" />
         </TouchableOpacity>
@@ -719,11 +795,18 @@ export default function OneMessageScreen() {
         </View>
       ) : (
         <>
-          <Image source={targetAvatar} style={[styles.emptyAvatar, { borderColor: accentContainer }]} />
+          <Avatar
+            uri={targetAvatar}
+            name={target?.username}
+            size={84}
+            borderWidth={3}
+            borderColor={accentContainer}
+            style={styles.emptyAvatar}
+          />
           <Text style={styles.emptyTitle}>{target?.username}</Text>
           {!!describeRole(target) && <Text style={styles.emptySubtitle}>{describeRole(target)}</Text>}
           <Text style={styles.emptyHint}>
-            {"Aucun message pour l'instant. Dites bonjour et posez votre question : la conversation est privée."}
+            {i18n.t("msgEmpty")}
           </Text>
         </>
       )}
@@ -737,6 +820,7 @@ export default function OneMessageScreen() {
         title={target?.username}
         subtitle={describeRole(target)}
         avatar={targetAvatar}
+        avatarName={target?.username}
         showBack
         rightIcons={[
           { name: "search-outline", onPress: () => setSearchOpen(true) },
@@ -753,7 +837,7 @@ export default function OneMessageScreen() {
             onChangeText={setSearchText}
             onSubmitEditing={() => goToMatch(1)}
             returnKeyType="search"
-            placeholder="Rechercher dans la conversation…"
+            placeholder={i18n.t("msgSearchPlaceholder")}
             placeholderTextColor="#A9A4AE"
             style={styles.searchInput}
             selectionColor={accentColor}
@@ -806,7 +890,7 @@ export default function OneMessageScreen() {
         user={{ _id: myId }}
         renderMessageText={renderMessageText}
         locale="fr"
-        placeholder="Écrire un message…"
+        placeholder={i18n.t("msgWritePlaceholder")}
         alwaysShowSend
         showUserAvatar={false}
         renderAvatarOnTop
@@ -822,7 +906,7 @@ export default function OneMessageScreen() {
         renderSend={renderSend}
         renderChatEmpty={renderChatEmpty}
         bottomOffset={insets.bottom}
-        minInputToolbarHeight={64 + insets.bottom}
+        minInputToolbarHeight={58 + toolbarBottom}
         textInputProps={{
           style: styles.textInput,
           selectionColor: accentColor,
@@ -861,12 +945,12 @@ export default function OneMessageScreen() {
             )}
             <TouchableOpacity style={styles.sheetAction} onPress={copyMessage} activeOpacity={0.7}>
               <Ionicons name="copy-outline" size={20} color="#2B2530" />
-              <Text style={styles.sheetActionText}>Copier</Text>
+              <Text style={styles.sheetActionText}>{i18n.t("msgCopy")}</Text>
             </TouchableOpacity>
             {selected?.user?._id === myId && !selected?.attachmentType && (
               <TouchableOpacity style={styles.sheetAction} onPress={startEdit} activeOpacity={0.7}>
                 <Ionicons name="create-outline" size={20} color="#2B2530" />
-                <Text style={styles.sheetActionText}>Modifier</Text>
+                <Text style={styles.sheetActionText}>{i18n.t("forumEdit")}</Text>
               </TouchableOpacity>
             )}
             {selected?.user?._id === myId && (
@@ -879,7 +963,7 @@ export default function OneMessageScreen() {
                 activeOpacity={0.7}
               >
                 <Ionicons name="trash-outline" size={20} color="#E24C6B" />
-                <Text style={[styles.sheetActionText, { color: "#E24C6B" }]}>Supprimer pour tout le monde</Text>
+                <Text style={[styles.sheetActionText, { color: "#E24C6B" }]}>{i18n.t("msgDeleteForEveryone")}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -902,7 +986,7 @@ export default function OneMessageScreen() {
               }}
             >
               <Ionicons name="images-outline" size={20} color="#2B2530" />
-              <Text style={styles.sheetActionText}>Médias, liens et docs</Text>
+              <Text style={styles.sheetActionText}>{i18n.t("msgMediaTitle")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.sheetAction}
@@ -913,7 +997,7 @@ export default function OneMessageScreen() {
               }}
             >
               <Ionicons name="search-outline" size={20} color="#2B2530" />
-              <Text style={styles.sheetActionText}>Rechercher</Text>
+              <Text style={styles.sheetActionText}>{i18n.t("rechercher")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.sheetAction}
@@ -924,7 +1008,7 @@ export default function OneMessageScreen() {
               }}
             >
               <Ionicons name="trash-outline" size={20} color="#E24C6B" />
-              <Text style={[styles.sheetActionText, { color: "#E24C6B" }]}>Supprimer la conversation</Text>
+              <Text style={[styles.sheetActionText, { color: "#E24C6B" }]}>{i18n.t("msgDeleteConversation")}</Text>
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -934,9 +1018,9 @@ export default function OneMessageScreen() {
         visible={!!toDelete}
         icon="trash-outline"
         danger
-        title="Supprimer ce message ?"
-        message="Il sera remplacé par « Message supprimé » pour vous et votre interlocutrice."
-        confirmLabel="Supprimer"
+        title={i18n.t("msgDeleteMessageTitle")}
+        message={i18n.t("msgDeleteMessageBody")}
+        confirmLabel={i18n.t("forumDelete")}
         onConfirm={confirmDelete}
         onCancel={() => setToDelete(null)}
       />
@@ -944,9 +1028,9 @@ export default function OneMessageScreen() {
         visible={confirmClear}
         icon="trash-outline"
         danger
-        title="Supprimer la conversation ?"
-        message="Les messages seront effacés de votre côté uniquement. Votre interlocutrice garde les siens."
-        confirmLabel="Supprimer"
+        title={i18n.t("msgDeleteConversationTitle")}
+        message={i18n.t("msgDeleteConversationMessage")}
+        confirmLabel={i18n.t("forumDelete")}
         onConfirm={handleClear}
         onCancel={() => setConfirmClear(false)}
       />
@@ -957,12 +1041,12 @@ export default function OneMessageScreen() {
       <Modal visible={attachMenu} transparent animationType="fade" onRequestClose={() => setAttachMenu(false)}>
         <Pressable style={styles.sheetOverlay} onPress={() => setAttachMenu(false)}>
           <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}>
-            <Text style={styles.sheetTitle}>Joindre</Text>
+            <Text style={styles.sheetTitle}>{i18n.t("msgAttach")}</Text>
             <View style={styles.sheetRow}>
               {[
-                { icon: "camera-outline", label: "Appareil photo", onPress: () => sendPhoto(true) },
-                { icon: "images-outline", label: "Galerie", onPress: () => sendPhoto(false) },
-                { icon: "document-attach-outline", label: "Fichier", onPress: sendDocument },
+                { icon: "camera-outline", label: i18n.t("msgCamera"), onPress: () => sendPhoto(true) },
+                { icon: "images-outline", label: i18n.t("msgGallery"), onPress: () => sendPhoto(false) },
+                { icon: "document-attach-outline", label: i18n.t("msgFile"), onPress: sendDocument },
               ].map((item) => (
                 <TouchableOpacity key={item.label} onPress={item.onPress} style={styles.sheetItem} activeOpacity={0.8}>
                   <View style={[styles.sheetIcon, { backgroundColor: accentContainer }]}>

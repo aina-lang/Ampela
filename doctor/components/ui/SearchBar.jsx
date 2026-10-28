@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
-    height: 48,
+    height: SIZES.scale(48),
     borderRadius: 999,
     paddingHorizontal: 16,
     // Pas d'ombre : c'est la bordure couleur du thème qui délimite la

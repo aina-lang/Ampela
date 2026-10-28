@@ -1,4 +1,5 @@
 import { handleHeaderScroll } from "@/hooks/useHeaderScroll";
+import Avatar from "@/components/ui/Avatar";
 import { DecorativeBlobs } from "@/components/ui";
 import React, { useState } from "react";
 import {
@@ -6,13 +7,12 @@ import {
   ScrollView,
   Text,
   StyleSheet,
-  Image,
   TouchableOpacity,
   Alert,
   Switch,
 } from "react-native";
 import AppHeader, { HEADER_HEIGHT } from "@/components/AppHeader";
-import { COLORS, SIZES, images } from "@/constants";
+import { COLORS, SIZES } from "@/constants";
 import { useNavigation } from "expo-router";
 import {
   updateUser,
@@ -27,13 +27,14 @@ import * as ImagePicker from "expo-image-picker";
 import * as LocalAuthentication from "expo-local-authentication";
 import { updateUserSqlite } from "@/services/database";
 import {
-  isSignedIn,
-  uploadImage,
-  signOut,
   deleteAccount,
 } from "@/services/api";
 import ConfirmSheet from "@/components/ConfirmSheet";
 import { describeRole, ROLE_LABEL } from "@/utils/roles";
+import i18n from "@/constants/i18n";
+import { persistLocalPhoto } from "@/utils/profilePhoto";
+import { scheduleSync } from "@/services/sync";
+import { formatDateFr } from "@/services/reminders";
 import { useDiscoveryTheme } from "@/components/discovery";
 import DiscoveryCard from "@/components/discovery/DiscoveryCard";
 import { toast } from "@/components/ui";
@@ -52,44 +53,36 @@ const AccountScreen = () => {
     try {
       const level = await LocalAuthentication.getEnrolledLevelAsync();
       if (level === LocalAuthentication.SecurityLevel.NONE) {
-        toast.warning(
-          "Configurez d'abord un verrouillage d'écran (empreinte, schéma ou code PIN) sur votre téléphone."
-        );
+        toast.warning(i18n.t("accountLockNeedsDeviceLock"));
         return;
       }
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: "Confirmez pour activer le verrouillage",
-        cancelLabel: "Annuler",
+        promptMessage: i18n.t("accountLockPrompt"),
+        cancelLabel: i18n.t("annuler"),
       });
       if (result.success) updatePreference({ appLockEnabled: true });
     } catch (error) {
       console.error("Failed to enable app lock:", error);
-      toast.error("Impossible d'activer le verrouillage.");
+      toast.error(i18n.t("accountLockFailed"));
     }
   };
   const navigation = useNavigation();
-  const { surface, accentColor, accentColorDisabled } = useDiscoveryTheme();
+  const { surface, accentColor, accentContainer } = useDiscoveryTheme();
   const signedIn = useSelector(() => !!sessionState.token.get());
   const sessionEmail = useSelector(() => sessionState.user.get()?.email ?? "");
 
-  // Confirmation en cours : "logout" | "delete" | null
+  // Confirmation en cours : "delete" | null
   const [confirm, setConfirm] = useState(null);
   const [accountBusy, setAccountBusy] = useState(false);
-
-  const handleLogout = async () => {
-    await signOut();
-    setConfirm(null);
-    toast.info("Vous êtes déconnectée. Vos données restent sur ce téléphone.");
-  };
 
   const handleDeleteAccount = async () => {
     setAccountBusy(true);
     try {
       await deleteAccount();
       setConfirm(null);
-      toast.success("Votre compte et vos données en ligne ont été supprimés.");
+      toast.success(i18n.t("accountDeleted"));
     } catch (error) {
-      toast.error(error.message || "Suppression impossible pour le moment.");
+      toast.error(error.message || i18n.t("accountDeleteFailed"));
     } finally {
       setAccountBusy(false);
     }
@@ -102,10 +95,7 @@ const AccountScreen = () => {
       suspendAppLock();
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert(
-          "Permission refusée",
-          "Nous avons besoin d'accéder à vos photos pour changer l'avatar."
-        );
+        Alert.alert(i18n.t("accountPermissionDenied"), i18n.t("accountPhotoPermission"));
         return;
       }
 
@@ -119,17 +109,11 @@ const AccountScreen = () => {
       });
 
       if (!result.canceled) {
-        let profileImage = result.assets[0].uri;
-        // Connectée : l'image part sur le serveur pour être visible depuis
-        // les autres appareils et dans la messagerie.
-        if (isSignedIn()) {
-          try {
-            profileImage = await uploadImage(profileImage);
-          } catch (error) {
-            console.error("Avatar upload failed:", error);
-          }
-        }
-        updateUser({ ...user, profileImage });
+        // Local d'abord : la photo est enregistrée tout de suite sur le
+        // téléphone ; la synchronisation l'envoie au serveur en arrière-plan
+        // (et réessaie plus tard si le réseau manque).
+        const profileImage = await persistLocalPhoto(result.assets[0].uri);
+        updateUser({ ...user, profileImage }, { touch: true });
         await updateUserSqlite(
           user.id,
           user.username,
@@ -141,6 +125,7 @@ const AccountScreen = () => {
           profileImage
         );
         setProfileImage(profileImage);
+        scheduleSync();
       }
     } catch (error) {
       console.error("Error picking image: ", error);
@@ -152,7 +137,7 @@ const AccountScreen = () => {
       <DecorativeBlobs />
       <AppHeader
         navigation={navigation}
-        title="À propos de moi"
+        title={i18n.t("accountAboutMe")}
         showBack
         absolute
         rightIcons={[
@@ -174,9 +159,12 @@ const AccountScreen = () => {
             activeOpacity={0.85}
             style={styles.avatarWrapper}
           >
-            <Image
-              source={profileImage1 ? { uri: profileImage1 } : images.doctor01}
-              style={[styles.avatar, { borderColor: accentColor }]}
+            <Avatar
+              uri={profileImage1}
+              name={user?.username}
+              size={120}
+              borderWidth={2}
+              borderColor={accentColor}
             />
             <View style={[styles.editBadge, { backgroundColor: accentColor }]}>
               <AntDesign name="camera" size={16} color={COLORS.neutral100} />
@@ -188,63 +176,57 @@ const AccountScreen = () => {
         </View>
 
 
-         {/* Infos cycle */}
+         {/* Infos cycle : une seule carte, lignes uniformes et action en pied */}
+         <Text style={styles.sectionLabel}>{i18n.t("accountMyCycle")}</Text>
          <DiscoveryCard style={styles.infoCard}>
-           <View style={styles.infoRow}>
-             <View style={styles.infoIconWrapper}>
-               <FontAwesome name="calendar" color={accentColor} size={18} />
+           {[
+             { icon: "repeat-outline", label: i18n.t("accountCycleLength"), value: `${user.cycleDuration} ${i18n.t("jours")}` },
+             { icon: "water-outline", label: i18n.t("accountPeriodLength"), value: `${user.durationMenstruation} ${i18n.t("jours")}` },
+             {
+               icon: "calendar-outline",
+               label: i18n.t("accountLastPeriod"),
+               // Lisible : « jeudi 1 octobre 2026 » plutôt que 2026-10-01.
+               value: user.lastMenstruationDate
+                 ? `${formatDateFr(user.lastMenstruationDate)} ${String(user.lastMenstruationDate).slice(0, 4)}`
+                 : "—",
+             },
+           ].map((row, index) => (
+             <View key={row.label}>
+               {index > 0 && <View style={styles.divider} />}
+               <View style={styles.infoRow}>
+                 <View style={[styles.infoIconWrapper, { backgroundColor: accentContainer }]}>
+                   <Ionicons name={row.icon} color={accentColor} size={18} />
+                 </View>
+                 <Text style={[styles.infoLabel, { color: COLORS.neutral400 }]}>{row.label}</Text>
+                 <Text style={[styles.infoValue, { color: COLORS.primary }]} numberOfLines={1}>
+                   {row.value}
+                 </Text>
+               </View>
              </View>
-             <Text style={[styles.infoLabel, { color: COLORS.neutral400 }]}>Durée du cycle</Text>
-             <Text style={[styles.infoValue, { color: COLORS.primary }]}>{user.cycleDuration} jours</Text>
-           </View>
+           ))}
 
-           <View style={styles.divider} />
-
-           <View style={styles.infoRow}>
-             <View style={styles.infoIconWrapper}>
-               <FontAwesome name="calendar-check-o" color={accentColor} size={18} />
-             </View>
-             <Text style={[styles.infoLabel, { color: COLORS.neutral400 }]}>Durée des règles</Text>
-             <Text style={[styles.infoValue, { color: COLORS.primary }]}>
-               {user.durationMenstruation} jours
-             </Text>
-           </View>
-
-           <View style={styles.divider} />
-
-           <View style={styles.infoRow}>
-             <View style={styles.infoIconWrapper}>
-               <FontAwesome name="calendar-plus-o" color={accentColor} size={18} />
-             </View>
-             <Text style={[styles.infoLabel, { color: COLORS.neutral400 }]}>Dernier cycle</Text>
-             <Text style={[styles.infoValue, { color: COLORS.primary }]}>{user.lastMenstruationDate}</Text>
-           </View>
-         </DiscoveryCard>
-
-         {/* Liens */}
-         <DiscoveryCard style={styles.linksCard}>
            <TouchableOpacity
              onPress={() => navigation.navigate("settings/updatecycleinfo")}
-             style={styles.linkRow}
-             activeOpacity={0.7}
+             style={[styles.editCycleButton, { backgroundColor: accentContainer }]}
+             activeOpacity={0.8}
            >
-             <Text style={[styles.linkText, { color: COLORS.primary }]}>
-               Modifier les informations du cycle
+             <Ionicons name="create-outline" size={18} color={accentColor} />
+             <Text style={[styles.editCycleText, { color: accentColor }]}>
+               {i18n.t("accountEditCycle")}
              </Text>
-             <AntDesign name="right" size={16} color={COLORS.neutral400} />
+             <Ionicons name="chevron-forward" size={16} color={accentColor} />
            </TouchableOpacity>
-
          </DiscoveryCard>
 
          {/* Compte et confidentialité (exigences Google Play : politique de
              confidentialité accessible, suppression de compte dans l'app) */}
-         <Text style={styles.sectionLabel}>Compte et confidentialité</Text>
+         <Text style={styles.sectionLabel}>{i18n.t("accountAndSecurity")}</Text>
          <DiscoveryCard style={styles.accountCard}>
            {signedIn && (
              <>
                <View style={styles.linkRow}>
                  <Text style={[styles.linkText, { color: COLORS.neutral400 }]}>
-                   Connectée avec
+                   {i18n.t("accountEmail")}
                  </Text>
                  <Text
                    style={[styles.linkValue, { color: COLORS.primary }]}
@@ -261,8 +243,8 @@ const AccountScreen = () => {
              <View style={styles.lockLeft}>
                <Ionicons name="finger-print" size={20} color={accentColor} />
                <View style={{ flex: 1 }}>
-                 <Text style={[styles.linkText, { color: COLORS.primary }]}>Verrouillage de l’app</Text>
-                 <Text style={styles.lockHint}>Empreinte, visage ou schéma à l’ouverture</Text>
+                 <Text style={[styles.linkText, { color: COLORS.primary }]}>{i18n.t("accountProtectApp")}</Text>
+                 <Text style={styles.lockHint}>{i18n.t("accountProtectAppHint")}</Text>
                </View>
              </View>
              <Switch
@@ -272,33 +254,11 @@ const AccountScreen = () => {
                thumbColor={COLORS.neutral100}
              />
            </View>
-           <View style={styles.divider} />
-
-           <TouchableOpacity
-             onPress={() => navigation.navigate("settings/privacy")}
-             style={styles.linkRow}
-             activeOpacity={0.7}
-           >
-             <Text style={[styles.linkText, { color: COLORS.primary }]}>
-               Politique de confidentialité
-             </Text>
-             <AntDesign name="right" size={16} color={COLORS.neutral400} />
-           </TouchableOpacity>
-
+           {/* La confidentialité et la déconnexion ne sont pas ici :
+               la première est dans le menu Profil, la seconde est inutile
+               (pas de mot de passe, la suppression de compte suffit). */}
            {signedIn && (
              <>
-               <View style={styles.divider} />
-               <TouchableOpacity
-                 onPress={() => setConfirm("logout")}
-                 style={styles.linkRow}
-                 activeOpacity={0.7}
-               >
-                 <Text style={[styles.linkText, { color: COLORS.primary }]}>
-                   Se déconnecter
-                 </Text>
-                 <Feather name="log-out" size={16} color={COLORS.neutral400} />
-               </TouchableOpacity>
-
                <View style={styles.divider} />
                <TouchableOpacity
                  onPress={() => setConfirm("delete")}
@@ -306,7 +266,7 @@ const AccountScreen = () => {
                  activeOpacity={0.7}
                >
                  <Text style={[styles.linkText, styles.dangerText]}>
-                   Supprimer mon compte
+                   {i18n.t("accountDeleteOnline")}
                  </Text>
                  <Feather name="trash-2" size={16} color="#E24C6B" />
                </TouchableOpacity>
@@ -316,22 +276,12 @@ const AccountScreen = () => {
       </ScrollView>
 
       <ConfirmSheet
-        visible={confirm === "logout"}
-        icon="log-out-outline"
-        title="Se déconnecter ?"
-        message="Vos données restent sur ce téléphone. Vous pourrez vous reconnecter à tout moment avec votre e-mail."
-        confirmLabel="Se déconnecter"
-        onConfirm={handleLogout}
-        onCancel={() => setConfirm(null)}
-      />
-
-      <ConfirmSheet
         visible={confirm === "delete"}
         icon="trash-outline"
         danger
-        title="Supprimer votre compte ?"
-        message="Votre compte en ligne, vos cycles synchronisés, vos publications et vos messages seront effacés définitivement. Les données enregistrées sur ce téléphone sont conservées."
-        confirmLabel="Supprimer définitivement"
+        title={i18n.t("accountDeleteTitle")}
+        message={i18n.t("accountDeleteMessage")}
+        confirmLabel={i18n.t("accountDeleteConfirm")}
         loading={accountBusy}
         onConfirm={handleDeleteAccount}
         onCancel={() => setConfirm(null)}
@@ -398,14 +348,17 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   infoIconWrapper: {
-    width: 32,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: "center",
+    justifyContent: "center",
   },
   infoLabel: {
     flex: 1,
     fontFamily: "Regular",
     fontSize: SIZES.small,
-    marginLeft: 10,
+    marginLeft: 12,
   },
   infoValue: {
     fontFamily: "SBold",
@@ -415,8 +368,19 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#F0F0F0",
   },
-  linksCard: {
-    marginTop: 20,
+  editCycleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 14,
+    paddingVertical: 13,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+  },
+  editCycleText: {
+    flex: 1,
+    fontFamily: "SBold",
+    fontSize: SIZES.small,
   },
   linkRow: {
     flexDirection: "row",
