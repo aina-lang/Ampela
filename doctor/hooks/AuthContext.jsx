@@ -32,7 +32,8 @@ export const AuthContextProvider = ({ children }) => {
       id: user.id,
       username: user.username ?? "",
       profession: user.profession ?? "",
-      role: user.role ?? "doctor",
+      role: user.role ?? "user",
+      verificationStatus: user.verificationStatus ?? "none",
       email: user.email ?? "",
       profileImage: user.profileImage ?? null,
     });

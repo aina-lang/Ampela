@@ -9,20 +9,25 @@ import { SIZES, images } from "@/constants";
 import { PrimaryButton, Input, DecorativeBlobs, toast } from "@/components/ui";
 import { MeshBackground, DiscoveryHeader, useDiscoveryTheme } from "@/components/discovery";
 import { uploadImage } from "@/services/api";
-import { saveDoctorProfile } from "@/services/otpAuth";
+import { registerDoctor } from "@/services/otpAuth";
 import { suspendAppLock } from "@/components/AppLockGate";
 
 /**
- * Profil professionnel après la première connexion : nom affiché,
- * spécialité, photo. Enregistré sur le backend avec le rôle « doctor ».
+ * Activation de l'accès professionnel : code d'invitation + profil (nom
+ * affiché, spécialité, photo, informations de vérification). Le serveur
+ * accorde le rôle « doctor » vérifié en consommant l'invitation.
  */
 const DoctorProfile = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { accentColor, accentContainer, surface } = useDiscoveryTheme();
 
+  const [code, setCode] = useState("");
   const [username, setUsername] = useState("");
   const [profession, setProfession] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [institution, setInstitution] = useState("");
+  const [licenseNumber, setLicenseNumber] = useState("");
   const [profileImage, setProfileImage] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -52,16 +57,22 @@ const DoctorProfile = () => {
     }
   };
 
+  const canSave = code.trim().length >= 4 && !!username.trim() && !!profession.trim();
+
   const save = async () => {
-    if (!username.trim() || !profession.trim()) return;
+    if (!canSave) return;
     setSaving(true);
     try {
-      await saveDoctorProfile({
+      await registerDoctor({
+        code: code.trim(),
         username: username.trim(),
         profession: profession.trim(),
+        fullName: fullName.trim(),
+        institution: institution.trim(),
+        licenseNumber: licenseNumber.trim(),
         profileImage,
       });
-      toast.success("Profil professionnel enregistré.");
+      toast.success("Accès professionnel activé. Bienvenue !");
       router.replace("/(drawer)/(main)");
     } catch (error) {
       toast.error(error.message || "Impossible d'enregistrer le profil.");
@@ -85,8 +96,8 @@ const DoctorProfile = () => {
         >
           <DiscoveryHeader
             eyebrow="Votre profil"
-            title="Présentez-vous"
-            subtitle="Ces informations apparaissent auprès des utilisatrices sur le forum et dans la messagerie, avec la mention « Professionnelle de santé »."
+            title="Activez votre accès"
+            subtitle="Saisissez le code d'invitation reçu de l'équipe Ampela, puis présentez-vous : votre nom affiché et votre spécialité apparaîtront auprès des utilisatrices avec la mention « Professionnelle de santé »."
             accentColor={accentColor}
           />
 
@@ -110,6 +121,18 @@ const DoctorProfile = () => {
                 </Text>
               </View>
 
+              <Text style={styles.label}>Code d’invitation</Text>
+              <Input
+                icon={<Ionicons name="key-outline" size={20} color="#A9A4AE" />}
+                placeholder="Ex : AMPELA2345"
+                value={code}
+                onChangeText={(t) => setCode(t.toUpperCase())}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                maxLength={32}
+                editable={!saving}
+                containerStyle={styles.field}
+              />
               <Text style={styles.label}>Nom affiché</Text>
               <Input
                 icon={<Ionicons name="person-outline" size={20} color="#A9A4AE" />}
@@ -131,10 +154,39 @@ const DoctorProfile = () => {
                 containerStyle={styles.field}
               />
 
+              <Text style={styles.sectionHint}>Informations professionnelles (optionnel, pour la vérification)</Text>
+              <Input
+                icon={<Ionicons name="id-card-outline" size={20} color="#A9A4AE" />}
+                placeholder="Nom complet"
+                value={fullName}
+                onChangeText={setFullName}
+                maxLength={120}
+                editable={!saving}
+                containerStyle={styles.field}
+              />
+              <Input
+                icon={<Ionicons name="business-outline" size={20} color="#A9A4AE" />}
+                placeholder="Établissement (CSB, clinique, cabinet…)"
+                value={institution}
+                onChangeText={setInstitution}
+                maxLength={160}
+                editable={!saving}
+                containerStyle={styles.field}
+              />
+              <Input
+                icon={<Ionicons name="ribbon-outline" size={20} color="#A9A4AE" />}
+                placeholder="Numéro d'ordre (si applicable)"
+                value={licenseNumber}
+                onChangeText={setLicenseNumber}
+                maxLength={80}
+                editable={!saving}
+                containerStyle={styles.field}
+              />
+
               <PrimaryButton
-                title="Commencer"
+                title="Activer mon accès"
                 onPress={save}
-                disabled={!username.trim() || !profession.trim() || saving || uploading}
+                disabled={!canSave || saving || uploading}
                 loading={saving}
                 style={{ marginTop: 8 }}
               />
@@ -209,6 +261,14 @@ const styles = StyleSheet.create({
   },
   field: {
     marginBottom: 16,
+  },
+  sectionHint: {
+    fontFamily: "Regular",
+    fontSize: SIZES.small - 1,
+    color: "#8E8793",
+    marginTop: 4,
+    marginBottom: 10,
+    marginLeft: 4,
   },
 });
 

@@ -1,4 +1,4 @@
-import { IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 
 export class UpdateProfileDto {
   @IsOptional() @IsString() @MaxLength(80)
@@ -7,9 +7,6 @@ export class UpdateProfileDto {
   /** Spécialité (professionnelles de santé uniquement). */
   @IsOptional() @IsString() @MaxLength(120)
   profession?: string | null;
-
-  @IsOptional() @IsIn(['user', 'doctor'])
-  role?: 'user' | 'doctor';
 
   @IsOptional() @IsString() @MaxLength(20)
   lastMenstruationDate?: string | null;

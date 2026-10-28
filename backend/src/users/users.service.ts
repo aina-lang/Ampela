@@ -10,8 +10,14 @@ export const publicUserSelect = {
   username: true,
   profession: true,
   role: true,
+  verificationStatus: true,
   profileImage: true,
 } as const;
+
+/** Professionnelle de santé effective : rôle « doctor » ET statut vérifié. */
+export const isVerifiedDoctor = (
+  user: { role?: string | null; verificationStatus?: string | null } | null | undefined,
+) => user?.role === 'doctor' && user?.verificationStatus === 'verified';
 
 @Injectable()
 export class UsersService {
@@ -64,10 +70,15 @@ export class UsersService {
    * les utilisatrices.
    */
   async listOthers(userId: string) {
-    const me = await this.prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
-    const otherRole = me?.role === 'doctor' ? 'user' : 'doctor';
+    const me = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true, verificationStatus: true },
+    });
+    const iAmDoctor = isVerifiedDoctor(me);
     const users = await this.prisma.user.findMany({
-      where: { id: { not: userId }, role: otherRole, username: { not: '' } },
+      where: iAmDoctor
+        ? { id: { not: userId }, role: 'user', username: { not: '' } }
+        : { id: { not: userId }, role: 'doctor', verificationStatus: 'verified', username: { not: '' } },
       select: publicUserSelect,
       take: 200,
     });

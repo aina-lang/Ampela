@@ -17,3 +17,7 @@ mobile/google-service-account.json
 doctor/android/
 doctor/ios/
 doctor/google-service-account.json
+
+# Clés de signature locales
+mobile/credentials/
+doctor/credentials/

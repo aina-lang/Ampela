@@ -44,3 +44,18 @@ npm run start:dev               # http://localhost:3200
 Le fichier `.env` de production vit dans `/opt/ampela-api/.env` sur le serveur
 (jamais versionné). `nginx.ampela.conf` est le vhost de référence ; certbot
 ajoute le HTTPS.
+
+## Professionnelles de santé (invitations)
+
+Le rôle `doctor` n'est jamais accordé par le client : il est obtenu via `POST /doctors/register` avec un code d'invitation à usage unique. Sur le serveur (`/opt/ampela-api`) :
+
+```bash
+npm run invite -- create sage-femme@exemple.mg --note "Sage-femme, CSB Antsirabe" [--days 30]
+npm run invite -- create --free --note "Code libre atelier"   # utilisable avec n'importe quel e-mail
+npm run invite -- list
+npm run invite -- revoke ABCD2345
+npm run invite -- verify email@exemple.mg          # valider directement un compte
+npm run invite -- revoke-doctor email@exemple.mg   # retirer le statut professionnel
+```
+
+`User.verificationStatus` (`none` / `pending` / `verified` / `rejected`), `verifiedAt`, `verifiedBy`, `fullName`, `institution` et `licenseNumber` préparent une validation par justificatifs : seules les professionnelles `verified` apparaissent comme telles et peuvent échanger avec les utilisatrices.

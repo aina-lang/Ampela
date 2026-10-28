@@ -13,6 +13,7 @@ import {
   requestOtp,
   verifyOtpAndSignIn,
   fetchCloudProfile,
+  fetchDoctorStatus,
 } from "@/services/otpAuth";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -20,6 +21,7 @@ import {
   PrimaryButton,
   GhostButton,
   Input,
+  OtpInput,
   DecorativeBlobs,
   toast,
 } from "@/components/ui";
@@ -82,22 +84,28 @@ const Login = () => {
     }
   };
 
-  const handleVerify = async () => {
-    if (code.length !== 6) {
+  const handleVerify = async (submitted) => {
+    const otp = typeof submitted === "string" ? submitted : code;
+    if (otp.length !== 6) {
       setCodeError("Le code contient 6 chiffres");
       return;
     }
     setIsLoading(true);
     try {
-      await verifyOtpAndSignIn(email.trim(), code);
+      await verifyOtpAndSignIn(email.trim(), otp);
       const profile = await fetchCloudProfile();
       if (profile) {
         toast.success(`Bon retour, ${profile.username} !`);
         router.replace("/(drawer)/(main)");
-      } else {
-        // Nouveau compte (ou compte sans profil professionnel) : on le complète.
+        return;
+      }
+      // Pas encore professionnelle vérifiée : l'accès dépend d'une invitation.
+      const status = await fetchDoctorStatus();
+      if (status.invited) {
         toast.info("Bienvenue ! Complétons votre profil professionnel.");
         router.replace("/(discovery)/profile");
+      } else {
+        router.replace("/(discovery)/access");
       }
     } catch (error) {
       setCodeError(error.message);
@@ -172,21 +180,15 @@ const Login = () => {
                 <View style={styles.formCard}>
                   <Text style={styles.formTitle}>Code de connexion</Text>
 
-                  <Input
-                    icon={
-                      <Ionicons name="key-outline" size={20} color="#A9A4AE" />
-                    }
-                    placeholder="••••••"
-                    keyboardType="number-pad"
-                    maxLength={6}
+                  <OtpInput
                     value={code}
-                    onChangeText={(text) => {
-                      setCode(text.replace(/\D/g, ""));
+                    onChange={(text) => {
+                      setCode(text);
                       setCodeError("");
                     }}
                     error={codeError}
                     editable={!isLoading}
-                    inputStyle={styles.codeInput}
+                    onComplete={handleVerify}
                   />
 
                   <PrimaryButton
@@ -247,12 +249,6 @@ const styles = StyleSheet.create({
     fontSize: SIZES.medium,
     color: "#433C47",
     marginBottom: 18,
-    textAlign: "center",
-  },
-  codeInput: {
-    fontFamily: "Bold",
-    fontSize: SIZES.large,
-    letterSpacing: 10,
     textAlign: "center",
   },
 });

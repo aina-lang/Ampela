@@ -13,7 +13,11 @@ async function fetchData(setIsFirstTime, setInitialRouteName, setLoaded) {
     // Session restaurée si possible (hors ligne : on garde le profil connu).
     await restoreSession().catch(() => null);
     const user = getCurrentUser();
-    const ready = isSignedIn() && !!user?.username && user?.role === "doctor";
+    const ready =
+      isSignedIn() &&
+      !!user?.username &&
+      user?.role === "doctor" &&
+      user?.verificationStatus === "verified";
     setIsFirstTime(!ready);
     setInitialRouteName(ready ? "/(drawer)/(main)" : "/(discovery)");
   } catch (error) {

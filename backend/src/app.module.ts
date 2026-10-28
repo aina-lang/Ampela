@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
 import { CyclesModule } from './cycles/cycles.module';
+import { DoctorsModule } from './doctors/doctors.module';
 import { MessagesModule } from './messages/messages.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PostsModule } from './posts/posts.module';
@@ -27,6 +28,7 @@ class HealthController {
     AuthModule,
     UsersModule,
     CyclesModule,
+    DoctorsModule,
     PostsModule,
     MessagesModule,
     NotificationsModule,

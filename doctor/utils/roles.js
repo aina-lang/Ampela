@@ -13,7 +13,10 @@ export const ROLE_LABEL = {
   doctor: "Professionnelle de santé",
 };
 
-export const isDoctor = (person) => person?.role === ROLES.doctor;
+/** Professionnelle de santé effective : rôle « doctor » et statut vérifié (invitation). */
+export const isDoctor = (person) =>
+  person?.role === ROLES.doctor &&
+  (person?.verificationStatus === undefined || person?.verificationStatus === "verified");
 
 /** « Sage-femme · Professionnelle de santé », « Professionnelle de santé » ou "" pour une utilisatrice. */
 export const describeRole = (person) => {

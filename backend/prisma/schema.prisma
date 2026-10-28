@@ -12,8 +12,17 @@ model User {
   email                String    @unique
   username             String    @default("")
   profession           String?
-  /// Acteur : "user" (utilisatrice) ou "doctor" (professionnelle de santé)
+  /// Acteur : "user" (utilisatrice) ou "doctor" (professionnelle de santé).
+  /// Le rôle "doctor" n'est accordé que par invitation (POST /doctors/register).
   role                 String   @default("user")
+  /// Vérification du statut professionnel : "none" | "pending" | "verified" | "rejected"
+  verificationStatus   String   @default("none")
+  verifiedAt           DateTime?
+  verifiedBy           String?
+  /// Informations professionnelles (traçabilité, validation future par justificatifs)
+  fullName             String?
+  institution          String?
+  licenseNumber        String?
   lastMenstruationDate String?
   durationMenstruation Int?
   cycleDuration        Int?
@@ -31,6 +40,24 @@ model User {
 }
 
 /// Code de connexion à usage unique, indexé par e-mail normalisé.
+/// Invitation à rejoindre l'application des professionnelles de santé.
+/// Créée par un administrateur (scripts/invite-doctor.js) ; à usage unique.
+model DoctorInvitation {
+  id          String    @id @default(uuid())
+  /// E-mail attendu (minuscules). Null = code libre, utilisable avec n'importe quel e-mail.
+  email       String?
+  code        String    @unique
+  note        String?
+  createdBy   String?
+  expiresAt   DateTime?
+  usedAt      DateTime?
+  usedById    String?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([email])
+}
+
 /// Notification in-app : like / commentaire sur ma publication, réponse à mon commentaire, message reçu.
 model Notification {
   id        String    @id @default(uuid())

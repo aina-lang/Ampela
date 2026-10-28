@@ -204,6 +204,7 @@ async function reset() {
   const ids = demo.map((u) => u.id);
   if (!ids.length) return;
   await prisma.room.deleteMany({ where: { OR: [{ userAId: { in: ids } }, { userBId: { in: ids } }] } });
+  await prisma.doctorInvitation.deleteMany({ where: { OR: [{ createdBy: 'seed' }, { usedById: { in: ids } }] } });
   await prisma.user.deleteMany({ where: { id: { in: ids } } });
   console.log(`Comptes de démo supprimés : ${ids.length}`);
 }
@@ -226,6 +227,9 @@ async function main() {
         username: u.username,
         role: u.role,
         profession: u.profession,
+        verificationStatus: u.role === 'doctor' ? 'verified' : 'none',
+        verifiedAt: u.role === 'doctor' ? new Date() : null,
+        verifiedBy: u.role === 'doctor' ? 'seed' : null,
         lastMenstruationDate: iso(daysAgo(u.last)),
         durationMenstruation: u.period,
         cycleDuration: u.cycle,
@@ -272,6 +276,21 @@ async function main() {
     }
   }
 
+  // 2 bis. Invitations : celles des professionnelles de démo (utilisées) et
+  //        deux codes disponibles pour tester l'application professionnelle.
+  for (const u of USERS.filter((x) => x.role === 'doctor')) {
+    await prisma.doctorInvitation.create({
+      data: { email: `${u.key}@${DEMO_DOMAIN}`, code: `DEMO${u.key.toUpperCase().slice(0, 4)}`, note: 'Seed', createdBy: 'seed', usedAt: new Date(), usedById: users[u.key].id },
+    });
+  }
+  const openInvitations = [
+    { email: `pro1@${DEMO_DOMAIN}`, code: 'AMPELAPRO1', note: 'Invitation de test (e-mail pro1)' },
+    { email: null, code: 'AMPELAFREE', note: 'Code libre de test (tout e-mail)' },
+  ];
+  for (const inv of openInvitations) {
+    await prisma.doctorInvitation.create({ data: { ...inv, createdBy: 'seed' } });
+  }
+
   // 3. Conversations privées
   let messageCount = 0;
   for (const conv of CONVERSATIONS) {
@@ -291,6 +310,7 @@ async function main() {
   console.log(
     `Seed terminé : ${USERS.length} utilisatrices, ${POSTS.length} publications, ${likeCount} likes, ${commentCount} commentaires (réponses incluses), ${CONVERSATIONS.length} conversations, ${messageCount} messages.`,
   );
+  console.log("Invitations pro disponibles : code AMPELAPRO1 (réservé à pro1@demo.ampela.mg) et AMPELAFREE (tout e-mail).");
   console.log(`Connexion : n'importe quel e-mail @${DEMO_DOMAIN} (ex. nirina@${DEMO_DOMAIN}) via le code reçu… sur une vraie boîte seulement : ces adresses sont fictives.`);
 }
 

@@ -2,6 +2,7 @@
 
 Application Expo (React Native) destinée aux professionnelles de santé (sages-femmes, gynécologues, infirmières…). Elle partage le backend et le compte e-mail d'Ampela : un même e-mail peut être utilisatrice sur Ampela et professionnelle sur Ampela Pro, c'est le rôle `doctor` enregistré lors du premier profil qui fait la différence.
 
+- **Accès sur invitation** : le rôle professionnel n'est accordé que par un code d'invitation créé par l'équipe (`cd backend && npm run invite -- create email@exemple.mg --note "Sage-femme, CSB X"`). Sans invitation, l'app affiche un écran « Accès réservé » avec une demande par e-mail. Le statut de vérification (`verificationStatus`) et les champs nom complet / établissement / numéro d'ordre sont prêts pour une validation par justificatifs plus tard.
 - **100 % en ligne** : aucune base locale, le profil et les contenus viennent de l'API (`EXPO_PUBLIC_API_URL`).
 - **Parcours** : bienvenue → langue et thème → confidentialité → connexion par code e-mail → profil professionnel (nom affiché, spécialité, photo) → tableau de bord.
 - **Tableau de bord** : questions du forum sans réponse, messages non lus, notifications, conversations récentes.

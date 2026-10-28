@@ -24,6 +24,7 @@ import {
   SecondaryButton,
   GhostButton,
   Input,
+  OtpInput,
   DecorativeBlobs,
   toast,
 } from "@/components/ui";
@@ -112,14 +113,15 @@ const Login = () => {
     });
   };
 
-  const handleVerify = async () => {
-    if (code.length !== 6) {
+  const handleVerify = async (submitted) => {
+    const otp = typeof submitted === "string" ? submitted : code;
+    if (otp.length !== 6) {
       setCodeError("Le code contient 6 chiffres");
       return;
     }
     setIsLoading(true);
     try {
-      await verifyOtpAndSignIn(email.trim(), code);
+      await verifyOtpAndSignIn(email.trim(), otp);
       const profile = await fetchCloudProfile();
 
       if (profile) {
@@ -222,21 +224,15 @@ const Login = () => {
                 <View style={styles.formCard}>
                   <Text style={styles.formTitle}>Code de connexion</Text>
 
-                  <Input
-                    icon={
-                      <Ionicons name="key-outline" size={20} color="#A9A4AE" />
-                    }
-                    placeholder="••••••"
-                    keyboardType="number-pad"
-                    maxLength={6}
+                  <OtpInput
                     value={code}
-                    onChangeText={(text) => {
-                      setCode(text.replace(/\D/g, ""));
+                    onChange={(text) => {
+                      setCode(text);
                       setCodeError("");
                     }}
                     error={codeError}
                     editable={!isLoading}
-                    inputStyle={styles.codeInput}
+                    onComplete={handleVerify}
                   />
 
                   <PrimaryButton
@@ -297,12 +293,6 @@ const styles = StyleSheet.create({
     fontSize: SIZES.medium,
     color: "#433C47",
     marginBottom: 18,
-    textAlign: "center",
-  },
-  codeInput: {
-    fontFamily: "Bold",
-    fontSize: SIZES.large,
-    letterSpacing: 10,
     textAlign: "center",
   },
   dividerRow: {

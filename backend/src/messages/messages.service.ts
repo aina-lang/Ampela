@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { publicUserSelect } from '../users/users.service';
+import { isVerifiedDoctor, publicUserSelect } from '../users/users.service';
 import { SendMessageDto } from './dto/send-message.dto';
 
 /** Identifiant déterministe du salon entre deux utilisatrices. */
@@ -21,13 +21,15 @@ export class MessagesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async ensureRoom(me: string, other: string) {
+    const select = { role: true, verificationStatus: true };
     const [mine, theirs] = await Promise.all([
-      this.prisma.user.findUnique({ where: { id: me }, select: { role: true } }),
-      this.prisma.user.findUnique({ where: { id: other }, select: { role: true } }),
+      this.prisma.user.findUnique({ where: { id: me }, select }),
+      this.prisma.user.findUnique({ where: { id: other }, select }),
     ]);
     if (!theirs) throw new NotFoundException('Utilisatrice introuvable.');
-    // Pas de conversation utilisatrice ↔ utilisatrice ni pro ↔ pro.
-    if ((mine?.role ?? 'user') === (theirs.role ?? 'user')) {
+    // Pas de conversation utilisatrice ↔ utilisatrice ni pro ↔ pro, et une
+    // professionnelle non vérifiée compte comme simple utilisatrice.
+    if (isVerifiedDoctor(mine) === isVerifiedDoctor(theirs)) {
       throw new ForbiddenException(
         'La messagerie est réservée aux échanges entre utilisatrices et professionnelles de santé.',
       );

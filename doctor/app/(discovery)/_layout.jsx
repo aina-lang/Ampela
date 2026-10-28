@@ -26,6 +26,7 @@ const Layout = () => {
         <Stack.Screen name="confidentiality" />
         <Stack.Screen name="login" />
         <Stack.Screen name="profile" />
+        <Stack.Screen name="access" />
       </Stack>
     </View>
   );

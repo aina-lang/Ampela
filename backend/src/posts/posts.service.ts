@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { publicUserSelect } from '../users/users.service';
+import { isVerifiedDoctor, publicUserSelect } from '../users/users.service';
 import { CreatePostDto } from './dto/create-post.dto';
 
 const postInclude = (userId: string) =>
@@ -23,7 +23,7 @@ const toView = (post: PostRow) => ({
   authorId: post.authorId,
   authorName: post.author.username,
   authorProfession: post.author.profession,
-  authorRole: post.author.role,
+  authorRole: isVerifiedDoctor(post.author) ? 'doctor' : 'user',
   authorImage: post.author.profileImage,
   likeCount: post._count.likes,
   commentCount: post._count.comments,

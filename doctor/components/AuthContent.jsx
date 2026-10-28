@@ -25,6 +25,7 @@ import {
   requestOtp,
   verifyOtpAndSignIn,
   fetchCloudProfile,
+  fetchDoctorStatus,
 } from "@/services/otpAuth";
 import { useRouter } from "expo-router";
 
@@ -98,9 +99,10 @@ const AuthContent = ({ closeModal: closeModalProp }) => {
       await verifyOtpAndSignIn(email.trim(), otp);
       const profile = await fetchCloudProfile();
       if (!profile) {
-        // Profil professionnel absent : on le complète avant d'aller plus loin.
+        // Pas encore professionnelle vérifiée : invitation ou demande d'accès.
         closeModal();
-        router.replace("/(discovery)/profile");
+        const status = await fetchDoctorStatus();
+        router.replace(status.invited ? "/(discovery)/profile" : "/(discovery)/access");
         return;
       }
       toast.success(`Bon retour, ${profile.username} !`);

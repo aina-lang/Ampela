@@ -4,21 +4,16 @@
     "slug": "Ampela",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo/logo-1.png",
+    "icon": "./assets/images/app-icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/images/logo/logo-1.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FF7575"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.maminiaina.ampela"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/adaptive-foreground.png",
         "backgroundColor": "#FF7575"
       },
       "package": "com.maminiaina_mercia.Ampela",
@@ -64,6 +59,15 @@
         "expo-audio",
         {
           "microphonePermission": "Autorisez $(PRODUCT_NAME) à utiliser le micro pour envoyer des messages vocaux."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#FF7575"
         }
       ]
     ],
